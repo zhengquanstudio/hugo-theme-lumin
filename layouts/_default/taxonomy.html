@@ -1,0 +1,19 @@
+{{ define "main" }}
+<div class="list-page">
+  <header class="list-header">
+    <h1 class="list-title">{{ .Title }}</h1>
+    <div class="list-count">
+      共 {{ len .Data.Pages }} 个{{ if eq .Data.Plural "categories" }}分类{{ else }}标签{{ end }}
+    </div>
+  </header>
+  
+  <div class="taxonomy-cloud">
+    {{ range .Data.Pages }}
+    <a href="{{ .Permalink }}" class="taxonomy-item">
+      <span class="taxonomy-name">{{ .Title }}</span>
+      <span class="taxonomy-count">{{ len .Data.Pages }}</span>
+    </a>
+    {{ end }}
+  </div>
+</div>
+{{ end }}

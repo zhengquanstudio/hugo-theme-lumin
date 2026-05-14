@@ -1,0 +1,28 @@
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-left">
+        <p class="footer-copyright">
+          &copy; {{ .Site.Params.footer.since | default now.Year }} - {{ now.Year }} 
+          <a href="{{ .Site.BaseURL }}">{{ .Site.Params.author | default .Site.Title }}</a>
+        </p>
+        {{ with .Site.Params.footer.icp }}
+        <p class="footer-icp">{{ . }}</p>
+        {{ end }}
+        {{ with .Site.Params.footer.customText }}
+        <p class="footer-custom">{{ . | safeHTML }}</p>
+        {{ end }}
+      </div>
+      
+      <div class="footer-right">
+        {{ if .Site.Params.footer.poweredBy }}
+        <p class="footer-powered">
+          Powered by <a href="https://gohugo.io" target="_blank" rel="noopener">Hugo</a>
+          <span class="separator">|</span>
+          Theme <a href="https://github.com/yourname/hugo-theme-lumin" target="_blank" rel="noopener">Lumin</a>
+        </p>
+        {{ end }}
+      </div>
+    </div>
+  </div>
+</footer>

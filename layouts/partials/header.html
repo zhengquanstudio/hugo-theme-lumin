@@ -1,0 +1,97 @@
+<header class="site-header">
+  <div class="container">
+    <div class="header-wrapper">
+      <a href="{{ .Site.BaseURL }}" class="header-brand">
+        {{ if and .Site.Params.header.showLogo .Site.Params.header.logo }}
+          <img src="{{ .Site.Params.header.logo }}" alt="{{ .Site.Title }}" class="header-logo">
+        {{ end }}
+        {{ if .Site.Params.header.showTitle }}
+          <span class="header-title">{{ .Site.Title }}</span>
+        {{ end }}
+      </a>
+      
+      <nav class="header-nav" aria-label="主导航">
+        <ul class="nav-list">
+          {{ range .Site.Menus.main }}
+          <li class="nav-item">
+            <a href="{{ .URL }}" class="nav-link{{ if $.IsMenuCurrent "main" . }} active{{ end }}">
+              {{ .Name }}
+            </a>
+          </li>
+          {{ end }}
+        </ul>
+      </nav>
+      
+      <div class="header-actions">
+        {{ if .Site.Params.search.enable }}
+        <button class="action-btn search-toggle" id="search-toggle" aria-label="搜索">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </button>
+        {{ end }}
+        
+        <button class="action-btn theme-toggle" id="theme-toggle" aria-label="切换主题">
+          <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+        
+        <button class="action-btn mobile-menu-toggle" id="mobile-menu-toggle" aria-label="菜单">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Mobile Menu -->
+  <div class="mobile-menu" id="mobile-menu">
+    <div class="container">
+      <ul class="mobile-nav-list">
+        {{ range .Site.Menus.main }}
+        <li class="mobile-nav-item">
+          <a href="{{ .URL }}" class="mobile-nav-link">{{ .Name }}</a>
+        </li>
+        {{ end }}
+      </ul>
+    </div>
+  </div>
+  
+  <!-- Search Modal -->
+  {{ if .Site.Params.search.enable }}
+  <div class="search-modal" id="search-modal">
+    <div class="search-modal-content">
+      <div class="search-input-wrapper">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" class="search-input" id="search-input" placeholder="{{ .Site.Params.search.placeholder | default "搜索文章..." }}" autocomplete="off">
+        <button class="search-close" id="search-close" aria-label="关闭">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="search-results" id="search-results"></div>
+    </div>
+  </div>
+  {{ end }}
+</header>

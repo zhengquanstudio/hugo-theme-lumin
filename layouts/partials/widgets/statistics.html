@@ -1,0 +1,28 @@
+{{ if .Site.Params.widgets.statistics }}
+<div class="widget widget-statistics">
+  <h4 class="widget-title">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="20" x2="18" y2="10"></line>
+      <line x1="12" y1="20" x2="12" y2="4"></line>
+      <line x1="6" y1="20" x2="6" y2="14"></line>
+    </svg>
+    站点统计
+  </h4>
+  <div class="statistics-list">
+    <div class="stat-item">
+      <span class="stat-label">文章总数</span>
+      <span class="stat-value">{{ len (where .Site.RegularPages "Type" "in" (slice "post" "posts" "")) }}</span>
+    </div>
+    {{ if .Site.Params.statistics.busuanzi }}
+    <div class="stat-item">
+      <span class="stat-label">访客数</span>
+      <span class="stat-value" id="busuanzi_value_site_uv">--</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">总访问量</span>
+      <span class="stat-value" id="busuanzi_value_site_pv">--</span>
+    </div>
+    {{ end }}
+  </div>
+</div>
+{{ end }}

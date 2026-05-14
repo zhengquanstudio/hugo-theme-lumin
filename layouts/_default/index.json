@@ -1,0 +1,15 @@
+[
+{{- $pages := where .Site.RegularPages "Type" "in" (slice "post" "posts" "") }}
+{{- $total := len $pages }}
+{{- range $index, $page := $pages }}
+{
+  "title": {{ $page.Title | jsonify }},
+  "permalink": {{ $page.Permalink | jsonify }},
+  "date": {{ $page.Date.Format "2006-01-02" | jsonify }},
+  "summary": {{ $page.Summary | plainify | truncate 200 | jsonify }},
+  "content": {{ $page.Content | plainify | truncate 500 | jsonify }},
+  "tags": {{ $page.Params.tags | jsonify }},
+  "categories": {{ $page.Params.categories | jsonify }}
+}{{ if ne (add $index 1) $total }},{{ end }}
+{{- end }}
+]

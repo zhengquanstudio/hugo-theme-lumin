@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="{{ .Site.LanguageCode }}" data-theme="{{ .Site.Params.defaultTheme | default "light" }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  
+  {{ $title := .Title }}
+  {{ if .IsHome }}
+    {{ $title = .Site.Title }}
+  {{ else if ne .Title .Site.Title }}
+    {{ $title = printf "%s | %s" .Title .Site.Title }}
+  {{ end }}
+  <title>{{ $title }}</title>
+  
+  <meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Params.description }}{{ end }}">
+  <meta name="keywords" content="{{ if .Keywords }}{{ delimit .Keywords ", " }}{{ else }}{{ delimit .Site.Params.keywords ", " }}{{ end }}">
+  <meta name="author" content="{{ .Site.Params.author }}">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="{{ $title }}">
+  <meta property="og:description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Params.description }}{{ end }}">
+  <meta property="og:type" content="{{ if .IsPage }}article{{ else }}website{{ end }}">
+  <meta property="og:url" content="{{ .Permalink }}">
+  {{ with .Params.featured_image }}<meta property="og:image" content="{{ . | absURL }}">{{ end }}
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ $title }}">
+  <meta name="twitter:description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Params.description }}{{ end }}">
+  {{ with .Params.featured_image }}<meta name="twitter:image" content="{{ . | absURL }}">{{ end }}
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  
+  <!-- RSS -->
+  {{ with .OutputFormats.Get "rss" }}
+  <link rel="alternate" type="application/rss+xml" href="{{ .Permalink }}" title="{{ $.Site.Title }}">
+  {{ end }}
+  
+  <!-- CSS -->
+  {{ $mainCSS := resources.Get "css/main.css" | resources.Minify | resources.Fingerprint }}
+  <link rel="stylesheet" href="{{ $mainCSS.RelPermalink }}">
+  
+  <!-- Custom CSS -->
+  {{ if resources.Get "css/custom.css" }}
+    {{ $customCSS := resources.Get "css/custom.css" | resources.Minify | resources.Fingerprint }}
+    <link rel="stylesheet" href="{{ $customCSS.RelPermalink }}">
+  {{ end }}
+  
+  {{ block "head" . }}{{ end }}
+</head>
+<body class="lumin-body sidebar-{{ .Site.Params.sidebarPosition | default "left" }}">
+  <a href="#main-content" class="skip-link">跳转到主要内容</a>
+  
+  {{ partial "header.html" . }}
+  
+  {{ if .IsHome }}
+    {{ partial "banner.html" . }}
+  {{ end }}
+  
+  <div class="main-wrapper">
+    <div class="container">
+      <div class="layout-grid">
+        {{ if eq (.Site.Params.sidebarPosition | default "left") "left" }}
+          <aside class="sidebar">
+            {{ partial "sidebar.html" . }}
+          </aside>
+        {{ end }}
+        
+        <main id="main-content" class="main-content">
+          {{ block "main" . }}{{ end }}
+        </main>
+        
+        {{ if eq (.Site.Params.sidebarPosition | default "left") "right" }}
+          <aside class="sidebar">
+            {{ partial "sidebar.html" . }}
+          </aside>
+        {{ end }}
+      </div>
+    </div>
+  </div>
+  
+  {{ partial "footer.html" . }}
+  
+  <!-- Back to top -->
+  <button id="back-to-top" class="back-to-top" aria-label="返回顶部">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="18 15 12 9 6 15"></polyline>
+    </svg>
+  </button>
+  
+  <!-- JavaScript -->
+  {{ $mainJS := resources.Get "js/main.js" | resources.Minify | resources.Fingerprint }}
+  <script src="{{ $mainJS.RelPermalink }}" defer></script>
+  
+  <!-- Busuanzi -->
+  {{ if .Site.Params.statistics.busuanzi }}
+  <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  {{ end }}
+  
+  {{ block "scripts" . }}{{ end }}
+</body>
+</html>

@@ -1,0 +1,21 @@
+{{ if .Site.Params.banner.enable }}
+<section class="site-banner">
+  {{ $images := .Site.Params.banner.images }}
+  {{ if $images }}
+    {{ $randomIndex := mod now.Unix (len $images) }}
+    {{ $bannerImage := index $images $randomIndex }}
+    <div class="banner-background" style="background-image: url('/images/banners/{{ $bannerImage }}')"></div>
+  {{ else }}
+    <div class="banner-background banner-gradient"></div>
+  {{ end }}
+  
+  <div class="banner-overlay"></div>
+  
+  <div class="container">
+    <div class="banner-content">
+      <h1 class="banner-title">{{ .Site.Params.banner.title | default .Site.Title }}</h1>
+      <p class="banner-subtitle">{{ .Site.Params.banner.subtitle | default .Site.Params.description }}</p>
+    </div>
+  </div>
+</section>
+{{ end }}

@@ -1,0 +1,59 @@
+{{ if .Site.Params.comments.enable }}
+<div class="post-comments">
+  <h3 class="comments-title">评论</h3>
+  
+  {{ if eq .Site.Params.comments.type "disqus" }}
+    <div id="disqus_thread"></div>
+    <script>
+      var disqus_config = function () {
+        this.page.url = "{{ .Permalink }}";
+        this.page.identifier = "{{ .RelPermalink }}";
+      };
+      (function() {
+        var d = document, s = d.createElement('script');
+        s.src = 'https://{{ .Site.Params.comments.disqus.shortname }}.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+      })();
+    </script>
+  
+  {{ else if eq .Site.Params.comments.type "gitalk" }}
+    <div id="gitalk-container"></div>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+    <script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+    <script>
+      var gitalk = new Gitalk({
+        clientID: '{{ .Site.Params.comments.gitalk.clientID }}',
+        clientSecret: '{{ .Site.Params.comments.gitalk.clientSecret }}',
+        repo: '{{ .Site.Params.comments.gitalk.repo }}',
+        owner: '{{ .Site.Params.comments.gitalk.owner }}',
+        admin: {{ .Site.Params.comments.gitalk.admin | jsonify }},
+        id: location.pathname,
+        distractionFreeMode: false
+      });
+      gitalk.render('gitalk-container');
+    </script>
+  
+  {{ else if eq .Site.Params.comments.type "twikoo" }}
+    <div id="tcomment"></div>
+    <script src="https://cdn.jsdelivr.net/npm/twikoo@1.6.16/dist/twikoo.all.min.js"></script>
+    <script>
+      twikoo.init({
+        envId: '{{ .Site.Params.comments.twikoo.envId }}',
+        el: '#tcomment',
+      });
+    </script>
+  
+  {{ else if eq .Site.Params.comments.type "waline" }}
+    <div id="waline"></div>
+    <link rel="stylesheet" href="https://unpkg.com/@waline/client@v2/dist/waline.css" />
+    <script type="module">
+      import { init } from 'https://unpkg.com/@waline/client@v2/dist/waline.mjs';
+      init({
+        el: '#waline',
+        serverURL: '{{ .Site.Params.comments.waline.serverURL }}',
+      });
+    </script>
+  {{ end }}
+</div>
+{{ end }}

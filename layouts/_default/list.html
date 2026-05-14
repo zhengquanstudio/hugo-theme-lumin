@@ -1,0 +1,35 @@
+{{ define "main" }}
+<div class="list-page">
+  <header class="list-header">
+    <h1 class="list-title">{{ .Title }}</h1>
+    {{ with .Description }}
+    <p class="list-description">{{ . }}</p>
+    {{ end }}
+    <div class="list-count">共 {{ len .Data.Pages }} 篇文章</div>
+  </header>
+  
+  <div class="article-list">
+    {{ range .Data.Pages }}
+    <article class="list-item">
+      <a href="{{ .Permalink }}" class="list-item-link">
+        {{ with .Params.featured_image }}
+        <div class="list-item-image">
+          <img src="{{ . }}" alt="{{ $.Title }}" loading="lazy">
+        </div>
+        {{ end }}
+        <div class="list-item-content">
+          <h3 class="list-item-title">{{ .Title }}</h3>
+          <p class="list-item-excerpt">{{ .Description | default .Summary | truncate 150 }}</p>
+          <div class="list-item-meta">
+            <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006-01-02" }}</time>
+            {{ with .Params.categories }}
+            <span class="list-item-category">{{ index . 0 }}</span>
+            {{ end }}
+          </div>
+        </div>
+      </a>
+    </article>
+    {{ end }}
+  </div>
+</div>
+{{ end }}

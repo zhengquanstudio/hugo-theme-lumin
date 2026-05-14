@@ -1,0 +1,21 @@
+{{ if .Site.Params.reward.enable }}
+<div class="post-reward">
+  <p class="reward-text">{{ .Site.Params.reward.title | default "请作者喝杯咖啡" }}</p>
+  <div class="reward-tabs">
+    <button class="reward-tab active" data-tab="wechat">微信</button>
+    <button class="reward-tab" data-tab="alipay">支付宝</button>
+  </div>
+  <div class="reward-content">
+    {{ with .Site.Params.reward.wechat }}
+    <div class="reward-panel active" data-panel="wechat">
+      <img src="{{ . }}" alt="微信打赏">
+    </div>
+    {{ end }}
+    {{ with .Site.Params.reward.alipay }}
+    <div class="reward-panel" data-panel="alipay">
+      <img src="{{ . }}" alt="支付宝打赏">
+    </div>
+    {{ end }}
+  </div>
+</div>
+{{ end }}
