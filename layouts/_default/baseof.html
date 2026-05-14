@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ .Site.LanguageCode }}" data-theme="{{ .Site.Params.defaultTheme | default "light" }}">
+<html lang="{{ .Site.Language.Lang }}" data-theme="{{ .Site.Params.defaultTheme | default "light" }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -51,7 +51,7 @@
   
   {{ block "head" . }}{{ end }}
 </head>
-<body class="lumin-body sidebar-{{ .Site.Params.sidebarPosition | default "left" }}">
+<body class="lumin-body sidebar-{{ .Site.Params.sidebarPosition | default "left" }}{{ if .IsHome }} home-page{{ end }}">
   <a href="#main-content" class="skip-link">跳转到主要内容</a>
   
   {{ partial "header.html" . }}

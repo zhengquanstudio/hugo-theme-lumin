@@ -5,10 +5,20 @@
       <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
       <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
     </svg>
-    {{ .Site.Params.announcement.title | default "公告" }}
+    {{ .Site.Params.announcement.title | default "📢 公告" }}
   </h4>
   <div class="announcement-content">
-    {{ .Site.Params.announcement.content | markdownify }}
+    {{ with .Site.Params.announcement.subtitle }}
+    <h5 class="announcement-subtitle">{{ . }}</h5>
+    {{ end }}
+    <p class="announcement-text">{{ .Site.Params.announcement.content | default .Site.Params.announcement.text }}</p>
+    {{ if .Site.Params.announcement.link }}
+    <div class="announcement-footer">
+      <a href="{{ .Site.Params.announcement.link }}" class="announcement-link" {{ if .Site.Params.announcement.external }}target="_blank" rel="noopener"{{ end }}>
+        <span>{{ .Site.Params.announcement.linkText | default "查看详情 →" }}</span>
+      </a>
+    </div>
+    {{ end }}
   </div>
 </div>
 {{ end }}

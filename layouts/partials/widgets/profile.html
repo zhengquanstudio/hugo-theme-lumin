@@ -1,59 +1,64 @@
 {{ if .Site.Params.profile.enable }}
-<div class="widget widget-profile">
-  <div class="profile-avatar">
-    <img src="{{ .Site.Params.profile.avatar | default "/images/avatar/avatar.png" }}" alt="{{ .Site.Params.profile.author }}">
-  </div>
-  <h3 class="profile-name">{{ .Site.Params.profile.author }}</h3>
-  <p class="profile-bio">{{ .Site.Params.profile.bio }}</p>
-  {{ with .Site.Params.profile.location }}
-  <p class="profile-location">
-    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-      <circle cx="12" cy="10" r="3"></circle>
-    </svg>
-    {{ . }}
-  </p>
+<div class="profile-card">
+  {{ with .Site.Params.profile.backgroundImage }}
+  <div class="profile-card-bg" style="background-image: url('{{ . }}');"></div>
+  {{ else }}
+  <div class="profile-card-bg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
   {{ end }}
-  
-  <div class="profile-social">
-    {{ with .Site.Params.social.github }}
-    <a href="https://github.com/{{ . }}" target="_blank" rel="noopener" aria-label="GitHub">
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.726.083-.726 1.205.082 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.943 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22v3.293c0 .319.214.694.825.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-      </svg>
-    </a>
+  <div class="profile-card-body">
+    <div class="profile-card-avatar">
+      <img src="{{ .Site.Params.profile.avatar | default "/images/avatar/avatar.png" }}" alt="{{ .Site.Params.profile.author }}">
+    </div>
+    <h3 class="profile-card-name">{{ .Site.Params.profile.author }}</h3>
+    
+    {{ with .Site.Params.profile.slogan }}
+    <p class="profile-card-slogan">{{ . }}</p>
+    {{ else }}
+    <p class="profile-card-slogan">{{ .Site.Params.profile.bio }}</p>
     {{ end }}
-    {{ with .Site.Params.social.twitter }}
-    <a href="https://twitter.com/{{ . }}" target="_blank" rel="noopener" aria-label="Twitter">
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M18.244 2.25h3.308l-7.227 8.26 8.552 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-      </svg>
-    </a>
-    {{ end }}
-    {{ with .Site.Params.social.email }}
-    <a href="mailto:{{ . }}" aria-label="Email">
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-        <polyline points="22,6 12,13 2,6"></polyline>
-      </svg>
-    </a>
-    {{ end }}
-    {{ with .Site.Params.social.weibo }}
-    <a href="https://weibo.com/{{ . }}" target="_blank" rel="noopener" aria-label="Weibo">
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M10.098 20.323c-3.977.391-7.414-1.406-7.672-4.02-.259-2.609 2.759-5.047 6.74-5.441 3.979-.394 7.413 1.404 7.671 4.018.259 2.6-2.759 5.049-6.739 5.443zM9.05 17.219c-.384.616-1.208.884-1.829.602-.612-.279-.793-.991-.406-1.593.379-.595 1.176-.861 1.793-.601.622.263.82.972.442 1.592zm1.27-1.627c-.141.237-.449.353-.689.253-.236-.09-.313-.361-.177-.586.138-.227.436-.346.672-.24.239.09.315.36.194.573zm.176-2.719c-1.893-.493-4.033.45-4.857 2.118-.836 1.704-.026 3.591 1.886 4.21 1.983.64 4.318-.341 5.132-2.179.8-1.793-.201-3.642-2.161-4.149zm7.563-1.224c-.346-.105-.579-.18-.405-.649.386-1.031.425-1.922.003-2.555-.789-1.187-2.924-1.109-5.382-.031 0 0-.768.334-.571-.271.378-1.186.32-2.175-.267-2.748-1.333-1.3-4.878.047-7.915 3.008C1.134 10.611 0 12.775 0 14.658c0 3.604 4.635 5.8 9.168 5.8 5.937 0 9.892-3.448 9.892-6.185 0-1.655-1.397-2.592-2.001-2.624zm1.652-3.752c.808-.909.886-2.22.186-3.091-.7-.867-1.834-1.015-2.646-.206-.81.908-.888 2.219-.188 3.09.701.868 1.836 1.015 2.648.207zm2.175-2.385c-.529-.593-.58-1.454-.121-2.023.46-.567 1.201-.663 1.731-.07.529.592.58 1.453.12 2.021-.459.568-1.2.664-1.73.072z"/>
-      </svg>
-    </a>
-    {{ end }}
-    {{ if .Site.Params.social.rss }}
-    <a href="{{ "index.xml" | absURL }}" target="_blank" rel="noopener" aria-label="RSS">
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4 11a9 9 0 0 1 9 9"></path>
-        <path d="M4 4a16 16 0 0 1 16 16"></path>
-        <circle cx="5" cy="19" r="1"></circle>
-      </svg>
-    </a>
-    {{ end }}
+    
+    <div class="profile-card-social">
+      {{ with .Site.Params.social.github }}
+      <a href="https://github.com/{{ . }}" target="_blank" rel="noopener" title="GitHub">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.726.083-.726 1.205.082 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.943 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22v3.293c0 .319.214.694.825.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+      </a>
+      {{ end }}
+      {{ with .Site.Params.social.twitter }}
+      <a href="https://twitter.com/{{ . }}" target="_blank" rel="noopener" title="Twitter">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.552 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      </a>
+      {{ end }}
+      {{ with .Site.Params.social.youtube }}
+      <a href="https://youtube.com/{{ . }}" target="_blank" rel="noopener" title="YouTube">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+      </a>
+      {{ end }}
+      {{ with .Site.Params.social.weibo }}
+      <a href="https://weibo.com/{{ . }}" target="_blank" rel="noopener" title="微博">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M10.098 20.323c-3.977.391-7.414-1.406-7.672-4.02-.259-2.609 2.759-5.047 6.74-5.441 3.979-.394 7.413 1.404 7.671 4.018.259 2.6-2.759 5.049-6.739 5.443z"/></svg>
+      </a>
+      {{ end }}
+      {{ with .Site.Params.social.zhihu }}
+      <a href="https://zhihu.com/people/{{ . }}" target="_blank" rel="noopener" title="知乎">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M5.721 0C2.251 0 0 2.25 0 5.719V18.28C0 21.751 2.252 24 5.721 24h12.56C21.751 24 24 21.75 24 18.281V5.72C24 2.249 21.75 0 18.281 0zm1.964 4.078h6.191c.14-.008.274.014.396.066.122.05.228.13.31.232.08.1.136.22.164.35.03.13.03.266.004.396a.924.924 0 0 1-.168.394.882.882 0 0 1-.31.232.856.856 0 0 1-.396.066H7.685a.856.856 0 0 1-.396-.066.882.882 0 0 1-.31-.232.924.924 0 0 1-.168-.394.856.856 0 0 1 .004-.396.882.882 0 0 1 .164-.35.882.882 0 0 1 .31-.232.856.856 0 0 1 .396-.066zm-2.014 8.078h2.578l1.51 3.672 1.504-3.672h2.578l-2.766 6.078 2.906 6.422h-2.672l-1.617-3.938-1.617 3.938H5.281l2.906-6.422z"/></svg>
+      </a>
+      {{ end }}
+      {{ with .Site.Params.social.bilibili }}
+      <a href="https://bilibili.com/{{ . }}" target="_blank" rel="noopener" title="Bilibili">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.813 4.653h.854c1.51.054 2.769.578 3.773 1.574 1.004.995 1.524 2.249 1.56 3.76v7.36c-.036 1.51-.556 2.769-1.56 3.773s-2.262 1.524-3.773 1.56H5.333c-1.51-.036-2.769-.556-3.773-1.56S.036 18.858 0 17.347v-7.36c.036-1.511.556-2.765 1.56-3.76 1.004-.996 2.262-1.52 3.773-1.574h.774l-1.174-1.12a1.234 1.234 0 0 1-.373-.906c0-.356.124-.658.373-.907l.027-.027c.267-.249.573-.373.92-.373.347 0 .653.124.92.373L9.653 4.44c.071.071.134.142.187.213h4.267a.836.836 0 0 1 .16-.213l2.853-2.747c.267-.249.573-.373.92-.373.347 0 .662.151.929.4.267.249.391.551.391.907 0 .355-.124.657-.373.906zM5.333 7.24c-.746.018-1.373.276-1.88.773-.506.498-.769 1.13-.786 1.894v7.52c.017.764.28 1.395.786 1.893.507.498 1.134.756 1.88.773h13.334c.746-.017 1.373-.275 1.88-.773.506-.498.769-1.129.786-1.893v-7.52c-.017-.765-.28-1.396-.786-1.894-.507-.497-1.134-.755-1.88-.773zM8 11.107c.373 0 .684.124.933.373.25.249.383.569.4.96v1.173c-.017.391-.15.711-.4.96-.249.25-.56.374-.933.374s-.684-.125-.933-.374c-.25-.249-.383-.569-.4-.96V12.44c.017-.391.15-.711.4-.96.249-.249.56-.373.933-.373zm8 0c.373 0 .684.124.933.373.25.249.383.569.4.96v1.173c-.017.391-.15.711-.4.96-.249.25-.56.374-.933.374s-.684-.125-.933-.374c-.25-.249-.383-.569-.4-.96V12.44c.017-.391.15-.711.4-.96.249-.249.56-.373.933-.373z"/></svg>
+      </a>
+      {{ end }}
+      {{ with .Site.Params.social.email }}
+      <a href="mailto:{{ . }}" title="Email">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      </a>
+      {{ end }}
+      {{ if .Site.Params.social.rss }}
+      <a href="{{ "index.xml" | absURL }}" target="_blank" rel="noopener" title="RSS">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
+      </a>
+      {{ end }}
+    </div>
   </div>
 </div>
 {{ end }}

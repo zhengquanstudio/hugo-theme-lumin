@@ -1,14 +1,14 @@
 {{ define "main" }}
 <div class="home-page">
-  {{ $paginator := .Paginate (where .Site.RegularPages "Type" "in" (slice "post" "posts" "")) }}
-  
+  {{ $paginator := .Paginate .Site.RegularPages }}
+
   <div class="article-grid">
     {{ range $paginator.Pages }}
-    <article class="article-card">
+    <article class="article-card{{ if .Params.sticky }} is-sticky{{ end }}{{ if .Params.recommend }} is-recommend{{ end }}">
       <a href="{{ .Permalink }}" class="article-link">
         <div class="article-image">
-          {{ if .Params.featured_image }}
-            <img src="{{ .Params.featured_image }}" alt="{{ .Title }}" loading="lazy">
+          {{ if or .Params.featured_image .Params.image }}
+            <img src="{{ .Params.featured_image | default .Params.image }}" alt="{{ .Title }}" loading="lazy">
           {{ else }}
             <div class="article-image-placeholder">
               <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
@@ -18,11 +18,15 @@
               </svg>
             </div>
           {{ end }}
-          {{ if .Params.featured }}
-          <span class="featured-badge">推荐</span>
+          {{ if .Params.sticky }}
+          <span class="sticky-badge">置顶</span>
+          {{ else if .Params.recommend }}
+          <span class="recommend-badge">推荐</span>
+          {{ else if .Params.featured }}
+          <span class="featured-badge">精选</span>
           {{ end }}
         </div>
-        
+
         <div class="article-content">
           {{ with .Params.categories }}
           <div class="article-categories">
@@ -31,16 +35,17 @@
             {{ end }}
           </div>
           {{ end }}
-          
+
           <h2 class="article-title">{{ .Title }}</h2>
-          
-          <p class="article-excerpt">{{ .Description | default .Summary | truncate 120 }}</p>
-          
+
           <div class="article-meta">
             <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006-01-02" }}</time>
+            {{ with .Params.categories }}
+            <span class="meta-category">{{ index . 0 }}</span>
+            {{ end }}
             {{ if .Params.tags }}
             <div class="article-tags">
-              {{ range first 2 .Params.tags }}
+              {{ range first 3 .Params.tags }}
               <span class="tag">#{{ . }}</span>
               {{ end }}
             </div>
@@ -51,7 +56,7 @@
     </article>
     {{ end }}
   </div>
-  
+
   {{ if gt $paginator.TotalPages 1 }}
   <nav class="pagination" aria-label="分页导航">
     <div class="pagination-wrapper">
@@ -63,7 +68,7 @@
         上一页
       </a>
       {{ end }}
-      
+
       <div class="pagination-numbers">
         {{ range $paginator.Pagers }}
           {{ if eq . $paginator }}
@@ -73,7 +78,7 @@
           {{ end }}
         {{ end }}
       </div>
-      
+
       {{ if $paginator.HasNext }}
       <a href="{{ $paginator.Next.URL }}" class="pagination-btn next">
         下一页
@@ -84,7 +89,7 @@
       {{ end }}
     </div>
     <div class="pagination-info">
-      共 {{ $paginator.TotalPages }} 页，{{ $paginator.Total }} 篇文章
+      共 {{ $paginator.TotalPages }} 页，{{ $paginator.TotalNumberOfElements }} 篇文章
     </div>
   </nav>
   {{ end }}

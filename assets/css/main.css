@@ -31,8 +31,8 @@
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   
   --header-height: 64px;
-  --sidebar-width: 300px;
-  --max-width: 1400px;
+  --sidebar-width: 320px;
+  --max-width: 100%;
   
   --transition-fast: 0.15s ease;
   --transition-normal: 0.3s ease;
@@ -159,9 +159,9 @@ ul, ol {
 /* Container */
 .container {
   width: 100%;
-  max-width: var(--max-width);
+  max-width: 100%;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 40px;
 }
 
 /* Header */
@@ -171,9 +171,49 @@ ul, ol {
   left: 0;
   right: 0;
   z-index: 100;
-  background: var(--bg-primary);
-  border-bottom: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+/* 首页导航栏透明 */
+.home-page .site-header {
+  background: transparent;
+  border-bottom: none;
+}
+
+.home-page .site-header .header-title,
+.home-page .site-header .nav-link {
+  color: white;
+}
+
+.home-page .site-header .action-btn {
+  color: white;
+}
+
+.home-page .site-header .nav-link:hover,
+.home-page .site-header .nav-link.active {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+/* 滚动后导航栏变白 */
+.site-header.scrolled {
+  background: rgba(255, 255, 255, 0.98);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.site-header.scrolled .header-title {
+  color: var(--text-primary);
+}
+
+.site-header.scrolled .nav-link {
+  color: var(--text-secondary);
+}
+
+.site-header.scrolled .action-btn {
+  color: var(--text-secondary);
 }
 
 .header-wrapper {
@@ -356,9 +396,49 @@ ul, ol {
 /* Banner */
 .site-banner {
   position: relative;
-  height: 360px;
-  margin-top: var(--header-height);
+  height: 100vh;
+  min-height: 600px;
+  margin-top: 0;
   overflow: hidden;
+  background: #0a0e1a;
+}
+
+/* 背景图轮播 - 交叉淡入淡出 */
+.banner-slideshow {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.banner-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.5s ease-in-out;
+  /* 始终可见（不使用visibility），避免切换间隙 */
+}
+
+.banner-slide.active {
+  opacity: 1;
+  z-index: 1;
+}
+
+/* 呼吸效果 - 当前活跃图片缓慢缩放 */
+.banner-slide.active .banner-slide-image {
+  animation: breathe 10s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+.banner-slide-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
 }
 
 .banner-background {
@@ -375,26 +455,64 @@ ul, ol {
 .banner-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 100%);
+  background: linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0.5) 100%);
+  z-index: 1;
 }
 
 .banner-content {
-  position: relative;
-  z-index: 1;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100%;
   text-align: center;
   color: white;
+  width: 100%;
+  padding: 0 24px;
 }
 
 .banner-title {
-  font-size: 2.5rem;
+  font-size: 4rem;
   font-weight: 800;
-  margin-bottom: 12px;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  margin-bottom: 24px;
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.6);
+  letter-spacing: 4px;
+}
+
+/* 打字机效果 */
+.banner-typewriter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  margin-bottom: 40px;
+}
+
+.typewriter-text {
+  font-size: 1.5rem;
+  opacity: 0.95;
+  text-shadow: 0 2px 15px rgba(0, 0, 0, 0.5);
+  letter-spacing: 2px;
+  display: inline-block;
+  min-width: 10px;
+}
+
+.typewriter-cursor {
+  font-size: 1.5rem;
+  opacity: 0.95;
+  animation: blink 0.8s step-end infinite;
+  margin-left: 4px;
+  color: #fff;
+  font-weight: 300;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
 }
 
 .banner-subtitle {
@@ -403,9 +521,87 @@ ul, ol {
   max-width: 500px;
 }
 
+/* 向下滚动提示 */
+.scroll-down-hint {
+  position: absolute;
+  bottom: 180px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: white;
+  font-size: 0.9rem;
+  opacity: 0.85;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+  animation: float 3s ease-in-out infinite;
+}
+
+.scroll-down-hint:hover {
+  opacity: 1;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-15px); }
+}
+
+/* 波浪效果 - 参考 teeker 主题，纯 CSS 无缝来回移动 */
+.banner-waves {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 12vh;
+  max-height: 150px;
+  min-height: 80px;
+  margin-bottom: -1px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.hero-waves {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-waves .parallax > .wave-layer {
+  animation: wave-move 25s cubic-bezier(0.55, 0.5, 0.45, 0.5) infinite;
+}
+
+.hero-waves .parallax > .wave-layer:nth-child(1) {
+  animation-delay: -2s;
+  animation-duration: 7s;
+}
+
+.hero-waves .parallax > .wave-layer:nth-child(2) {
+  animation-delay: -3s;
+  animation-duration: 10s;
+}
+
+.hero-waves .parallax > .wave-layer:nth-child(3) {
+  animation-delay: -4s;
+  animation-duration: 13s;
+}
+
+.hero-waves .parallax > .wave-layer:nth-child(4) {
+  animation-delay: -5s;
+  animation-duration: 16s;
+}
+
+@keyframes wave-move {
+  0%   { transform: translate3d(-90px, 0, 0); }
+  100% { transform: translate3d(85px, 0, 0); }
+}
+
 /* Main Layout */
 .main-wrapper {
   padding: 32px 0;
+  background: var(--bg-primary);
 }
 
 .layout-grid {
@@ -443,6 +639,14 @@ ul, ol {
   padding: 20px;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-light);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.widget:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px 2px rgba(59, 130, 246, 0.1),
+              0 0 12px 1px rgba(59, 130, 246, 0.15),
+              0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .widget-title {
@@ -525,6 +729,100 @@ ul, ol {
 .profile-social a:hover {
   background: var(--accent-color);
   color: white;
+}
+
+/* Profile Card with Background */
+.profile-card {
+  background: var(--bg-card);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: center;
+}
+
+.profile-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px 2px rgba(59, 130, 246, 0.1),
+              0 0 12px 1px rgba(59, 130, 246, 0.15),
+              0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.profile-card-bg {
+  height: 120px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.profile-card-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 100%);
+}
+
+.profile-card-body {
+  padding: 0 20px 20px;
+  margin-top: -40px;
+  position: relative;
+}
+
+.profile-card-avatar {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid var(--bg-card);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.profile-card-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-card-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.profile-card-social {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.profile-card-social a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  transition: all 0.3s ease;
+  font-size: 0.875rem;
+}
+
+.profile-card-social a:hover {
+  background: var(--accent-color);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.profile-card-slogan {
+  font-size: 0.875rem;
+  color: var(--text-tertiary);
+  line-height: 1.5;
 }
 
 /* Recent Posts Widget */
@@ -693,11 +991,15 @@ ul, ol {
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-light);
   transition: all var(--transition-normal);
+  display: flex;
+  flex-direction: column;
 }
 
 .article-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 0 24px 2px rgba(59, 130, 246, 0.1),
+              0 0 16px 1px rgba(59, 130, 246, 0.15),
+              0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
 .article-link {
@@ -744,8 +1046,35 @@ ul, ol {
   border-radius: 16px;
 }
 
+.sticky-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 4px 12px;
+  background: #ef4444;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 16px;
+}
+
+.recommend-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 4px 12px;
+  background: #f59e0b;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 16px;
+}
+
 .article-content {
   padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .article-categories {
@@ -787,9 +1116,13 @@ ul, ol {
 .article-meta {
   display: flex;
   align-items: center;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
   font-size: 0.8rem;
   color: var(--text-muted);
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-light);
 }
 
 .article-tags {
@@ -1544,11 +1877,11 @@ ul, ol {
   }
   
   .site-banner {
-    height: 280px;
+    min-height: 500px;
   }
   
   .banner-title {
-    font-size: 2rem;
+    font-size: 3rem;
   }
 }
 
@@ -1574,16 +1907,24 @@ ul, ol {
   }
   
   .site-banner {
-    height: 240px;
-    margin-top: var(--header-height);
+    min-height: 450px;
   }
   
   .banner-title {
-    font-size: 1.5rem;
+    font-size: 2.5rem;
+    letter-spacing: 2px;
   }
   
-  .banner-subtitle {
-    font-size: 1rem;
+  .banner-typewriter {
+    min-height: 32px;
+  }
+  
+  .typewriter-text {
+    font-size: 1.1rem;
+  }
+  
+  .scroll-down-hint {
+    bottom: 100px;
   }
   
   .post-title {
@@ -1625,6 +1966,10 @@ ul, ol {
   .list-item-image {
     width: 100%;
     height: 160px;
+  }
+  
+  .banner-title {
+    font-size: 2rem;
   }
 }
 
