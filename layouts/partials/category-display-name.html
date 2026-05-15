@@ -1,0 +1,16 @@
+{{- /* 用法: partial "category-display-name.html" (dict "Site" .Site "Slug" "life") */ -}}
+{{- $site := .Site -}}
+{{- $slug := strings.TrimSpace (printf "%s" .Slug) -}}
+{{- $key := $slug | urlize -}}
+{{- if and $site.Params.categoryLabels (index $site.Params.categoryLabels $slug) -}}
+{{- index $site.Params.categoryLabels $slug -}}
+{{- else if and $site.Params.categoryLabels (index $site.Params.categoryLabels $key) -}}
+{{- index $site.Params.categoryLabels $key -}}
+{{- else -}}
+  {{- $p := $site.GetPage (printf "/categories/%s" $key) -}}
+  {{- if $p -}}
+    {{- $p.Title -}}
+  {{- else -}}
+    {{- $slug -}}
+  {{- end -}}
+{{- end -}}

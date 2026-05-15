@@ -1,19 +1,51 @@
 {{ define "main" }}
-<div class="list-page">
-  <header class="list-header">
-    <h1 class="list-title">{{ .Title }}</h1>
-    <div class="list-count">
-      共 {{ len .Data.Pages }} 个{{ if eq .Data.Plural "categories" }}分类{{ else }}标签{{ end }}
+{{ if eq .Kind "term" }}
+  {{/* 单分类 / 单标签下列文章（部分 Hugo 版本会走 taxonomy 模板） */}}
+  {{ $isCat := eq .Data.Plural "categories" }}
+  {{ $extra := cond $isCat "tags" "categories" }}
+  <div class="list-page archives-page taxonomy-term-page">
+    <header class="list-header">
+      <h1 class="list-title">
+        {{- if $isCat -}}
+          {{- partial "category-display-name.html" (dict "Site" .Site "Slug" .Data.Term) -}}
+        {{- else -}}
+          {{- .Title -}}
+        {{- end -}}
+      </h1>
+      {{ with .Description }}<p class="list-description">{{ . }}</p>{{ end }}
+      <div class="list-count">共 {{ len .Pages }} 篇文章</div>
+    </header>
+    <div class="taxonomy-term-body">
+      {{ partial "archive-post-list.html" (dict "Pages" .Pages "extraMeta" $extra) }}
     </div>
-  </header>
-  
-  <div class="taxonomy-cloud">
-    {{ range .Data.Pages }}
-    <a href="{{ .Permalink }}" class="taxonomy-item">
-      <span class="taxonomy-name">{{ .Title }}</span>
-      <span class="taxonomy-count">{{ len .Data.Pages }}</span>
-    </a>
-    {{ end }}
   </div>
-</div>
+{{ else }}
+  {{/* 分类目录 / 标签目录（全部 term 列表） */}}
+  {{ $isCat := eq .Data.Plural "categories" }}
+  <div class="list-page archives-page archive-hub-page taxonomy-hub-page">
+    <header class="list-header">
+      <h1 class="list-title">{{ .Title }}</h1>
+      {{ with .Description }}<p class="list-description">{{ . }}</p>{{ end }}
+      <div class="list-count">
+        {{- if $isCat -}}共 {{ len .Pages }} 个分类{{- else -}}共 {{ len .Pages }} 个标签{{- end -}}
+      </div>
+    </header>
+    <div class="taxonomy-hub-body">
+      <div class="taxonomy-cloud">
+        {{ range .Pages }}
+        <a href="{{ .Permalink }}" class="taxonomy-item">
+          <span class="taxonomy-name">
+            {{- if $isCat -}}
+              {{- partial "category-display-name.html" (dict "Site" $.Site "Slug" .Data.Term) -}}
+            {{- else -}}
+              {{- .Title -}}
+            {{- end -}}
+          </span>
+          <span class="taxonomy-count">{{ len .Pages }}</span>
+        </a>
+        {{ end }}
+      </div>
+    </div>
+  </div>
+{{ end }}
 {{ end }}

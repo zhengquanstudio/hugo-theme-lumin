@@ -5,8 +5,8 @@
 /* CSS Variables */
 :root {
   /* Light Theme Colors */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8f9fa;
+  --bg-primary: #F9FAFB;
+  --bg-secondary: #f1f3f5;
   --bg-tertiary: #e9ecef;
   --bg-card: #ffffff;
   --bg-code: #f6f8fa;
@@ -31,6 +31,7 @@
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   
   --header-height: 64px;
+  --header-offset: 80px;
   --sidebar-width: 320px;
   --max-width: 100%;
   
@@ -101,6 +102,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: var(--header-offset);
   -webkit-text-size-adjust: 100%;
 }
 
@@ -114,13 +116,13 @@ body {
 }
 
 a {
-  color: var(--accent-color);
+  color: inherit;
   text-decoration: none;
   transition: color var(--transition-fast);
 }
 
 a:hover {
-  color: var(--accent-hover);
+  color: var(--accent-color);
 }
 
 img {
@@ -161,7 +163,7 @@ ul, ol {
   width: 100%;
   max-width: 100%;
   margin: 0 auto;
-  padding: 0 40px;
+  padding: 0 85px;
 }
 
 /* Header */
@@ -171,37 +173,42 @@ ul, ol {
   left: 0;
   right: 0;
   z-index: 100;
-  background: rgba(255, 255, 255, 0.95);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: background 0.3s ease;
 }
 
-/* 首页导航栏透明 */
+/* 首页导航栏 */
 .home-page .site-header {
-  background: transparent;
-  border-bottom: none;
+  background: rgba(255, 255, 255, 0.65);
 }
 
-.home-page .site-header .header-title,
+.home-page .site-header .header-title {
+  color: #1a1a2e;
+}
+
 .home-page .site-header .nav-link {
-  color: white;
+  color: #333;
 }
 
 .home-page .site-header .action-btn {
-  color: white;
+  color: #555;
 }
 
 .home-page .site-header .nav-link:hover,
 .home-page .site-header .nav-link.active {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
+  color: #3b82f6;
+  background: transparent;
 }
 
-/* 滚动后导航栏变白 */
+.home-page .site-header .header-clock {
+  color: #555;
+}
+
+/* 滚动后导航栏 */
 .site-header.scrolled {
-  background: rgba(255, 255, 255, 0.98);
-  border-bottom: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.75);
 }
 
 .site-header.scrolled .header-title {
@@ -261,14 +268,23 @@ ul, ol {
 
 .nav-link:hover,
 .nav-link.active {
-  color: var(--accent-color);
-  background: var(--accent-light);
+  color: #3b82f6;
+  background: transparent;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+.header-clock {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  letter-spacing: 0.5px;
+  margin-right: 8px;
 }
 
 .action-btn {
@@ -348,7 +364,7 @@ ul, ol {
   z-index: 200;
   align-items: flex-start;
   justify-content: center;
-  padding-top: 100px;
+  padding-top: calc(var(--header-offset) + 20px);
 }
 
 .search-modal.active {
@@ -593,6 +609,18 @@ ul, ol {
   animation-duration: 16s;
 }
 
+/* Wave Layer Colors - Light Theme (渐变过渡) */
+.wave-layer-1 { fill: rgba(200, 205, 210, 0.35); }
+.wave-layer-2 { fill: rgba(220, 225, 230, 0.55); }
+.wave-layer-3 { fill: rgba(240, 243, 246, 0.75); }
+.wave-layer-4 { fill: #F9FAFB; }
+
+/* Wave Layer Colors - Dark Theme (渐变过渡) */
+[data-theme="dark"] .wave-layer-1 { fill: rgba(30, 35, 50, 0.4); }
+[data-theme="dark"] .wave-layer-2 { fill: rgba(20, 25, 38, 0.55); }
+[data-theme="dark"] .wave-layer-3 { fill: rgba(15, 18, 28, 0.7); }
+[data-theme="dark"] .wave-layer-4 { fill: #0f0f1a; }
+
 @keyframes wave-move {
   0%   { transform: translate3d(-90px, 0, 0); }
   100% { transform: translate3d(85px, 0, 0); }
@@ -607,7 +635,9 @@ ul, ol {
 .layout-grid {
   display: grid;
   grid-template-columns: var(--sidebar-width) 1fr;
-  gap: 32px;
+  gap: 60px;
+  /* 侧边栏与主内容整体下移，统一避开固定导航栏 */
+  padding-top: var(--header-offset);
 }
 
 .sidebar-right .layout-grid {
@@ -615,15 +645,15 @@ ul, ol {
 }
 
 .sidebar {
-  position: sticky;
-  top: calc(var(--header-height) + 32px);
   height: fit-content;
-  max-height: calc(100vh - var(--header-height) - 64px);
-  overflow-y: auto;
 }
 
 .main-content {
   min-width: 0;
+}
+
+#main-content {
+  scroll-margin-top: var(--header-offset);
 }
 
 /* Widgets */
@@ -981,7 +1011,7 @@ ul, ol {
 .article-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  gap: 35px;
 }
 
 .article-card {
@@ -993,24 +1023,29 @@ ul, ol {
   transition: all var(--transition-normal);
   display: flex;
   flex-direction: column;
+  height: 360px;
 }
 
 .article-card:hover {
-  transform: translateY(-4px) scale(1.01);
-  box-shadow: 0 0 24px 2px rgba(59, 130, 246, 0.1),
-              0 0 16px 1px rgba(59, 130, 246, 0.15),
-              0 8px 24px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(59, 130, 246, 0.25), 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
 }
 
 .article-link {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
 }
 
 .article-image {
   position: relative;
   width: 100%;
-  height: 180px;
+  height: 200px;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .article-image img {
@@ -1071,42 +1106,53 @@ ul, ol {
 }
 
 .article-content {
-  padding: 20px;
+  padding: 14px 16px 16px;
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-.article-categories {
-  margin-bottom: 8px;
-}
-
-.category-tag {
-  display: inline-block;
-  padding: 2px 8px;
-  background: var(--tag-bg);
-  color: var(--tag-text);
-  font-size: 0.75rem;
-  border-radius: 4px;
+/* 固定标题位置 - 不管有没有description都固定高度 */
+.title-box {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
 }
 
 .article-title {
-  font-size: 1rem;
+  font-size: 1.2rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 8px;
+  margin: 0;
   line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: color 0.2s ease;
+}
+
+.article-card:hover .article-title {
+  color: var(--accent-color);
+}
+
+.article-excerpt {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0 0 10px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.article-excerpt {
-  font-size: 0.875rem;
-  color: var(--text-tertiary);
+.article-desc {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
   line-height: 1.5;
-  margin-bottom: 12px;
+  margin: 0 0 10px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -1116,25 +1162,83 @@ ul, ol {
 .article-meta {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  font-size: 0.8rem;
-  color: var(--text-muted);
+  flex-wrap: nowrap;
+  gap: 14px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
   margin-top: auto;
-  padding-top: 12px;
+  padding-top: 10px;
   border-top: 1px solid var(--border-light);
+  white-space: nowrap;
+  overflow: hidden;
 }
 
-.article-tags {
-  display: flex;
-  gap: 6px;
+.meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
 }
 
-.article-tags .tag {
-  padding: 2px 6px;
-  background: var(--bg-secondary);
-  border-radius: 4px;
-  font-size: 0.75rem;
+/* 日期样式 - 无交互 */
+.meta-date {
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.meta-date svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+/* 分类样式 - 文件夹图标 + 文字颜色 */
+.meta-category {
+  color: var(--text-secondary);
+}
+
+.meta-category .folder-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.meta-category a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.meta-category a:hover {
+  color: var(--accent-color);
+}
+
+/* 标签样式 */
+.meta-tags {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+}
+
+.meta-tags .tag-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.meta-tag {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.meta-tag:hover {
+  color: var(--accent-color);
 }
 
 /* Pagination */
@@ -1315,6 +1419,7 @@ ul, ol {
   margin-top: 1.5em;
   margin-bottom: 0.5em;
   font-weight: 600;
+  scroll-margin-top: var(--header-offset);
 }
 
 .post-content h2 { font-size: 1.5rem; }
@@ -1707,6 +1812,45 @@ ul, ol {
   border-radius: 4px;
 }
 
+.archive-tag {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  background: var(--accent-light);
+  color: var(--accent-color);
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+/* 分类/标签下列表与归档时间线同一行样式（无月份分组） */
+.archive-list.archive-list--flat {
+  padding-left: 0;
+  margin-top: 0;
+}
+
+/* 分类目录、标签目录页：与归档页同一卡片与头部节奏 */
+.taxonomy-hub-page .taxonomy-hub-body {
+  margin-top: 8px;
+}
+
+.taxonomy-hub-page .taxonomy-cloud {
+  gap: 14px;
+}
+
+.taxonomy-hub-page .taxonomy-item {
+  border: 1px solid var(--border-light);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+}
+
+.taxonomy-hub-page .taxonomy-item:hover {
+  border-color: var(--accent-color);
+}
+
+/* 单个分类/标签下的文章列表 */
+.taxonomy-term-page .taxonomy-term-body {
+  margin-top: 8px;
+}
+
 /* Error Page */
 .error-page {
   display: flex;
@@ -1847,22 +1991,27 @@ ul, ol {
   
   .layout-grid {
     grid-template-columns: 260px 1fr;
+    gap: 60px;
+  }
+  
+  .container {
+    padding: 0 85px;
   }
 }
 
 @media (max-width: 992px) {
   .layout-grid {
     grid-template-columns: 1fr;
+    gap: 60px;
   }
   
   .sidebar-right .layout-grid {
     grid-template-columns: 1fr;
+    gap: 60px;
   }
   
   .sidebar {
-    position: static;
     width: 100%;
-    max-height: none;
     order: 2;
   }
   
@@ -1876,6 +2025,10 @@ ul, ol {
     gap: 16px;
   }
   
+  .container {
+    padding: 0 40px;
+  }
+  
   .site-banner {
     min-height: 500px;
   }
@@ -1887,7 +2040,7 @@ ul, ol {
 
 @media (max-width: 768px) {
   .container {
-    padding: 0 16px;
+    padding: 0 20px;
   }
   
   .header-nav {
@@ -1900,6 +2053,7 @@ ul, ol {
   
   .article-grid {
     grid-template-columns: 1fr;
+    gap: 20px;
   }
   
   .sidebar-widgets {
@@ -1994,5 +2148,85 @@ ul, ol {
     box-shadow: none;
     border: none;
     padding: 0;
+  }
+}
+
+/* Dark Theme Header Overrides */
+[data-theme="dark"] .site-header {
+  background: rgba(15, 15, 26, 0.6);
+}
+
+[data-theme="dark"] .home-page .site-header {
+  background: rgba(15, 15, 26, 0.6);
+}
+
+[data-theme="dark"] .home-page .site-header .header-title {
+  color: #e8e8f0;
+}
+
+[data-theme="dark"] .home-page .site-header .nav-link {
+  color: #ccc;
+}
+
+[data-theme="dark"] .home-page .site-header .action-btn {
+  color: #aaa;
+}
+
+[data-theme="dark"] .home-page .site-header .nav-link:hover,
+[data-theme="dark"] .home-page .site-header .nav-link.active {
+  color: #60a5fa;
+}
+
+[data-theme="dark"] .home-page .site-header .header-clock {
+  color: #aaa;
+}
+
+[data-theme="dark"] .site-header.scrolled {
+  background: rgba(15, 15, 26, 0.7);
+}
+
+[data-theme="dark"] .nav-link:hover,
+[data-theme="dark"] .nav-link.active {
+  color: #60a5fa;
+}
+
+/* Auto Theme Dark Header */
+@media (prefers-color-scheme: dark) {
+  [data-theme="auto"] .site-header {
+    background: rgba(15, 15, 26, 0.6);
+  }
+  
+  [data-theme="auto"] .home-page .site-header {
+    background: rgba(15, 15, 26, 0.6);
+  }
+  
+  [data-theme="auto"] .home-page .site-header .header-title {
+    color: #e8e8f0;
+  }
+  
+  [data-theme="auto"] .home-page .site-header .nav-link {
+    color: #ccc;
+  }
+  
+  [data-theme="auto"] .home-page .site-header .action-btn {
+    color: #aaa;
+  }
+  
+  [data-theme="auto"] .home-page .site-header .nav-link:hover,
+  [data-theme="auto"] .home-page .site-header .nav-link.active {
+    color: #60a5fa;
+  }
+  
+  [data-theme="auto"] .home-page .site-header .header-clock {
+    color: #aaa;
+  }
+  
+  [data-theme="auto"] .site-header.scrolled {
+    background: rgba(15, 15, 26, 0.7);
+  }
+  
+  [data-theme="auto"] .nav-link:hover,
+  [data-theme="auto"] .nav-link.active {
+    color: #60a5fa;
   }
 }

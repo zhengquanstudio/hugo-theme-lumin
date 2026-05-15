@@ -338,10 +338,30 @@
   };
 
   // ==========================================
+  // Header Clock
+  // ==========================================
+  var HeaderClock = {
+    init: function() {
+      this.clock = document.getElementById('header-clock');
+      if (!this.clock) return;
+      this.update();
+      setInterval(function() { HeaderClock.update(); }, 1000);
+    },
+    update: function() {
+      var now = new Date();
+      var h = String(now.getHours()).padStart(2, '0');
+      var m = String(now.getMinutes()).padStart(2, '0');
+      var s = String(now.getSeconds()).padStart(2, '0');
+      if (this.clock) this.clock.textContent = h + ':' + m + ':' + s;
+    }
+  };
+
+  // ==========================================
   // Initialize all modules
   // ==========================================
   document.addEventListener('DOMContentLoaded', function() {
     HeaderScroll.init();
+    HeaderClock.init();
     BannerSlideshow.init();
     Typewriter.init();
     ThemeToggle.init();

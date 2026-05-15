@@ -23,7 +23,8 @@
           <div class="list-item-meta">
             <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006-01-02" }}</time>
             {{ with .Params.categories }}
-            <span class="list-item-category">{{ index . 0 }}</span>
+            {{ $c0 := index . 0 }}
+            <span class="list-item-category">{{ partial "category-display-name.html" (dict "Site" $.Site "Slug" $c0) }}</span>
             {{ end }}
           </div>
         </div>

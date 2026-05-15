@@ -1,12 +1,14 @@
 {{ define "main" }}
+{{ $sections := .Site.Params.mainSections | default (slice "life" "tech" "smart") }}
+{{ $pages := where .Site.RegularPages "Section" "in" $sections }}
+{{ $pages = $pages.ByDate.Reverse }}
 <div class="list-page archives-page">
   <header class="list-header">
-    <h1 class="list-title">文章归档</h1>
-    <div class="list-count">共 {{ len (where .Site.RegularPages "Type" "in" (slice "post" "posts" "")) }} 篇文章</div>
+    <h1 class="list-title">{{ .Title }}</h1>
+    <div class="list-count">共 {{ len $pages }} 篇文章</div>
   </header>
-  
+
   <div class="archives-timeline">
-    {{ $pages := where .Site.RegularPages "Type" "in" (slice "post" "posts" "") }}
     {{ range $pages.GroupByDate "2006" }}
     <div class="archive-year">
       <h2 class="archive-year-title">{{ .Key }}</h2>
@@ -15,11 +17,12 @@
         <h3 class="archive-month-title">{{ .Key }}月</h3>
         <ul class="archive-list">
           {{ range .Pages }}
+          {{ $pg := . }}
           <li class="archive-item">
-            <time class="archive-date">{{ .Date.Format "01-02" }}</time>
-            <a href="{{ .Permalink }}" class="archive-link">{{ .Title }}</a>
-            {{ with .Params.categories }}
-            <span class="archive-category">{{ index . 0 }}</span>
+            <time class="archive-date" datetime="{{ $pg.Date.Format "2006-01-02" }}">{{ $pg.Date.Format "01-02" }}</time>
+            <a href="{{ $pg.Permalink }}" class="archive-link">{{ $pg.Title }}</a>
+            {{ with $pg.Params.categories }}
+            <span class="archive-category">{{ partial "category-display-name.html" (dict "Site" $.Site "Slug" (index . 0)) }}</span>
             {{ end }}
           </li>
           {{ end }}

@@ -4,7 +4,8 @@
     {{ with .Params.categories }}
     <div class="post-categories">
       {{ range . }}
-      <a href="{{ "categories" | relURL }}/{{ . | urlize }}/" class="category-link">{{ . }}</a>
+      {{ $slug := . }}
+      <a href="{{ "categories" | relURL }}/{{ $slug | urlize }}/" class="category-link">{{ partial "category-display-name.html" (dict "Site" $.Site "Slug" $slug) }}</a>
       {{ end }}
     </div>
     {{ end }}

@@ -1,29 +1,23 @@
 {{ define "main" }}
-<div class="list-page">
+{{ $isCat := eq .Data.Plural "categories" }}
+{{ $extra := cond $isCat "tags" "categories" }}
+<div class="list-page archives-page taxonomy-term-page">
   <header class="list-header">
-    <h1 class="list-title">{{ .Title }}</h1>
-    <div class="list-count">共 {{ len .Data.Pages }} 篇文章</div>
-  </header>
-  
-  <div class="article-list">
-    {{ range .Data.Pages }}
-    <article class="list-item">
-      <a href="{{ .Permalink }}" class="list-item-link">
-        {{ with .Params.featured_image }}
-        <div class="list-item-image">
-          <img src="{{ . }}" alt="{{ $.Title }}" loading="lazy">
-        </div>
-        {{ end }}
-        <div class="list-item-content">
-          <h3 class="list-item-title">{{ .Title }}</h3>
-          <p class="list-item-excerpt">{{ .Description | default .Summary | truncate 150 }}</p>
-          <div class="list-item-meta">
-            <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006-01-02" }}</time>
-          </div>
-        </div>
-      </a>
-    </article>
+    <h1 class="list-title">
+      {{- if $isCat -}}
+        {{- partial "category-display-name.html" (dict "Site" .Site "Slug" .Data.Term) -}}
+      {{- else -}}
+        {{- .Title -}}
+      {{- end -}}
+    </h1>
+    {{ with .Description }}
+    <p class="list-description">{{ . }}</p>
     {{ end }}
+    <div class="list-count">共 {{ len .Pages }} 篇文章</div>
+  </header>
+
+  <div class="taxonomy-term-body">
+    {{ partial "archive-post-list.html" (dict "Pages" .Pages "extraMeta" $extra) }}
   </div>
 </div>
 {{ end }}
