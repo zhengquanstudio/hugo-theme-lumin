@@ -2,6 +2,7 @@
 # See https://github.com/gohugoio/hugoThemes#themetoml for an example
 
 name = "Lumin"
+version = "1.3-beta"
 license = "MIT"
 licenselink = "https://github.com/yourname/hugo-theme-lumin/blob/main/LICENSE"
 description = "A modern, elegant Hugo blog theme with dark/light mode, sidebar widgets, and rich features"

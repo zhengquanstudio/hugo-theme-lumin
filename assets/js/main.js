@@ -453,6 +453,115 @@
   };
 
   // ==========================================
+  // Mobile Category Dropdown - 移动端分类折叠
+  // ==========================================
+  var MobileCategory = {
+    init: function() {
+      var toggles = document.querySelectorAll('.mobile-nav-toggle');
+      if (!toggles.length) return;
+      toggles.forEach(function(toggle) {
+        toggle.addEventListener('click', function(e) {
+          e.stopPropagation();
+          var parent = this.closest('.mobile-nav-item');
+          if (parent) parent.classList.toggle('active');
+        });
+      });
+    }
+  };
+
+  // ==========================================
+  // Archive Collapsible - 归档页年份/月份折叠
+  // ==========================================
+  var ArchiveCollapsible = {
+    init: function() {
+      var container = document.getElementById('archives-timeline');
+      if (!container) return;
+
+      var self = this;
+
+      // 年份标题点击
+      container.querySelectorAll('.archive-year-header[data-toggle="year"]').forEach(function(title) {
+        title.addEventListener('click', function() {
+          var yearEl = this.closest('.archive-year');
+          if (yearEl) yearEl.classList.toggle('collapsed');
+          self.updateHeight(yearEl.querySelector('.archive-year-content'));
+        });
+      });
+
+      // 月份标题点击
+      container.querySelectorAll('.archive-month-header[data-toggle="month"]').forEach(function(title) {
+        title.addEventListener('click', function(e) {
+          e.stopPropagation(); // 防止触发年份折叠
+          var monthEl = this.closest('.archive-month');
+          if (monthEl) monthEl.classList.toggle('collapsed');
+          self.updateHeight(monthEl.querySelector('.archive-month-content'));
+        });
+      });
+
+      // 默认展开最近一年，其余折叠
+      this.autoCollapse();
+    },
+
+    updateHeight: function(el) {
+      if (!el) return;
+      var isCollapsed = el.parentElement.classList.contains('collapsed');
+      if (isCollapsed) {
+        el.style.maxHeight = '0';
+        el.style.opacity = '0';
+      } else {
+        // 先临时设为 auto 以获取真实高度，再设回
+        el.style.maxHeight = 'none';
+        el.style.opacity = '1';
+        var h = el.scrollHeight;
+        el.style.maxHeight = h + 'px';
+        // 动画结束后清除内联样式，让 CSS transition 接管（可选）
+        var self = this;
+        setTimeout(function() {
+          if (!el.parentElement.classList.contains('collapsed')) {
+            el.style.maxHeight = 'none';
+          }
+        }, 360);
+      }
+    },
+
+    autoCollapse: function() {
+      var years = document.querySelectorAll('.archive-year.archive-collapsible');
+      if (!years.length) return;
+
+      var self = this;
+
+      years.forEach(function(year) {
+        if (year.classList.contains('collapsed')) {
+          var content = year.querySelector('.archive-year-content');
+          if (content) {
+            content.style.maxHeight = '0';
+            content.style.opacity = '0';
+          }
+        } else {
+          var content = year.querySelector('.archive-year-content');
+          if (content) {
+            content.style.maxHeight = 'none';
+            content.style.opacity = '1';
+          }
+        }
+
+        // 初始化月份折叠状态
+        year.querySelectorAll('.archive-month').forEach(function(month) {
+          var mContent = month.querySelector('.archive-month-content');
+          if (!mContent) return;
+          if (month.classList.contains('collapsed')) {
+            mContent.style.maxHeight = '0';
+            mContent.style.opacity = '0';
+          } else {
+            mContent.style.maxHeight = 'none';
+            mContent.style.opacity = '1';
+          }
+        });
+      });
+    }
+  };
+
+  // ==========================================
   // Initialize all modules
   // ==========================================
   document.addEventListener('DOMContentLoaded', function() {
@@ -462,12 +571,14 @@
     Typewriter.init();
     ThemeToggle.init();
     MobileMenu.init();
+    MobileCategory.init();
     Search.init();
     Calendar.init();
     Countdown.init();
     BackToTop.init();
     ScrollDownHint.init();
     TocHighlight.init();
+    ArchiveCollapsible.init();
   });
 
 })();

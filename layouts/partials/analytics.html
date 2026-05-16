@@ -1,0 +1,62 @@
+{{/* 访客分析统计 - 支持多平台同时启用 */}}
+{{ $analytics := site.Params.analytics }}
+{{ if and $analytics $analytics.enable }}
+
+  {{/* ===== Google Analytics 4 (GA4) ===== */}}
+  {{ with $analytics.google.id }}
+  <!-- Google Analytics 4 -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id={{ . }}"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', '{{ . }}');
+  </script>
+  {{ end }}
+
+  {{/* ===== 百度统计 ===== */}}
+  {{ with $analytics.baidu.id }}
+  <!-- Baidu Tongji -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?{{ . }}";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+  {{ end }}
+
+  {{/* ===== Microsoft Clarity ===== */}}
+  {{ with $analytics.clarity.id }}
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+      c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+      t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+      y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "{{ . }}");
+  </script>
+  {{ end }}
+
+  {{/* ===== Umami ===== */}}
+  {{ if and $analytics.umami.id $analytics.umami.src }}
+  <!-- Umami Analytics -->
+  <script defer src="{{ $analytics.umami.src }}" data-website-id="{{ $analytics.umami.id }}"></script>
+  {{ end }}
+
+  {{/* ===== Cloudflare Web Analytics ===== */}}
+  {{ with $analytics.cloudflare.token }}
+  <!-- Cloudflare Web Analytics -->
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "{{ . }}"}'></script>
+  {{ end }}
+
+  {{/* ===== Plausible ===== */}}
+  {{ if and $analytics.plausible.domain }}
+  <!-- Plausible Analytics -->
+  <script defer data-domain="{{ $analytics.plausible.domain }}"{{ with $analytics.plausible.src }} src="{{ . }}/js/script.js"{{ end }}>
+  </script>
+  {{ end }}
+
+{{ end }}

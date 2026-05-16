@@ -50,6 +50,9 @@
   {{ end }}
   
   {{ block "head" . }}{{ end }}
+
+  <!-- Analytics (Google / Baidu / Clarity) -->
+  {{ partial "analytics.html" . }}
 </head>
 <body class="lumin-body sidebar-{{ .Site.Params.sidebarPosition | default "left" }}{{ if .IsHome }} home-page{{ end }}">
   <a href="#main-content" class="skip-link">跳转到主要内容</a>
@@ -60,29 +63,34 @@
     {{ partial "banner.html" . }}
   {{ end }}
   
-  <div class="main-wrapper{{ if .IsPage }} has-toc{{ end }}">
+  {{/* 判断是否为全宽列表页（分类/标签汇总页等完全无侧边栏） */}}
+  {{ $isFullWidth := or (eq .Kind "section") (eq .Type "taxonomy") (eq .Type "term") }}
+  {{/* 归档页：保留左侧侧边栏，仅隐藏右侧 TOC */}}
+  {{ $isArchives := eq .Layout "archives" }}
+
+  <div class="main-wrapper{{ if and .IsPage (not $isFullWidth) (not $isArchives) }} has-toc{{ end }}{{ if $isFullWidth }} fullwidth-page{{ end }}{{ if $isArchives }} archives-page-layout{{ end }}">
     <div class="container">
       <div class="layout-grid">
-        {{ if eq (.Site.Params.sidebarPosition | default "left") "left" }}
+        {{ if and (not $isFullWidth) (eq (.Site.Params.sidebarPosition | default "left") "left") }}
           <aside class="sidebar">
             {{ partial "sidebar.html" . }}
           </aside>
         {{ end }}
 
-        <main id="main-content" class="main-content">
+        <main id="main-content" class="main-content{{ if $isFullWidth }} content-fullwidth{{ end }}{{ if $isArchives }} content-archives{{ end }}">
           {{ block "main" . }}{{ end }}
         </main>
 
         {{ if eq (.Site.Params.sidebarPosition | default "left") "left" }}
         {{ end }}
 
-        {{ if eq (.Site.Params.sidebarPosition | default "left") "right" }}
+        {{ if and (not $isFullWidth) (eq (.Site.Params.sidebarPosition | default "left") "right") }}
           <aside class="sidebar">
             {{ partial "sidebar.html" . }}
           </aside>
         {{ end }}
 
-        {{ if .IsPage }}
+        {{ if and .IsPage (not $isFullWidth) }}
           {{ block "toc-sidebar" . }}{{ end }}
         {{ end }}
       </div>
@@ -108,5 +116,14 @@
   {{ end }}
   
   {{ block "scripts" . }}{{ end }}
+
+  <!-- 51.la 统计 -->
+  {{ with site.Params.analytics.la51.id }}
+  <script>
+    !function(p){"use strict";!function(t){var s=window,e=document,i="script",n=t.createElement(i),t=t.getElementsByTagName(i)[0];n.src=p,t.parentNode.insertBefore(n,t)}(e);
+    }("https://sdk.51.la/js-sdk-develop.min.js");
+    LA.init({id:"{{ . }}",ck:"{{ . }}"});
+  </script>
+  {{ end }}
 </body>
 </html>

@@ -13,11 +13,45 @@
       <nav class="header-nav" aria-label="主导航">
         <ul class="nav-list">
           {{ range .Site.Menus.main }}
+          {{ $icon := "" }}
+          {{ if eq .Identifier "home" }}{{ $icon = "🏠" }}
+          {{ else if eq .Identifier "archives" }}{{ $icon = "📅" }}
+          {{ else if eq .Identifier "categories" }}{{ $icon = "📂" }}
+          {{ else if eq .Identifier "tags" }}{{ $icon = "🏷️" }}
+          {{ else if eq .Identifier "gallery" }}{{ $icon = "📷" }}
+          {{ else if eq .Identifier "movies" }}{{ $icon = "🎬" }}
+          {{ else if eq .Identifier "music" }}{{ $icon = "🎵" }}
+          {{ else if eq .Identifier "diary" }}{{ $icon = "📔" }}
+          {{ else if eq .Identifier "topics" }}{{ $icon = "🛠️" }}
+          {{ else if eq .Identifier "friends" }}{{ $icon = "🤝" }}
+          {{ else if eq .Identifier "guestbook" }}{{ $icon = "💬" }}
+          {{ else if eq .Identifier "about" }}{{ $icon = "👤" }}
+          {{ end }}
+
+          {{ if eq .Identifier "categories" }}
+          <!-- 分类下拉菜单 -->
+          <li class="nav-item nav-item-dropdown">
+            <a href="javascript:void(0)" class="nav-link nav-link-dropdown">
+              <span class="nav-icon">{{ $icon | safeHTML }}</span>{{ .Name }}
+              <svg class="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </a>
+            <ul class="dropdown-menu">
+              {{ range $.Site.Taxonomies.categories }}
+              {{/* 从 categoryLabels 获取中文显示名，无则用原标题 */}}
+              {{ $label := index $.Site.Params.categoryLabels .Page.Title | default .Page.Title }}
+              <li class="dropdown-item">
+                <a href="{{ .Page.Permalink }}" class="dropdown-link">{{ $label }}</a>
+              </li>
+              {{ end }}
+            </ul>
+          </li>
+          {{ else }}
           <li class="nav-item">
             <a href="{{ .URL }}" class="nav-link{{ if $.IsMenuCurrent "main" . }} active{{ end }}">
-              {{ .Name }}
+              <span class="nav-icon">{{ $icon | safeHTML }}</span>{{ .Name }}
             </a>
           </li>
+          {{ end }}
           {{ end }}
         </ul>
       </nav>
@@ -67,9 +101,41 @@
     <div class="container">
       <ul class="mobile-nav-list">
         {{ range .Site.Menus.main }}
+        {{ $icon := "" }}
+        {{ if eq .Identifier "home" }}{{ $icon = "🏠" }}
+        {{ else if eq .Identifier "archives" }}{{ $icon = "📅" }}
+        {{ else if eq .Identifier "categories" }}{{ $icon = "📂" }}
+        {{ else if eq .Identifier "tags" }}{{ $icon = "🏷️" }}
+        {{ else if eq .Identifier "gallery" }}{{ $icon = "📷" }}
+        {{ else if eq .Identifier "movies" }}{{ $icon = "🎬" }}
+        {{ else if eq .Identifier "music" }}{{ $icon = "🎵" }}
+        {{ else if eq .Identifier "diary" }}{{ $icon = "📔" }}
+        {{ else if eq .Identifier "topics" }}{{ $icon = "🛠️" }}
+        {{ else if eq .Identifier "friends" }}{{ $icon = "🤝" }}
+        {{ else if eq .Identifier "guestbook" }}{{ $icon = "💬" }}
+        {{ else if eq .Identifier "about" }}{{ $icon = "👤" }}
+        {{ end }}
+
+        {{ if eq .Identifier "categories" }}
+        <!-- 移动端分类折叠列表 -->
         <li class="mobile-nav-item">
-          <a href="{{ .URL }}" class="mobile-nav-link">{{ .Name }}</a>
+          <div class="mobile-nav-link mobile-nav-toggle">
+            <span class="nav-icon">{{ $icon | safeHTML }}</span>{{ .Name }}
+            <svg class="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <ul class="mobile-dropdown-menu">
+            {{ range $.Site.Taxonomies.categories }}
+            {{ $label := index $.Site.Params.categoryLabels .Page.Title }}
+            {{ if not $label }}{{ $label = .Page.Title }}{{ end }}
+            <li><a href="{{ .Page.Permalink }}" class="mobile-nav-link sub-item">{{ $label }}</a></li>
+            {{ end }}
+          </ul>
         </li>
+        {{ else }}
+        <li class="mobile-nav-item">
+          <a href="{{ .URL }}" class="mobile-nav-link"><span class="nav-icon">{{ $icon | safeHTML }}</span>{{ .Name }}</a>
+        </li>
+        {{ end }}
         {{ end }}
       </ul>
     </div>
