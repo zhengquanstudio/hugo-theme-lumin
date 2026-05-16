@@ -80,16 +80,7 @@
     <img src="{{ . }}" alt="{{ $.Title }}" loading="lazy">
   </div>
   {{ end }}
-  
-  {{ if and .Site.Params.article.showToc .Params.toc }}
-  <div class="post-toc-wrapper">
-    <details class="post-toc" open>
-      <summary>目录</summary>
-      {{ .TableOfContents }}
-    </details>
-  </div>
-  {{ end }}
-  
+
   <div class="post-content">
     {{ .Content }}
   </div>
@@ -139,4 +130,17 @@
   {{ partial "comments.html" . }}
   {{ end }}
 </article>
+{{ end }}
+
+{{ define "toc-sidebar" }}
+{{ if and .Site.Params.article.showToc .TableOfContents }}
+<aside class="post-toc-sidebar" id="post-toc-sidebar">
+  <div class="post-toc-card">
+    <h4 class="post-toc-title">目录</h4>
+    <nav class="post-toc-nav" id="toc-nav">
+      {{ .TableOfContents }}
+    </nav>
+  </div>
+</aside>
+{{ end }}
 {{ end }}

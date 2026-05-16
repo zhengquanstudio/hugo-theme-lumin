@@ -60,7 +60,7 @@
     {{ partial "banner.html" . }}
   {{ end }}
   
-  <div class="main-wrapper">
+  <div class="main-wrapper{{ if .IsPage }} has-toc{{ end }}">
     <div class="container">
       <div class="layout-grid">
         {{ if eq (.Site.Params.sidebarPosition | default "left") "left" }}
@@ -68,15 +68,22 @@
             {{ partial "sidebar.html" . }}
           </aside>
         {{ end }}
-        
+
         <main id="main-content" class="main-content">
           {{ block "main" . }}{{ end }}
         </main>
-        
+
+        {{ if eq (.Site.Params.sidebarPosition | default "left") "left" }}
+        {{ end }}
+
         {{ if eq (.Site.Params.sidebarPosition | default "left") "right" }}
           <aside class="sidebar">
             {{ partial "sidebar.html" . }}
           </aside>
+        {{ end }}
+
+        {{ if .IsPage }}
+          {{ block "toc-sidebar" . }}{{ end }}
         {{ end }}
       </div>
     </div>

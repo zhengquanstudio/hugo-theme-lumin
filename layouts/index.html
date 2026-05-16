@@ -1,6 +1,10 @@
 {{ define "main" }}
 <div class="home-content">
-  {{ $paginator := .Paginate .Site.RegularPages }}
+  {{/* 从 hugo.toml 的 [params] homePageSize 读取每页数量，必须为 3 的倍数 */}}
+  {{ $pageSize := .Site.Params.homePageSize | default 12 }}
+  {{/* 排除标记为 excludeFromList 的特殊页面（关于/友链/留言板/归档等） */}}
+  {{ $articles := where .Site.RegularPages "Params.excludeFromList" "!=" true }}
+  {{ $paginator := .Paginate $articles $pageSize }}
 
   <div class="article-grid">
     {{ range $paginator.Pages }}
@@ -31,7 +35,14 @@
           <div class="title-box">
             <h2 class="article-title">{{ .Title }}</h2>
           </div>
+          {{ $desc := "" }}
           {{ with .Description }}
+            {{ $desc = . | truncate 80 "…" }}
+          {{ else }}
+            {{ $plain := .Plain | truncate 80 "…" }}
+            {{ $desc = $plain }}
+          {{ end }}
+          {{ with $desc }}
           <p class="article-desc">{{ . }}</p>
           {{ end }}
 

@@ -640,6 +640,12 @@ ul, ol {
   padding-top: var(--header-offset);
 }
 
+/* 文章页：三栏布局（左侧边栏 + 文章 + 右侧目录） */
+.has-toc .layout-grid {
+  grid-template-columns: var(--sidebar-width) 1fr var(--sidebar-width);
+  gap: 50px;
+}
+
 .sidebar-right .layout-grid {
   grid-template-columns: 1fr var(--sidebar-width);
 }
@@ -1154,7 +1160,7 @@ ul, ol {
   line-height: 1.5;
   margin: 0 0 10px;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -1402,6 +1408,82 @@ ul, ol {
 
 .post-toc li {
   margin: 8px 0;
+}
+
+/* ===== 右侧目录侧边栏（文章页） ===== */
+.post-toc-sidebar {
+  position: sticky;
+  top: calc(var(--header-offset) + 20px);
+  height: fit-content;
+}
+
+.post-toc-card {
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 24px 20px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
+}
+
+.post-toc-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 16px 0;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--accent-color, #2a9d8f);
+}
+
+.post-toc-nav {
+  font-size: 0.875rem;
+  max-height: calc(100vh - var(--header-offset) - 120px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.post-toc-nav::-webkit-scrollbar {
+  width: 3px;
+}
+
+.post-toc-nav::-webkit-scrollbar-thumb {
+  background: var(--border-light, #ddd);
+  border-radius: 3px;
+}
+
+.post-toc-nav > ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.post-toc-nav ul ul {
+  padding-left: 16px;
+  margin-top: 4px;
+}
+
+.post-toc-nav li {
+  margin: 6px 0;
+}
+
+.post-toc-nav a {
+  display: block;
+  padding: 4px 8px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  line-height: 1.5;
+}
+
+.post-toc-nav a:hover {
+  background: rgba(42, 157, 143, 0.08);
+  color: var(--accent-color, #2a9d8f);
+}
+
+.post-toc-nav a.active {
+  background: var(--accent-color, #2a9d8f);
+  color: #fff;
+  font-weight: 500;
 }
 
 .post-content {
@@ -1993,6 +2075,16 @@ ul, ol {
     grid-template-columns: 260px 1fr;
     gap: 60px;
   }
+
+  /* 小屏下文章页隐藏右侧目录，保持两栏 */
+  .has-toc .layout-grid {
+    grid-template-columns: 260px 1fr;
+    gap: 60px;
+  }
+
+  .post-toc-sidebar {
+    display: none;
+  }
   
   .container {
     padding: 0 85px;
@@ -2001,6 +2093,11 @@ ul, ol {
 
 @media (max-width: 992px) {
   .layout-grid {
+    grid-template-columns: 1fr;
+    gap: 60px;
+  }
+
+  .has-toc .layout-grid {
     grid-template-columns: 1fr;
     gap: 60px;
   }
@@ -2017,6 +2114,10 @@ ul, ol {
   
   .main-content {
     order: 1;
+  }
+
+  .post-toc-sidebar {
+    display: none;
   }
   
   .sidebar-widgets {

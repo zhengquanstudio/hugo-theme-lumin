@@ -357,6 +357,102 @@
   };
 
   // ==========================================
+  // TOC Scroll Highlight - 目录滚动高亮
+  // ==========================================
+  var TocHighlight = {
+    init: function() {
+      this.tocNav = document.getElementById('toc-nav');
+      if (!this.tocNav) return;
+
+      this.tocLinks = this.tocNav.querySelectorAll('a[href^="#"]');
+      if (!this.tocLinks.length) return;
+
+      this.headings = [];
+      var self = this;
+      this.tocLinks.forEach(function(link) {
+        var href = link.getAttribute('href');
+        // 跳过空链接或纯 # 链接
+        if (!href || href === '#' || href.length < 2) return;
+
+        var id = href.slice(1); // 去掉 #
+        var heading = null;
+
+        // 方案1：直接用 getElementById（最可靠）
+        heading = document.getElementById(id);
+
+        // 方案2：如果方案1失败，尝试 CSS.escape + querySelector（兼容特殊字符ID）
+        if (!heading && typeof CSS !== 'undefined' && CSS.escape) {
+          try { heading = document.querySelector('#' + CSS.escape(id)); } catch(e) {}
+        }
+
+        // 方案3：最后尝试直接拼接（不转义，部分浏览器支持中文ID）
+        if (!heading) {
+          try { heading = document.querySelector(href); } catch(e) {}
+        }
+
+        if (heading) self.headings.push({ el: heading, link: link, id: id });
+      });
+
+      if (!this.headings.length) return;
+
+      this.activeIndex = -1;
+      this.offset = 120; // 标题进入视口上方此距离即触发
+
+      // 使用 passive 提升滚动性能
+      window.addEventListener('scroll', function() { self.update(); }, { passive: true });
+
+      // 延迟执行首次更新，确保所有布局已完成
+      requestAnimationFrame(function() { self.update(); });
+    },
+
+    update: function() {
+      var scrollTop = window.scrollY || window.pageYOffset;
+      var currentIndex = -1;
+
+      for (var i = this.headings.length - 1; i >= 0; i--) {
+        var rect = this.headings[i].el.getBoundingClientRect();
+        if (rect.top <= this.offset) {
+          currentIndex = i;
+          break;
+        }
+      }
+
+      // 页面顶部时清除所有高亮
+      if (scrollTop < 100) currentIndex = -1;
+
+      if (currentIndex === this.activeIndex) return;
+      this.activeIndex = currentIndex;
+
+      // 移除所有 active 类
+      var self = this;
+      this.tocLinks.forEach(function(link) { link.classList.remove('active'); });
+
+      // 给当前项添加 active
+      if (currentIndex >= 0 && this.headings[currentIndex]) {
+        this.headings[currentIndex].link.classList.add('active');
+
+        // 自动滚动 TOC 让当前项可见
+        this.scrollTocIntoView(this.headings[currentIndex].link);
+      }
+    },
+
+    scrollTocIntoView: function(linkEl) {
+      var container = this.tocNav;
+      var linkRect = linkEl.getBoundingClientRect();
+      var containerRect = container.getBoundingClientRect();
+
+      // 如果当前项不在可视区域内，平滑滚动到可见位置
+      if (linkRect.bottom > containerRect.bottom || linkRect.top < containerRect.top) {
+        var offsetTop = linkEl.offsetTop - container.offsetTop - (container.offsetHeight / 2) + (linkEl.offsetHeight / 2);
+        container.scrollTo({
+          top: offsetTop,
+          behavior: 'smooth'
+        });
+      }
+    }
+  };
+
+  // ==========================================
   // Initialize all modules
   // ==========================================
   document.addEventListener('DOMContentLoaded', function() {
@@ -371,6 +467,7 @@
     Countdown.init();
     BackToTop.init();
     ScrollDownHint.init();
+    TocHighlight.init();
   });
 
 })();
