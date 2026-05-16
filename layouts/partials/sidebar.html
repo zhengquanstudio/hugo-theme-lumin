@@ -1,12 +1,30 @@
 <div class="sidebar-widgets">
-  {{ partial "widgets/profile.html" . }}
-  {{ partial "widgets/announcement.html" . }}
-  {{ partial "widgets/calendar.html" . }}
-  {{ partial "widgets/countdown.html" . }}
-  {{ partial "widgets/recent-posts.html" . }}
-  {{ partial "widgets/categories.html" . }}
-  {{ partial "widgets/tags.html" . }}
-  {{ partial "widgets/reward.html" . }}
-  {{ partial "widgets/statistics.html" . }}
-  {{ partial "widgets/qrcode.html" . }}
+  {{ $order := site.Params.widgets.order }}
+  {{ if $order }}
+    {{ range $order }}
+      {{ $name := . }}
+      {{ if eq $name "profile" }}{{ partial "widgets/profile.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
+      {{ if eq $name "visitor" }}{{ partial "widgets/visitor.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
+      {{ if eq $name "announcement" }}{{ partial "widgets/announcement.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
+      {{ if eq $name "calendar" }}{{ partial "widgets/calendar.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
+      {{ if eq $name "countdown" }}{{ partial "widgets/countdown.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
+      {{ if eq $name "recentPosts" }}{{ partial "widgets/recent-posts.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
+      {{ if eq $name "categories" }}{{ partial "widgets/categories.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
+      {{ if eq $name "tags" }}{{ partial "widgets/tags.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
+      {{ if eq $name "reward" }}{{ partial "widgets/reward.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
+      {{ if eq $name "statistics" }}{{ partial "widgets/statistics.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
+      {{ if eq $name "qrcode" }}{{ partial "widgets/qrcode.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
+    {{ end }}
+  {{ else }}
+    {{ partial "widgets/profile.html" . }}
+    {{ partial "widgets/announcement.html" . }}
+    {{ partial "widgets/calendar.html" . }}
+    {{ partial "widgets/countdown.html" . }}
+    {{ partial "widgets/recent-posts.html" . }}
+    {{ partial "widgets/categories.html" . }}
+    {{ partial "widgets/tags.html" . }}
+    {{ partial "widgets/reward.html" . }}
+    {{ partial "widgets/statistics.html" . }}
+    {{ partial "widgets/qrcode.html" . }}
+  {{ end }}
 </div>

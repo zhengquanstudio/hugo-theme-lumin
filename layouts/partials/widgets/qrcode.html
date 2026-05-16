@@ -1,4 +1,4 @@
-{{ if and .Site.Params.widgets.qrcode .Site.Params.qrcode.enable .Site.Params.qrcode.image }}
+{{ if or .widgetEnabled (and .Site.Params.widgets.qrcode .Site.Params.qrcode.enable .Site.Params.qrcode.image) }}
 <div class="widget widget-qrcode">
   <h4 class="widget-title">
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -7,10 +7,15 @@
       <rect x="14" y="14" width="7" height="7"></rect>
       <rect x="3" y="14" width="7" height="7"></rect>
     </svg>
-    {{ .Site.Params.qrcode.title | default "关注公众号" }}
+    {{ .Site.Params.qrcode.title | default "公众号" }}
   </h4>
-  <div class="qrcode-content">
-    <img src="{{ .Site.Params.qrcode.image }}" alt="公众号二维码">
+  <div class="qrcode-card">
+    <div class="qrcode-img-wrap">
+      <img src="{{ .Site.Params.qrcode.image }}" alt="公众号二维码" loading="lazy">
+    </div>
+    {{ with .Site.Params.qrcode.desc }}
+    <p class="qrcode-desc">{{ . }}</p>
+    {{ end }}
   </div>
 </div>
 {{ end }}

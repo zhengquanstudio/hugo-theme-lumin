@@ -1,4 +1,4 @@
-{{ if .Site.Params.widgets.statistics }}
+{{ if or .widgetEnabled .Site.Params.widgets.statistics }}
 <div class="widget widget-statistics">
   <h4 class="widget-title">
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -8,19 +8,68 @@
     </svg>
     站点统计
   </h4>
-  <div class="statistics-list">
-    <div class="stat-item">
-      <span class="stat-label">文章总数</span>
-      <span class="stat-value">{{ len (where .Site.RegularPages "Type" "in" (slice "post" "posts" "")) }}</span>
+  <div class="stats-list">
+    {{ $posts := where .Site.RegularPages ".Params.hidden" "!=" true }}
+    {{ $articleCount := len $posts }}
+
+    <!-- 文章数目 -->
+    <div class="stat-row">
+      <span class="stat-label">文章数目</span>
+      <span class="stat-value">{{ $articleCount }} <span class="stat-unit">篇</span></span>
     </div>
+
+    <!-- 分类 -->
+    {{ $catCount := len .Site.Taxonomies.categories }}
+    <div class="stat-row">
+      <span class="stat-label">分类数量</span>
+      <span class="stat-value">{{ $catCount }} <span class="stat-unit">个</span></span>
+    </div>
+
+    <!-- 标签 -->
+    {{ $tagCount := len .Site.Taxonomies.tags }}
+    <div class="stat-row">
+      <span class="stat-label">标签数量</span>
+      <span class="stat-value">{{ $tagCount }} <span class="stat-unit">个</span></span>
+    </div>
+
+    <!-- 运行时间 -->
+    {{ with .Site.Params.statistics.runningSince }}
+    {{ $startUnix := int ((time .).Unix) }}
+    {{ $nowUnix := int (now.Unix) }}
+    {{ $totalSecs := sub $nowUnix $startUnix }}
+    {{ if gt $totalSecs 0 }}
+    {{ $totalDays := div $totalSecs 86400 }}
+    {{ $years := div $totalDays 365 }}
+    {{ $remDays := mod $totalDays 365 }}
+    <div class="stat-row">
+      <span class="stat-label">已运行时间</span>
+      <span class="stat-value">{{ $years }} 年 {{ $remDays }} 天</span>
+    </div>
+    {{ end }}
+    {{ end }}
+
+    <!-- 最后活动时间 -->
+    {{ if gt $articleCount 0 }}
+    {{ $lastPost := index ($posts.ByDate.Reverse) 0 }}
+    {{ with $lastPost }}
+    {{ $daysAgo := int (now.Sub .Date).Hours | div 24 }}
+    <div class="stat-row">
+      <span class="stat-label">最后活动时间</span>
+      <span class="stat-value">{{ $daysAgo }} 天前</span>
+    </div>
+    {{ end }}
+    {{ end }}
+
     {{ if .Site.Params.statistics.busuanzi }}
-    <div class="stat-item">
-      <span class="stat-label">访客数</span>
-      <span class="stat-value" id="busuanzi_value_site_uv">--</span>
+    <!-- 本站访问量 -->
+    <div class="stat-row">
+      <span class="stat-label">本站访问</span>
+      <span class="stat-value"><span id="busuanzi_value_site_pv">--</span> <span class="stat-unit">次</span></span>
     </div>
-    <div class="stat-item">
-      <span class="stat-label">总访问量</span>
-      <span class="stat-value" id="busuanzi_value_site_pv">--</span>
+    <!-- 本站访客数 -->
+    <div class="stat-row">
+      <span class="stat-label">本站访客</span>
+      <span class="stat-value"><span id="busuanzi_value_site_uv">--</span> <span class="stat-unit">人</span></span>
     </div>
     {{ end }}
   </div>

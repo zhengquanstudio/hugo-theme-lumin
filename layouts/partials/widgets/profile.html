@@ -1,4 +1,4 @@
-{{ if .Site.Params.profile.enable }}
+{{ if or .widgetEnabled .Site.Params.profile.enable }}
 <div class="profile-card">
   {{ with .Site.Params.profile.backgroundImage }}
   <div class="profile-card-bg" style="background-image: url('{{ . }}');"></div>

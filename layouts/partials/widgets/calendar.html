@@ -1,4 +1,4 @@
-{{ if .Site.Params.widgets.calendar }}
+{{ if or .widgetEnabled .Site.Params.widgets.calendar }}
 <div class="widget widget-calendar">
   <h4 class="widget-title">
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
