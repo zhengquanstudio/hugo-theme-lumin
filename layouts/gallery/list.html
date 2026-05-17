@@ -35,18 +35,18 @@
 }
 
 /* 突破布局网格 */
-.main-wrapper:has(#gallery-page) .container{max-width:100%!important;padding-left:40px;padding-right:40px;}
-.main-wrapper:has(#gallery-page) .layout-grid{grid-template-columns:1fr!important;max-width:1300px;margin:0 auto;}
+.main-wrapper:has(#gallery-page) .container{max-width:100%!important;padding-left:40px!important;padding-right:40px!important;}
+.main-wrapper:has(#gallery-page) .layout-grid{grid-template-columns:1fr!important;max-width:1500px;margin:0 auto;}
 .main-wrapper:has(#gallery-page) .sidebar{display:none!important}
 #gallery-page{
-  max-width:1200px;margin:24px auto;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  max-width:1480px;margin:24px auto;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
 }
 
 @media(max-width:1200px){.main-wrapper:has(#gallery-page) .layout-grid{max-width:100%!important;padding-left:24px;padding-right:24px;}}
 @media(max-width:900px){.main-wrapper:has(#gallery-page) .container{padding-left:16px!important;padding-right:16px!important;}}
 
 /* ===== 页面头部 ===== */
-.gallery-header{text-align:center;padding:36px 24px 28px;background:var(--gal-grad-1);border-radius:20px;margin-bottom:22px;box-shadow:var(--gal-shadow-md);border:1px solid rgba(34,197,94,.12);position:relative;overflow:hidden;}
+.gallery-header{text-align:center;min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 24px;background:var(--gal-grad-1);border-radius:20px;margin-bottom:22px;box-shadow:var(--gal-shadow-md);border:1px solid rgba(34,197,94,.12);position:relative;overflow:hidden;}
 .gallery-header::before{content:'';position:absolute;top:-60%;left:-30%;width:200%;height:200%;background:radial-gradient(circle at 30% 40%,rgba(34,197,94,.07) 0%,transparent 55%);pointer-events:none;}
 .gallery-header::after{content:'\f03e';font-family:"Font Free";font-weight:900;position:absolute;top:50%;right:8%;transform:translateY(-50%);font-size:120px;color:rgba(34,197,94,.04);pointer-events:none;}
 .gallery-title{font-size:2rem;font-weight:800;color:var(--gal-text);margin:0 0 10px;display:inline-flex;align-items:center;gap:12px;position:relative;z-index:1;}
