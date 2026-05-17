@@ -12,9 +12,11 @@
     {{ range .Data.Pages }}
     <article class="list-item">
       <a href="{{ .Permalink }}" class="list-item-link">
-        {{ with .Params.featured_image }}
+        {{/* 优先级：featured_image > image > 默认封面 */}}
+        {{ $cover := .Params.featured_image | default .Params.image | default $.Site.Params.article.defaultFeaturedImage }}
+        {{ with $cover }}
         <div class="list-item-image">
-          <img src="{{ . }}" alt="{{ $.Title }}" loading="lazy">
+          <img src="{{ . }}" alt="{{ $.Title }}" loading="lazy" class="{{ if eq $cover $.Site.Params.article.defaultFeaturedImage }}default-cover{{ end }}">
         </div>
         {{ end }}
         <div class="list-item-content">

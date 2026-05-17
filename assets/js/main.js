@@ -728,9 +728,11 @@
 
   // ==========================================
   // ==========================================
-  // CodeBlock - 代码块复制按钮
+  // CodeBlock - 代码块复制按钮 + 折叠/展开
   // ==========================================
   var CodeBlock = {
+    MAX_HEIGHT: 300, // 超过此高度自动折叠
+
     init: function() {
       var blocks = document.querySelectorAll('.post-content pre');
       if (!blocks.length) return;
@@ -738,31 +740,109 @@
       blocks.forEach(function(pre) {
         var codeEl = pre.querySelector('code');
         if (!codeEl) return;
-        if (pre.querySelector('.code-copy-btn')) return;
+        if (pre.closest('.code-wrapper')) return; // 已处理过
 
+        // 创建包装器
         var wrapper = document.createElement('div');
         wrapper.className = 'code-wrapper';
         pre.parentNode.insertBefore(wrapper, pre);
         wrapper.appendChild(pre);
 
-        var btn = document.createElement('button');
-        btn.className = 'code-copy-btn';
-        btn.type = 'button';
-        btn.setAttribute('aria-label', '\u590d\u5236\u4ee3\u7801');
-        btn.innerHTML =
+        // ====== 工具栏（右上角：折叠 + 复制）======
+        var toolbar = document.createElement('div');
+        toolbar.className = 'code-toolbar';
+
+        // 折叠/展开按钮（仅高度超限时显示）
+        var toggleBtn = document.createElement('button');
+        toggleBtn.type = 'button';
+        toggleBtn.className = 'code-toggle-btn';
+        toggleBtn.setAttribute('aria-label', '\u6298\u53e0\u4ee3\u7801\u5757');
+        toggleBtn.innerHTML =
+          '<svg class="toggle-icon-collapse" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 14 10 20 16 14"/><line x1="20" y1="4" x2="12.01" y2="12"/></svg>' +
+          '<span>\u6298\u53e0</span>';
+
+        // 复制按钮
+        var copyBtn = document.createElement('button');
+        copyBtn.type = 'button';
+        copyBtn.className = 'code-copy-btn';
+        copyBtn.setAttribute('aria-label', '\u590d\u5236\u4ee3\u7801');
+        copyBtn.innerHTML =
           '<svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
           '<svg class="check-icon" style="display:none" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>' +
           '<span class="copy-text">Copy</span>';
 
-        btn.addEventListener('click', function() {
-          var text = codeEl.textContent || '';
-          navigator.clipboard.writeText(text).then(function() {
-            btn.classList.add('copied');
-            setTimeout(function() { btn.classList.remove('copied'); }, 2000);
-          }).catch(function() {});
+        toolbar.appendChild(toggleBtn);
+        toolbar.appendChild(copyBtn);
+        wrapper.appendChild(toolbar);
+
+        // 底部"查看更多"
+        var expandBar = document.createElement('div');
+        expandBar.className = 'code-expand-bar';
+        expandBar.style.display = 'none'; // 默认隐藏
+        var expandBtn = document.createElement('button');
+        expandBtn.type = 'button';
+        expandBtn.innerHTML =
+          '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>' +
+          '<span>\u67e5\u770b\u5168\u90e8</span>';
+        expandBar.appendChild(expandBtn);
+        wrapper.appendChild(expandBar);
+
+        // ====== 判断是否需要折叠（渲染后测量实际高度）======
+        requestAnimationFrame(function() {
+          var actualHeight = pre.scrollHeight;
+          if (actualHeight > CodeBlock.MAX_HEIGHT) {
+            wrapper.classList.add('collapsed');
+            expandBar.style.display = 'flex';
+            toggleBtn.style.display = 'inline-flex';
+          } else {
+            // 短代码块：隐藏折叠按钮
+            toggleBtn.style.display = 'none';
+          }
         });
 
-        wrapper.appendChild(btn);
+        // ====== 折叠/展开切换 ======
+        toggleBtn.addEventListener('click', function() {
+          var isCollapsed = wrapper.classList.contains('collapsed');
+          if (isCollapsed) {
+            // 展开全部
+            wrapper.classList.remove('collapsed');
+            wrapper.classList.add('expanded');
+            expandBar.style.display = 'none';
+            toggleBtn.setAttribute('aria-label', '\u6298\u53e0\u4ee3\u7801\u5757');
+            toggleBtn.innerHTML =
+              '<svg class="toggle-icon-expand" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 10 12 4 6 10"/><line x1="4" y1="20" x2="11.99" y2="12"/></svg>' +
+              '<span>\u6298\u53e0</span>';
+          } else {
+            // 折叠
+            wrapper.classList.remove('expanded');
+            wrapper.classList.add('collapsed');
+            expandBar.style.display = 'flex';
+            toggleBtn.setAttribute('aria-label', '\u5c55\u5f00\u4ee3\u7801\u5757');
+            toggleBtn.innerHTML =
+              '<svg class="toggle-icon-collapse" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 14 10 20 16 14"/><line x1="20" y1="4" x2="12.01" y2="12"/></svg>' +
+              '<span>\u6298\u53e0</span>';
+          }
+        });
+
+        // ====== 底部"查看更多"按钮 ======
+        expandBtn.addEventListener('click', function() {
+          wrapper.classList.remove('collapsed');
+          wrapper.classList.add('expanded');
+          expandBar.style.display = 'none';
+          toggleBtn.setAttribute('aria-label', '\u6298\u53e0\u4ee3\u7801\u5757');
+          toggleBtn.innerHTML =
+            '<svg class="toggle-icon-expand" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 10 12 4 6 10"/><line x1="4" y1="20" x2="11.99" y2="12"/></svg>' +
+            '<span>\u6298\u53e0</span>';
+        });
+
+        // ====== 复制功能 ======
+        copyBtn.addEventListener('click', function() {
+          var text = codeEl.textContent || '';
+          navigator.clipboard.writeText(text).then(function() {
+            copyBtn.classList.add('copied');
+            setTimeout(function() { copyBtn.classList.remove('copied'); }, 2000);
+          }).catch(function() {});
+        });
       });
     }
   };

@@ -1644,6 +1644,15 @@ ul, ol {
   color: var(--text-muted);
 }
 
+/* 默认封面图（系统配置的 fallback 图片） */
+.default-cover {
+  opacity: 0.85;
+}
+.article-card:hover .default-cover,
+.list-item:hover .default-cover {
+  opacity: 1;
+}
+
 .featured-badge {
   position: absolute;
   top: 12px;
@@ -2104,17 +2113,39 @@ ul, ol {
   margin: 0;
 }
 
+/* 折叠状态：限制最大高度，底部渐变遮罩 */
+.code-wrapper.collapsed pre {
+  max-height: 300px;
+  overflow-y: hidden;
+  position: relative;
+}
+
+/* 展开状态 */
+.code-wrapper.expanded pre,
+.code-wrapper:not(.collapsed) pre {
+  max-height: none;
+}
+
 /* 确保代码块内文字可见（Chroma/monokai 会覆盖具体 token 颜色） */
 .code-wrapper pre code {
   color: #abb2bf; /* monokai 默认前景色 */
   background: transparent !important;
 }
 
-/* 复制按钮 - 右上角 */
-.code-copy-btn {
+/* ====== 工具栏按钮组（右上角：折叠 + 复制）====== */
+.code-toolbar {
   position: absolute;
   top: 8px;
   right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 2;
+}
+
+/* 折叠 / 展开 按钮 */
+.code-toggle-btn,
+.code-copy-btn {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -2126,14 +2157,17 @@ ul, ol {
   border-radius: 5px;
   cursor: pointer;
   transition: all 0.2s ease;
-  z-index: 2;
   line-height: 1.4;
+  white-space: nowrap;
 }
+.code-toggle-btn:hover,
 .code-copy-btn:hover {
   color: rgba(255,255,255,0.85);
   background: rgba(255,255,255,0.15);
   border-color: rgba(255,255,255,0.25);
 }
+
+/* 复制按钮状态 */
 .code-copy-btn.copied {
   color: #4ade80 !important;
   border-color: rgba(74,222,128,0.35);
@@ -2141,7 +2175,41 @@ ul, ol {
 }
 .code-copy-btn.copied .copy-icon { display: none; }
 .code-copy-btn.copied .check-icon { display: inline-block !important; }
-.code-copy-btn.copied .copy-text { content: 'Copied!'; }
+
+/* ====== 底部"查看更多"按钮 ====== */
+.code-expand-bar {
+  position: relative;
+  height: 40px;
+  margin-top: -36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  /* 渐变遮罩衔接代码块 */
+  background: linear-gradient(transparent, #282c34 30%);
+  border-radius: 0 0 8px 8px;
+}
+
+.code-expand-bar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 16px;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1.4;
+  margin-top: 10px;
+}
+.code-expand-bar button:hover {
+  color: rgba(255,255,255,0.95);
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.35);
+}
 
 /* 行内代码（非代码块）保持主题色 */
 .post-content :not(pre) > code {

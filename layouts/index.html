@@ -11,8 +11,10 @@
     <article class="article-card{{ if .Params.sticky }} is-sticky{{ end }}{{ if .Params.recommend }} is-recommend{{ end }}">
       <a href="{{ .Permalink }}" class="article-link">
         <div class="article-image">
-          {{ if or .Params.featured_image .Params.image }}
-            <img src="{{ .Params.featured_image | default .Params.image }}" alt="{{ .Title }}" loading="lazy">
+          {{/* 优先级：featured_image > image > 默认封面 > 占位图标 */}}
+          {{ $cover := .Params.featured_image | default .Params.image | default $.Site.Params.article.defaultFeaturedImage }}
+          {{ with $cover }}
+            <img src="{{ . }}" alt="{{ $.Title }}" loading="lazy" class="{{ if eq $cover $.Site.Params.article.defaultFeaturedImage }}default-cover{{ end }}">
           {{ else }}
             <div class="article-image-placeholder">
               <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">

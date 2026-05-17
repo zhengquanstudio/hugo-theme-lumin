@@ -74,12 +74,6 @@
     </div>
     {{ end }}
   </header>
-  
-  {{ with .Params.featured_image }}
-  <div class="post-featured-image">
-    <img src="{{ . }}" alt="{{ $.Title }}" loading="lazy">
-  </div>
-  {{ end }}
 
   <div class="post-content">
     {{ .Content }}
