@@ -16,12 +16,13 @@
           {{ $icon := "" }}
           {{ if eq .Identifier "home" }}{{ $icon = "🏠" }}
           {{ else if eq .Identifier "archives" }}{{ $icon = "📅" }}
-          {{ else if eq .Identifier "categories" }}{{ $icon = "📂" }}
+          {{ else if eq .Identifier "categories" }}{{ $icon = "🗂️" }}
           {{ else if eq .Identifier "tags" }}{{ $icon = "🏷️" }}
           {{ else if eq .Identifier "gallery" }}{{ $icon = "📷" }}
           {{ else if eq .Identifier "movies" }}{{ $icon = "🎬" }}
           {{ else if eq .Identifier "music" }}{{ $icon = "🎵" }}
           {{ else if eq .Identifier "diary" }}{{ $icon = "📔" }}
+          {{ else if eq .Identifier "entertainment" }}{{ $icon = "🎪" }}
           {{ else if eq .Identifier "topics" }}{{ $icon = "🛠️" }}
           {{ else if eq .Identifier "friends" }}{{ $icon = "🤝" }}
           {{ else if eq .Identifier "guestbook" }}{{ $icon = "💬" }}
@@ -37,10 +38,47 @@
             </a>
             <ul class="dropdown-menu">
               {{ range $.Site.Taxonomies.categories }}
-              {{/* 从 categoryLabels 获取中文显示名，无则用原标题 */}}
-              {{ $label := index $.Site.Params.categoryLabels .Page.Title | default .Page.Title }}
+              {{/* 从 categoryLabels 获取中文显示名 */}}
+              {{ $label := index $.Site.Params.categoryLabels (string .Page.Title) | default .Page.Title }}
+              {{ $catSlug := "" }}
+              {{ range $k, $v := $.Site.Params.categoryLabels }}
+                {{ if eq $v $label }}{{ $catSlug = $k }}{{ end }}
+              {{ end }}
+              {{ $catIcon := "" }}
+              {{ if eq $catSlug "life" }}{{ $catIcon = "✏️" }}
+              {{ else if eq $catSlug "tech" }}{{ $catIcon = "💻" }}
+              {{ else if eq $catSlug "smart" }}{{ $catIcon = "🏠" }}
+              {{ else if eq $catSlug "game" }}{{ $catIcon = "🕹️" }}
+              {{ else if eq $catSlug "share" }}{{ $catIcon = "📦" }}
+              {{ else if eq $catSlug "code" }}{{ $catIcon = "⌨️" }}
+              {{ else }}{{ $catIcon = "📁" }}
+              {{ end }}
               <li class="dropdown-item">
-                <a href="{{ .Page.Permalink }}" class="dropdown-link">{{ $label }}</a>
+                <a href="{{ .Page.Permalink }}" class="dropdown-link">
+                  <span style="font-size:0.85rem;">{{ $catIcon | safeHTML }}</span>{{ $label }}
+                </a>
+              </li>
+              {{ end }}
+            </ul>
+          </li>
+          {{ else if and (eq .Identifier "entertainment") .Children }}
+          <!-- 娱乐下拉菜单 -->
+          <li class="nav-item nav-item-dropdown">
+            <a href="javascript:void(0)" class="nav-link nav-link-dropdown">
+              <span class="nav-icon">{{ $icon | safeHTML }}</span>{{ .Name }}
+              <svg class="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </a>
+            <ul class="dropdown-menu">
+              {{ range .Children }}
+              {{ $subIcon := "" }}
+              {{ if eq .Identifier "gallery" }}{{ $subIcon = "📷" }}
+              {{ else if eq .Identifier "movies" }}{{ $subIcon = "🎬" }}
+              {{ else if eq .Identifier "music" }}{{ $subIcon = "🎵" }}
+              {{ end }}
+              <li class="dropdown-item">
+                <a href="{{ .URL }}" class="dropdown-link">
+                  <span style="font-size:0.85rem;margin-right:4px;">{{ $subIcon | safeHTML }}</span>{{ .Name }}
+                </a>
               </li>
               {{ end }}
             </ul>
@@ -132,6 +170,7 @@
         {{ else if eq .Identifier "movies" }}{{ $icon = "🎬" }}
         {{ else if eq .Identifier "music" }}{{ $icon = "🎵" }}
         {{ else if eq .Identifier "diary" }}{{ $icon = "📔" }}
+        {{ else if eq .Identifier "entertainment" }}{{ $icon = "🎪" }}
         {{ else if eq .Identifier "topics" }}{{ $icon = "🛠️" }}
         {{ else if eq .Identifier "friends" }}{{ $icon = "🤝" }}
         {{ else if eq .Identifier "guestbook" }}{{ $icon = "💬" }}
@@ -147,9 +186,39 @@
           </div>
           <ul class="mobile-dropdown-menu">
             {{ range $.Site.Taxonomies.categories }}
-            {{ $label := index $.Site.Params.categoryLabels .Page.Title }}
-            {{ if not $label }}{{ $label = .Page.Title }}{{ end }}
-            <li><a href="{{ .Page.Permalink }}" class="mobile-nav-link sub-item">{{ $label }}</a></li>
+            {{ $label := index $.Site.Params.categoryLabels (string .Page.Title) | default .Page.Title }}
+            {{ $catSlug := "" }}
+            {{ range $k, $v := $.Site.Params.categoryLabels }}
+              {{ if eq $v $label }}{{ $catSlug = $k }}{{ end }}
+            {{ end }}
+            {{ $catIcon := "" }}
+            {{ if eq $catSlug "life" }}{{ $catIcon = "✏️" }}
+            {{ else if eq $catSlug "tech" }}{{ $catIcon = "💻" }}
+            {{ else if eq $catSlug "smart" }}{{ $catIcon = "🏠" }}
+            {{ else if eq $catSlug "game" }}{{ $catIcon = "🕹️" }}
+            {{ else if eq $catSlug "share" }}{{ $catIcon = "📦" }}
+            {{ else if eq $catSlug "code" }}{{ $catIcon = "⌨️" }}
+            {{ else }}{{ $catIcon = "📁" }}
+            {{ end }}
+            <li><a href="{{ .Page.Permalink }}" class="mobile-nav-link sub-item"><span style="margin-right:4px;">{{ $catIcon | safeHTML }}</span>{{ $label }}</a></li>
+            {{ end }}
+          </ul>
+        </li>
+        {{ else if and (eq .Identifier "entertainment") .Children }}
+        <!-- 移动端娱乐折叠列表 -->
+        <li class="mobile-nav-item">
+          <div class="mobile-nav-link mobile-nav-toggle">
+            <span class="nav-icon">{{ $icon | safeHTML }}</span>{{ .Name }}
+            <svg class="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <ul class="mobile-dropdown-menu">
+            {{ range .Children }}
+            {{ $subIcon := "" }}
+            {{ if eq .Identifier "gallery" }}{{ $subIcon = "📷" }}
+            {{ else if eq .Identifier "movies" }}{{ $subIcon = "🎬" }}
+            {{ else if eq .Identifier "music" }}{{ $subIcon = "🎵" }}
+            {{ end }}
+            <li><a href="{{ .URL }}" class="mobile-nav-link sub-item"><span style="margin-right:4px;">{{ $subIcon | safeHTML }}</span>{{ .Name }}</a></li>
             {{ end }}
           </ul>
         </li>
