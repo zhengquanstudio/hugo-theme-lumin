@@ -19,7 +19,7 @@
 {{ $daysRunning := int (math.Round (div (float $diffSec) 86400)) }}
 {{ if lt $daysRunning 0 }}{{ $daysRunning = 0 }}{{ end }}
 
-<!-- Font Awesome 已在 baseof.html 全局加载 -->
+
 <!-- Chart.js (带 CDN fallback) -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
   onerror="var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/chart.js/4.4.0/chart.umd.min.js';document.head.appendChild(s);"></script>

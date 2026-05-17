@@ -1,5 +1,7 @@
 {{ define "main" }}
 {{/* 面包屑导航 */}}
+{{ $pageIcons := dict "about" "fa-user-circle" "guestbook" "fa-comment-dots" "archives" "fa-box-archive" "movies" "fa-film" "music" "fa-music" }}
+{{ $currentIcon := index $pageIcons .Page.File.TranslationBaseName | default "" }}
 <nav class="breadcrumb" aria-label="面包屑导航">
   <ol class="breadcrumb-list">
     <li class="breadcrumb-item"><a href="{{ .Site.BaseURL }}"><i class="fas fa-home" style="font-size:0.9em;margin-right:2px;"></i> 首页</a></li>
@@ -7,7 +9,8 @@
       {{ $catSlug := index . 0 }}
       <li class="breadcrumb-item"><a href="{{ "categories" | relURL }}/{{ $catSlug | urlize }}/"><i class="fas fa-folder-open" style="font-size:0.85em;margin-right:3px;"></i>{{ partial "category-display-name.html" (dict "Site" $.Site "Slug" $catSlug) }}</a></li>
     {{ end }}
-    <li class="breadcrumb-item active" aria-current="page">{{ .Title }}</li>
+    <li class="breadcrumb-item active" aria-current="page">
+      {{ if $currentIcon }}<i class="fas {{ $currentIcon }}" style="font-size:0.85em;margin-right:4px;opacity:0.8;"></i>{{ end }}{{ .Title }}</li>
   </ol>
 </nav>
 
@@ -86,6 +89,18 @@
     </div>
     {{ end }}
   </header>
+
+  <!-- 文章工具栏 -->
+  <div class="post-toolbar" role="toolbar" aria-label="文章操作">
+    <button type="button" id="btn-export-pdf" class="post-tool-btn" title="导出为PDF">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span>导出PDF</span>
+    </button>
+    <button type="button" id="btn-print-article" class="post-tool-btn" title="打印文章">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      <span>打印</span>
+    </button>
+  </div>
 
   <div class="post-content">
     {{ .Content }}

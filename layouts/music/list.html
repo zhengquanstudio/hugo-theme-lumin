@@ -9,7 +9,6 @@
 {{$netease := $musicConfig.netease}}
 {{$kugou := $musicConfig.kugou}}
 
-<!-- Font Awesome 已在 baseof.html 全局加载 -->
 <!-- APlayer CSS (带 CDN fallback) -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.1/dist/APlayer.min.css"
   onerror="this.onerror=null;this.href='https://unpkg.com/aplayer@1.10.1/dist/APlayer.min.css'">
@@ -282,7 +281,7 @@ transition:box-shadow .5s ease;
     <div class="vinyl-area">
       <div class="tonearm" id="tonearm"></div>
       <div class="vinyl-disc" id="vinyl-div">
-        <div class="vinyl-cover"><img id="cover-img" src="https://picsum.photos/300/300?random=1" alt="cover"></div>
+        <div class="vinyl-cover"><img id="cover-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%2322c55e'/%3E%3Cstop offset='100%25' style='stop-color:%2316a34a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='url(%23g)' width='300' height='300' rx='150'/%3E%3Ctext x='150' y='130' text-anchor='middle' fill='white' font-size='60' opacity='0.9'%3E%26%239835%3C/text%3E%3Ctext x='150' y='180' text-anchor='middle' fill='white' font-size='18' opacity='0.7'%3EMusic Player%3C/text%3E%3C/svg%3E" alt="album cover" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 300 300%22%3E%3Crect fill=%22%23333%22 width=%22300%22 height=%22300%22 rx=%22150%22/%3E%3Ctext x=%22150%22 y=%22155%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2250%22%3E%E2%99%AB%3C/text%3E%3C/svg%3E'"></div>
         <div class="vinyl-center"></div>
       </div>
     </div>
@@ -460,7 +459,7 @@ function updProg(){if(!ap||!ap.audio)return;var c=ap.audio.currentTime||0,d=ap.a
   document.getElementById('progress-fill').style.width=p+'%';document.getElementById('progress-handle').style.left=p+'%';
   document.getElementById('current-time').textContent=fmt(c);
   if(d>0){document.getElementById('total-time').textContent=fmt(d);if(playlist[currentIndex]&&playlist[currentIndex].dur!==d){playlist[currentIndex].dur=d;updPD(currentIndex,d)}}}
-function updateSongInfo(i){var s=playlist[i];if(!s)return;document.getElementById('song-name').textContent=s.name;document.getElementById('artist-name').textContent=s.artist;var img=document.getElementById('cover-img');if(img&&s.cover)img.src=s.cover}
+function updateSongInfo(i){var s=playlist[i];if(!s)return;document.getElementById('song-name').textContent=s.name;document.getElementById('artist-name').textContent=s.artist;var img=document.getElementById('cover-img');if(img){if(s.cover)img.src=s.cover;else img.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 300 300\'%3E%3Cdefs%3E%3ClinearGradient id=\'g2\' x1=\'0%25\' y1=\'0%25\' x2=\'100%25\' y2=\'100%25\'%3E%3Cstop offset=\'0%25\' style=\'stop-color:%2322c55e\'/%3E%3Cstop offset=\'100%25\' style=\'stop-color:%2316a34a\'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill=\'url(%23g2)\' width=\'300\' height=\'300\' rx=\'150\'/%3E%3Ctext x=\'150\' y=\'140\' text-anchor=\'middle\' fill=\'white\' font-size=\'50\' opacity=\'0.9\'%3E%E2%99%AB%3C/text%3E%3Ctext x=\'150\' y=\'180\' text-anchor=\'middle\' fill=\'white\' font-size=\'16\' opacity=\'0.7\'%3ENo Cover%3C/text%3E%3C/svg%3E'}}
 function updPD(idx,dur){var rows=document.querySelectorAll('#playlist-body tr');if(rows[idx]){var tc=rows[idx].querySelector('.col-time');if(tc)tc.textContent=fmt(dur)}}
 function startV(){document.getElementById('vinyl-div').classList.add('playing');document.getElementById('tonearm').classList.add('playing')}
 function stopV(){document.getElementById('vinyl-div').classList.remove('playing');document.getElementById('tonearm').classList.remove('playing')}

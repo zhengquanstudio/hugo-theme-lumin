@@ -384,34 +384,15 @@
       if (!el) return;
       this.fetchIP(el);
     },
+    TIMEOUT: 8000,
     fetchIP: function(el) {
       var self = this;
+      // 主API: ip-api.com (国内友好, CORS支持)
+      var controller = new AbortController();
+      var timer = setTimeout(function() { controller.abort(); }, this.TIMEOUT);
       try {
-        fetch('https://ipapi.co/json/')
-          .then(function(res) { return res.json(); })
-          .then(function(data) {
-            if (data.ip) {
-              var city = data.city || '';
-              var region = data.region || '';
-              var country = data.country_name || data.country || '';
-              var locArr = [country, region, city].filter(Boolean);
-              var locationStr = locArr.length > 0 ? '来自：' + locArr.join(' · ') : '';
-              el.innerHTML =
-                '<div class="visitor-welcome">欢迎访问我的博客</div>' +
-                '<div class="visitor-ip">' + data.ip + '</div>' +
-                '<div class="visitor-location">' + locationStr + '</div>';
-            } else {
-              self.showError(el);
-            }
-          })
-          .catch(function() { self.fallback(el); });
-      } catch(e) { self.fallback(el); }
-    },
-    fallback: function(el) {
-      var self = this;
-      try {
-        fetch('http://ip-api.com/json/?lang=zh-CN', { mode: 'cors' })
-          .then(function(res) { return res.json(); })
+        fetch('https://ip-api.com/json/?lang=zh-CN', { signal: controller.signal })
+          .then(function(res) { clearTimeout(timer); return res.json(); })
           .then(function(data) {
             if (data.status === 'success') {
               var city = data.city || '';
@@ -425,11 +406,37 @@
                 '<div class="visitor-ip">' + data.query + '</div>' +
                 '<div class="visitor-location">' + locationStr + '</div>';
             } else {
+              self.fallback2(el);
+            }
+          })
+          .catch(function(err) { clearTimeout(timer); console.warn('[Visitor] ip-api失败:', err.message || err); self.fallback2(el); });
+      } catch(e) { clearTimeout(timer); self.fallback2(el); }
+    },
+    fallback2: function(el) {
+      var self = this;
+      var controller = new AbortController();
+      var timer = setTimeout(function() { controller.abort(); }, 6000);
+      try {
+        fetch('https://api.ip.sb/geoip', { signal: controller.signal })
+          .then(function(res) { clearTimeout(timer); if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+          .then(function(data) {
+            if (data.ip) {
+              var city = data.city || '';
+              var region = data.region || '';
+              var country = data.country_name || data.country || '';
+              var isp = data.asn_organization || data.org || '';
+              var locArr = [country, region, city, isp].filter(Boolean);
+              var locationStr = locArr.length > 0 ? '来自：' + locArr.join(' · ') : '';
+              el.innerHTML =
+                '<div class="visitor-welcome">欢迎访问我的博客</div>' +
+                '<div class="visitor-ip">' + data.ip + '</div>' +
+                '<div class="visitor-location">' + locationStr + '</div>';
+            } else {
               self.showError(el);
             }
           })
-          .catch(function() { self.showError(el); });
-      } catch(e) { self.showError(el); }
+          .catch(function(err) { clearTimeout(timer); console.warn('[Visitor] ip.sb失败:', err.message || err); self.showError(el); });
+      } catch(e) { clearTimeout(timer); self.showError(el); }
     },
     showError: function(el) {
       el.innerHTML =
@@ -875,7 +882,7 @@
         copyBtn.innerHTML =
           '<svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
           '<svg class="check-icon" style="display:none" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>' +
-          '<span class="copy-text">Copy</span>';
+          '<span class="copy-text">复制</span>';
 
         toolbar.appendChild(toggleBtn);
         toolbar.appendChild(copyBtn);
@@ -1223,5 +1230,150 @@
     ReadingProgress.init();
     FriendLinkCheck.init();
   });
+
+  // PWA - 安装提示（beforeinstallprompt 事件）
+  // ==========================================
+  var PWAInstall = {
+    deferredPrompt: null,
+    dismissed: false,
+
+    init: function() {
+      var self = this;
+      window.addEventListener('beforeinstallprompt', function(e) {
+        e.preventDefault();
+        self.deferredPrompt = e;
+
+        if (!sessionStorage.getItem('pwa-dismissed')) {
+          setTimeout(self.showPrompt.bind(self), 3000);
+        }
+      });
+
+      window.addEventListener('appinstalled', function() {
+        self.deferredPrompt = null;
+        var el = document.querySelector('.pwa-install-prompt');
+        if (el) el.remove();
+        console.log('[PWA] 已安装到主屏');
+      });
+    },
+
+    showPrompt: function() {
+      if (this.dismissed || !this.deferredPrompt || document.querySelector('.pwa-install-prompt')) return;
+
+      var banner = document.createElement('div');
+      banner.className = 'pwa-install-prompt';
+      banner.innerHTML =
+        '<img class="pwa-icon" src="' + (document.querySelector('link[rel="apple-touch-icon"]')?.href || '/apple-touch-icon.png') + '" alt="">' +
+        '<div class="pwa-text"><strong>添加到主屏</strong><small>离线访问，更佳体验</small></div>' +
+        '<button class="btn-accept">安装</button>' +
+        '<button class="btn-dismiss">稍后</button>';
+
+      banner.querySelector('.btn-accept').addEventListener('click', this.install.bind(this));
+      banner.querySelector('.btn-dismiss').addEventListener('click', this.dismiss.bind(this));
+
+      document.body.appendChild(banner);
+    },
+
+    install: function() {
+      var prompt = this.deferredPrompt;
+      if (prompt && prompt.prompt) {
+        prompt.prompt();
+        prompt.userChoice.then(function(choiceResult) {
+          console.log('[PWA] 用户选择:', choiceResult.outcome);
+          document.querySelector('.pwa-install-prompt')?.remove();
+        });
+      }
+    },
+
+    dismiss: function() {
+      this.dismissed = true;
+      sessionStorage.setItem('pwa-dismissed', '1');
+      document.querySelector('.pwa-install-prompt')?.remove();
+    }
+  };
+
+  PWAInstall.init();
+
+  // PDF 导出 & 打印（仅文章页）
+  // ==========================================
+  var PDFExport = {
+    init: function() {
+      var self = this;
+      var pdfBtn = document.getElementById('btn-export-pdf');
+      var printBtn = document.getElementById('btn-print-article');
+
+      if (pdfBtn) pdfBtn.addEventListener('click', self.exportPDF.bind(self));
+      if (printBtn) printBtn.addEventListener('click', self.print.bind(self));
+    },
+
+    // 一键导出 PDF
+    exportPDF: function() {
+      var btn = document.getElementById('btn-export-pdf');
+      if (!btn || btn.classList.contains('loading')) return;
+
+      btn.classList.add('loading');
+
+      // 动态加载 html2pdf.js
+      this.loadScript(
+        'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js',
+        function() {
+          var element = document.querySelector('.single-post');
+          if (!element) { btn.classList.remove('loading'); return; }
+
+          var title = document.querySelector('.post-title')?.textContent || 'article';
+
+          var opt = {
+            margin: [12, 16, 12, 16],
+            filename: title.replace(/[\\/:*?"<>|]/g, '_') + '.pdf',
+            image: { type: 'jpeg', quality: 0.95 },
+            html2canvas: {
+              scale: 2,
+              useCORS: true,
+              letterRendering: true,
+              logging: false,
+              backgroundColor: '#ffffff'
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+          };
+
+          // 隐藏工具栏避免出现在 PDF 中
+          var toolbar = document.querySelector('.post-toolbar');
+          if (toolbar) toolbar.style.display = 'none';
+
+          html2pdf().set(opt).from(element).save().then(function() {
+            if (toolbar) toolbar.style.display = '';
+            btn.classList.remove('loading');
+          }).catch(function(err) {
+            console.error('[PDF] 导出失败:', err);
+            if (toolbar) toolbar.style.display = '';
+            btn.classList.remove('loading');
+            alert('PDF 导出失败，请重试或使用打印功能');
+          });
+        }
+      );
+    },
+
+    // 打印文章
+    print: function() {
+      window.print();
+    },
+
+    // 动态加载脚本
+    loadScript: function(src, callback) {
+      if (window.html2pdf && window.html2pdf().set) return callback();
+      var s = document.createElement('script');
+      s.src = s.dataset.fallbackSrc || src;
+      s.onerror = function() {
+        var f = document.createElement('script');
+        f.src = src.replace('cdnjs', 'unpkg').replace('@0.10.1', '@0.10.1/dist');
+        f.onload = callback;
+        document.head.appendChild(f);
+      };
+      s.onload = callback;
+      document.head.appendChild(s);
+    }
+  };
+
+  PDFExport.init();
 
 })();

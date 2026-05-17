@@ -184,12 +184,7 @@ function initSingleComment(momentId, path, callback) {
 </script>
 {{ end }}
 
-<!-- Fancybox 灯箱（图片预览，带 CDN fallback） -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5/dist/fancybox/fancybox.css"
-  onerror="this.onerror=null;this.href='https://unpkg.com/@fancyapps/ui@5/dist/fancybox/fancybox.css'">
-<noscript><link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@5/dist/fancybox/fancybox.css"></noscript>
-<script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5/dist/fancybox/fancybox.umd.js"
-  onerror="var s=document.createElement('script');s.src='https://unpkg.com/@fancyapps/ui@5/dist/fancybox/fancybox.umd.js';document.head.appendChild(s);"></script>
+{{ partial "fancybox.html" . }}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   Fancybox.bind('[data-fancybox]', {

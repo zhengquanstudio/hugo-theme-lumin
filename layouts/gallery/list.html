@@ -2,13 +2,7 @@
 {{ $sections := .Sections }}
 {{ $defaultAlbum := .Site.Params.gallery.defaultAlbum | default "life" }}
 
-<!-- Font Awesome 已在 baseof.html 全局加载 -->
-<!-- Fancybox 5 (带 CDN fallback) -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5/dist/fancybox/fancybox.css"
-  onerror="this.onerror=null;this.href='https://unpkg.com/@fancyapps/ui@5/dist/fancybox/fancybox.css'">
-<noscript><link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@5/dist/fancybox/fancybox.css"></noscript>
-<script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5/dist/fancybox/fancybox.umd.js"
-  onerror="var s=document.createElement('script');s.src='https://unpkg.com/@fancyapps/ui@5/dist/fancybox/fancybox.umd.js';document.head.appendChild(s);"></script>
+{{ partial "fancybox.html" . }}
 
 <style>
 /* ===== CSS 变量 ===== */

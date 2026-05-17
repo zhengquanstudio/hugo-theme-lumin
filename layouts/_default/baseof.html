@@ -2,8 +2,20 @@
 <html lang="{{ .Site.Language.Lang }}" data-theme="{{ .Site.Params.defaultTheme | default "light" }}">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="{{ .Site.Params.accentColor | default "#3b82f6" }}" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="{{ .Site.Params.accentColorDark | default "#1e1e2e" }}" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="{{ .Site.Title }}">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="msapplication-TileColor" content="{{ .Site.Params.accentColor | default "#3b82f6" }}">
+  <meta name="msapplication-tap-highlight" content="no">
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json">
   
   {{ $title := .Title }}
   {{ if .IsHome }}
@@ -13,22 +25,125 @@
   {{ end }}
   <title>{{ $title }}</title>
   
+  <!-- Canonical URL -->
+  <link rel="canonical" href="{{ .Permalink }}">
+  
+  <!-- Meta -->
   <meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Params.description }}{{ end }}">
   <meta name="keywords" content="{{ if .Keywords }}{{ delimit .Keywords ", " }}{{ else }}{{ delimit .Site.Params.keywords ", " }}{{ end }}">
   <meta name="author" content="{{ .Site.Params.author }}">
+  <meta name="robots" content="{{ with .Params.robots }}{{ . }}{{ else }}index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1{{ end }}">
   
+  {{/* OG Image: 优先使用 front matter → 其次站点默认 → 最后空 */}}
+  {{ $ogImage := "" }}
+  {{ with .Params.featured_image }}
+    {{ $ogImage = . | absURL }}
+  {{ else with .Site.Params.defaultImage }}
+    {{ $ogImage = . | absURL }}
+  {{ end }}
+
   <!-- Open Graph -->
+  <meta property="og:type" content="{{ if .IsPage }}article{{ else }}website{{ end }}">
   <meta property="og:title" content="{{ $title }}">
   <meta property="og:description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Params.description }}{{ end }}">
-  <meta property="og:type" content="{{ if .IsPage }}article{{ else }}website{{ end }}">
   <meta property="og:url" content="{{ .Permalink }}">
-  {{ with .Params.featured_image }}<meta property="og:image" content="{{ . | absURL }}">{{ end }}
+  <meta property="og:site_name" content="{{ .Site.Title }}">
+  <meta property="og:locale" content="{{ .Site.Language.Lang | replace "-" "_" }}">
+  {{ with $ogImage }}<meta property="og:image" content="{{ . }}">{{ end }}
+  {{ if and .IsPage .Date }}<meta property="article:published_time" content="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">{{ end }}
+  {{ if and .IsPage .Lastmod (ne .Lastmod .Date) }}<meta property="article:modified_time" content="{{ .Lastmod.Format "2006-01-02T15:04:05Z07:00" }}">{{ end }}
+  {{ with .Params.tags }}<meta property="article:tag" content="{{ delimit . ", " }}">{{ end }}
   
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{{ $title }}">
   <meta name="twitter:description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Params.description }}{{ end }}">
-  {{ with .Params.featured_image }}<meta name="twitter:image" content="{{ . | absURL }}">{{ end }}
+  {{ with $ogImage }}<meta name="twitter:image" content="{{ . }}">{{ end }}
+  
+  {{/* ====== JSON-LD 结构化数据 ====== */}}
+  {{/* 1) WebSite - 首页 */}}
+  {{ if .IsHome }}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": {{ .Site.Title | jsonify }},
+    "url": {{ .Site.BaseURL | jsonify }},
+    {{ with .Site.Params.description }}"description": {{ . | jsonify }},{{ end }}
+    "inLanguage": {{ .Site.Language.Lang | jsonify }},
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {{ printf "%ssearch?q={search_term_string}" .Site.BaseURL | jsonify }},
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+  {{ end }}
+
+  {{/* 2) BreadcrumbList - 所有非首页页面 */}}
+  {{ if not .IsHome }}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "首页", "item": {{ .Site.BaseURL | jsonify }} },
+      {{ $pos := 2 }}
+      {{ if and (eq .Kind "section") (ne .Section "") }}
+      { "@type": "ListItem", "position": {{ $pos }}, "name": {{ .Section | title | jsonify }}, "item": {{ (printf "/%s/" .Section) | absURL | jsonify }} }
+      {{ else if eq .Kind "taxonomy" }}
+      { "@type": "ListItem", "position": {{ $pos }}, "name": {{ .Data.Plural | title | jsonify }}, "item": {{ "/tags/" | absURL | jsonify }} },
+        { "@type": "ListItem", "position": {{ add $pos 1 }}, "name": {{ .Title | jsonify }}, "item": {{ .Permalink | jsonify }} }
+      {{ else if eq .Type "term" }}
+      { "@type": "ListItem", "position": {{ $pos }}, "name": {{ $.Data.Singular | title | jsonify }}, "item": {{ (printf "/%s/" .Section) | absURL | jsonify }} },
+        { "@type": "ListItem", "position": {{ add $pos 1 }}, "name": {{ .Title | jsonify }}, "item": {{ .Permalink | jsonify }} }
+      {{ else if and .IsPage .Section }}
+      {{ if not (eq .Layout "archives") }}
+        { "@type": "ListItem", "position": {{ $pos }}, "name": {{ .Section | title | jsonify }}, "item": {{ (printf "/%s/" .Section) | absURL | jsonify }} },
+        { "@type": "ListItem", "position": {{ add $pos 1 }}, "name": {{ .Title | jsonify }}, "item": {{ .Permalink | jsonify }} }
+      {{ else }}
+        { "@type": "ListItem", "position": {{ $pos }}, "name": {{ .Title | jsonify }}, "item": {{ .Permalink | jsonify }} }
+      {{ end }}
+      {{ else }}
+      { "@type": "ListItem", "position": {{ $pos }}, "name": {{ .Title | jsonify }}, "item": {{ .Permalink | jsonify }} }
+      {{ end }}
+    ]
+  }
+  </script>
+  {{ end }}
+
+  {{/* 3) BlogPosting / Article - 文章页（增强版）*/}}
+  {{ if and .IsPage (ne .Layout "search") (ne .Layout "archives") (not .IsHome) }}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "{{ if eq .Kind "page" }}WebPage{{ else }}BlogPosting{{ end }}",
+    "headline": {{ .Title | jsonify }},
+    {{ with .Description }}"description": {{ . | jsonify }},{{ end }}
+    "url": {{ .Permalink | jsonify }},
+    {{ with $ogImage }}"image": {{ . | jsonify }},{{ end }}
+    "datePublished": {{ .Date.Format "2006-01-02T15:04:05Z07:00" | jsonify }},
+    "dateModified": {{ .Lastmod.Format "2006-01-02T15:04:05Z07:00" | jsonify }},
+    {{ if .WordCount }}"wordCount": {{ .WordCount }},{{ end }}
+    {{ with .Params.keywords }}"keywords": [{{ range $i, $k := . }}{{ if $i }}, {{ end }}{{ $k | jsonify }}{{ end }}],{{ end }}
+    {{ with .Params.tags }}"keywords": [{{ range $i, $t := . }}{{ if $i }}, {{ end }}{{ $t | jsonify }}{{ end }}],{{ end }}
+    "author": {
+      "@type": "Person",
+      "name": {{ .Site.Params.author | jsonify }}
+      {{ with .Site.Params.socialLinks.github }}, "sameAs": [{{ . | jsonify }}]{{ end }}
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": {{ .Site.Title | jsonify }},
+      {{ with $ogImage }}"logo": { "@type": "ImageObject", "url": {{ . | jsonify }} },{{ end }}
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": {{ .Permalink | jsonify }}
+    }
+  }
+  </script>
+  {{ end }}
   
   <!-- Favicon -->
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
@@ -140,5 +255,31 @@
     LA.init({id:"{{ . }}",ck:"{{ . }}"});
   </script>
   {{ end }}
+
+  <!-- PWA: 注册 Service Worker（离线支持） -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js')
+          .then(function(reg) {
+            console.log('[PWA] Service Worker 注册成功:', reg.scope);
+            reg.addEventListener('updatefound', function() {
+              const newWorker = reg.installing;
+              newWorker.addEventListener('statechange', function() {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // 新版本可用，提示用户刷新
+                  console.log('[PWA] 新版本可用，可提示用户刷新');
+                }
+              });
+            });
+          })
+          .catch(function(err) { console.warn('[PWA] SW 注册失败:', err); });
+      });
+
+      // 监听离线/在线状态
+      window.addEventListener('online', function() { document.body.classList.remove('is-offline'); });
+      window.addEventListener('offline', function() { document.body.classList.add('is-offline'); });
+    }
+  </script>
 </body>
 </html>

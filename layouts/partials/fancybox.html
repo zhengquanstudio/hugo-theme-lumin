@@ -1,0 +1,12 @@
+{{/* Fancybox 5 灯箱组件（全局共享，JS 层防重复） */}}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5/dist/fancybox/fancybox.css"
+  onerror="this.onerror=null;this.href='https://unpkg.com/@fancyapps/ui@5/dist/fancybox/fancybox.css'">
+<noscript><link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@5/dist/fancybox/fancybox.css"></noscript>
+<script>
+if (!window.__FANCYBOX_LOADED__) {
+  window.__FANCYBOX_LOADED__=true;
+  var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@fancyapps/ui@5/dist/fancybox/fancybox.umd.js';
+  s.onerror=function(){var f=document.createElement('script');f.src='https://unpkg.com/@fancyapps/ui@5/dist/fancybox/fancybox.umd.js';document.head.appendChild(f);};
+  document.head.appendChild(s);
+}
+</script>

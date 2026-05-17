@@ -11,7 +11,9 @@
   </h4>
   <div class="recent-posts-card">
     {{ $recentCount := .Site.Params.widgets.recentPostsCount | default 6 }}
+    {{ $mainSections := .Site.Params.mainSections | default (slice "posts") }}
     {{ $posts := where .Site.RegularPages ".Params.hidden" "!=" true }}
+    {{ $posts = where $posts "Section" "in" $mainSections }}
     {{ $idx := 0 }}
     {{ range first $recentCount ($posts.ByDate.Reverse) }}
     <a href="{{ .Permalink }}" class="rp-item">
@@ -20,7 +22,9 @@
         <span class="rp-title">{{ .Title }}</span>
         <span class="rp-meta">
           {{ with .Params.categories }}
-          <span class="rp-cat">{{ index . 0 }}</span>
+          {{- $catKey := index . 0 -}}
+          {{- $catLabel := index $.Site.Params.categoryLabels $catKey -}}
+          <span class="rp-cat">{{ with $catLabel }}{{ . }}{{ else }}{{ $catKey }}{{ end }}</span>
           {{ end }}
           <time class="rp-date">{{ .Date.Format "01-02" }}</time>
         </span>

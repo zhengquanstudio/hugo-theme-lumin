@@ -1,0 +1,39 @@
+User-agent: *
+Allow: /
+{{/* 禁止爬取 Hugo 内部 /admin/ 路径（如果使用 CMS） */}}
+Disallow: /admin/
+Disallow: /.git/
+Disallow: /static/
+
+{{/* 允许所有静态资源 */}}
+Allow: /css/
+Allow: /js/
+Allow: /images/
+Allow: /fonts/
+Allow: /*.css$
+Allow: /*.js$
+Allow: /*.jpg$
+Allow: /*.png$
+Allow: /*.gif$
+Allow: /*.webp$
+Allow: /*.svg$
+
+{{/* Sitemap */}}
+Sitemap: {{ .Site.BaseURL }}sitemap.xml
+
+{{/* 针对百度爬虫特殊处理 */}}
+User-agent: Baiduspider
+Allow: /
+Crawl-delay: 1
+Sitemap: {{ .Site.BaseURL }}sitemap.xml
+
+{{/* 针对 Bing */}}
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+Sitemap: {{ .Site.BaseURL }}sitemap.xml
+
+{{/* Google 不需要 Crawl-delay */}}
+User-agent: Googlebot
+Allow: /
+Sitemap: {{ .Site.BaseURL }}sitemap.xml
