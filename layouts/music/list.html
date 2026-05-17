@@ -9,10 +9,10 @@
 {{$netease := $musicConfig.netease}}
 {{$kugou := $musicConfig.kugou}}
 
-<!-- Font Awesome -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<!-- APlayer -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.1/dist/APlayer.min.css">
+<!-- Font Awesome 已在 baseof.html 全局加载 -->
+<!-- APlayer CSS (带 CDN fallback) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.1/dist/APlayer.min.css"
+  onerror="this.onerror=null;this.href='https://unpkg.com/aplayer@1.10.1/dist/APlayer.min.css'">
 
 <style>
 /* ===== CSS 变量 & 暗黑模式 ===== */
@@ -336,11 +336,15 @@ transition:box-shadow .5s ease;
 
 <div id="aplayer-container"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/aplayer@1.10.1/dist/APlayer.min.js"></script>
+<!-- APlayer JS (带 CDN fallback) -->
+<script src="https://cdn.jsdelivr.net/npm/aplayer@1.10.1/dist/APlayer.min.js"
+  onerror="var s=document.createElement('script');s.src='https://unpkg.com/aplayer@1.10.1/dist/APlayer.min.js';document.head.appendChild(s);"></script>
 
 {{ if .Site.Params.comments.enable }}
 {{ if eq .Site.Params.comments.type "twikoo" }}
-<script src="https://cdn.jsdelivr.net/npm/twikoo@1.7.7/dist/twikoo.all.min.js"></script>
+<!-- Twikoo (带 CDN fallback) -->
+<script src="https://cdn.jsdelivr.net/npm/twikoo@1.7.7/dist/twikoo.all.min.js"
+  onerror="var s=document.createElement('script');s.src='https://unpkg.com/twikoo@1.7.7/dist/twikoo.all.min.js';document.head.appendChild(s);"></script>
 {{ end }}
 {{ end }}
 

@@ -96,7 +96,9 @@
 </div>
 
 {{ if .Site.Params.comments.enable }}
-<script src="https://cdn.jsdelivr.net/npm/twikoo@1.7.7/dist/twikoo.all.min.js"></script>
+<!-- Twikoo (带 CDN fallback) -->
+<script src="https://cdn.jsdelivr.net/npm/twikoo@1.7.7/dist/twikoo.all.min.js"
+  onerror="var s=document.createElement('script');s.src='https://unpkg.com/twikoo@1.7.7/dist/twikoo.all.min.js';document.head.appendChild(s);"></script>
 <script>
 // 存储已初始化的评论实例
 var initializedComments = {};
@@ -182,9 +184,12 @@ function initSingleComment(momentId, path, callback) {
 </script>
 {{ end }}
 
-<!-- Fancybox 灯箱（图片预览） -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5/dist/fancybox/fancybox.css">
-<script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5/dist/fancybox/fancybox.umd.js"></script>
+<!-- Fancybox 灯箱（图片预览，带 CDN fallback） -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5/dist/fancybox/fancybox.css"
+  onerror="this.onerror=null;this.href='https://unpkg.com/@fancyapps/ui@5/dist/fancybox/fancybox.css'">
+<noscript><link rel="stylesheet" href="https://unpkg.com/@fancyapps/ui@5/dist/fancybox/fancybox.css"></noscript>
+<script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5/dist/fancybox/fancybox.umd.js"
+  onerror="var s=document.createElement('script');s.src='https://unpkg.com/@fancyapps/ui@5/dist/fancybox/fancybox.umd.js';document.head.appendChild(s);"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   Fancybox.bind('[data-fancybox]', {

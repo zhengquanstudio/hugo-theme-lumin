@@ -1,5 +1,4 @@
-[
-{{- $pages := where .Site.RegularPages "Type" "in" (slice "post" "posts" "") }}
+[{{- $pages := where .Site.RegularPages "Section" "in" .Site.Params.mainSections }}
 {{- $total := len $pages }}
 {{- range $index, $page := $pages }}
 {

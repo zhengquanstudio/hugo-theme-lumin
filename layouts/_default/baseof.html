@@ -48,7 +48,14 @@
     {{ $customCSS := resources.Get "css/custom.css" | resources.Minify | resources.Fingerprint }}
     <link rel="stylesheet" href="{{ $customCSS.RelPermalink }}">
   {{ end }}
-  
+
+  <!-- Font Awesome (全局，带 CDN fallback) -->
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"
+    onerror="this.onerror=null;this.href='https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css'">
+
   {{ block "head" . }}{{ end }}
 
   <!-- Analytics (Google / Baidu / Clarity) -->
@@ -110,9 +117,10 @@
   {{ $mainJS := resources.Get "js/main.js" | resources.Fingerprint }}
   <script src="{{ $mainJS.RelPermalink }}" defer></script>
   
-  <!-- Busuanzi -->
+  <!-- Busuanzi (不蒜子访客统计，带错误降级) -->
   {{ if .Site.Params.statistics.busuanzi }}
-  <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
+    onerror="console.warn('[CDN] Busuanzi 加载失败，统计功能暂不可用')"></script>
   {{ end }}
   
   {{ block "scripts" . }}{{ end }}
