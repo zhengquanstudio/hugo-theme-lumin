@@ -1,0 +1,645 @@
+{{ define "main" }}
+<div class="moments-page" id="moments-page">
+  <!-- 页面头部 -->
+  <header class="moments-header">
+    <div class="mh-bg">
+      <div class="mh-circle mh-circle--1"></div>
+      <div class="mh-circle mh-circle--2"></div>
+      <div class="mh-circle mh-circle--3"></div>
+    </div>
+    <h1 class="mh-title">
+      <i class="fas fa-bolt"></i> 说说
+    </h1>
+    <p class="mh-subtitle">生活碎片，随手记录 ✨</p>
+  </header>
+
+  {{ $pages := where .Site.RegularPages "Section" "moments" }}
+  {{ $allMoments := $pages.ByDate.Reverse }}
+
+  <!-- 时间线容器 -->
+  <div class="moments-timeline" id="moments-timeline">
+
+    {{ if not $allMoments }}
+    <div class="moments-empty">
+      <i class="far fa-comment-dots"></i>
+      <p>还没有发布说说哦~</p>
+    </div>
+    {{ else }}
+      {{ range $idx, $m := $allMoments }}
+        {{/* 检查是否需要显示日期分组头 */}}
+        {{ $currentDate := $m.Date.Format "2006年01月02日 星期一" }}
+        {{ if or (eq $idx 0) (ne ($m.Date.Format "2006-01-02") ((index $allMoments (sub $idx 1)).Date.Format "2006-01-02")) }}
+        <div class="mt-date-group">
+          <span class="mt-date-line"></span>
+          <span class="mt-date-text">{{ $m.Date.Format "01月02日" }}<small>{{ $m.Date.Format "星期一" }}</small></span>
+          <span class="mt-date-line"></span>
+        </div>
+        {{ end }}
+
+        <!-- 单条说说卡片 -->
+        <article class="moment-card" data-id="{{ $idx }}">
+          <!-- 时间线圆点 -->
+          <div class="mt-dot"></div>
+
+          <div class="mc-body">
+            <!-- 内容区 -->
+            <div class="mc-content">{{ $m.Content | safeHTML }}</div>
+
+            <!-- 图片网格 -->
+            {{ with $m.Params.images }}
+              {{ $imgCount := len . }}
+              {{ if gt $imgCount 0 }}
+              <div class="mc-images mc-images--count{{ $imgCount }}">
+                {{ range . }}
+                <a href="{{ . }}" data-fancybox="moments-{{ $idx }}" data-caption="{{ $m.Title }}" class="mc-img-wrap">
+                  <img src="{{ . }}" alt="" loading="lazy" onerror="this.style.display='none'">
+                </a>
+                {{ end }}
+              </div>
+              {{ end }}
+            {{ end }}
+
+            <!-- 视频嵌入 -->
+            {{ with $m.Params.video }}
+            <div class="mc-video">
+              <iframe src="{{ . }}" scrolling="no" border="0" frameborder="0"
+                      allowfullscreen sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-presentation"
+                      loading="lazy"></iframe>
+            </div>
+            {{ end }}
+
+            <!-- 底部信息栏 -->
+            <div class="mc-footer">
+              <span class="mc-time"><i class="far fa-clock"></i>{{ $m.Date.Format "15:04" }}</span>
+              <span class="mc-comment-btn" data-moment-id="{{ $idx }}" data-moment-path="{{ $m.RelPermalink }}" onclick="toggleMomentComment(this)">
+                <i class="far fa-comment"></i>
+                <span class="mc-comment-text">评论</span>
+              </span>
+            </div>
+
+            <!-- 单条说说评论区（点击展开） -->
+            <div class="mc-comment-box" id="moment-comment-{{ $idx }}" style="display:none;">
+              <div class="moments-comments-section">
+                <div id="tcomment-{{ $idx }}"></div>
+              </div>
+            </div>
+          </div>
+        </article>
+      {{ end }}
+    {{ end }}
+  </div>
+
+  <!-- 底部装饰 -->
+  <div class="moments-bottom">
+    <p><i class="fas fa-heart"></i> 记录生活的每一个瞬间</p>
+  </div>
+</div>
+
+{{ if .Site.Params.comments.enable }}
+<script src="https://cdn.jsdelivr.net/npm/twikoo@1.7.7/dist/twikoo.all.min.js"></script>
+<script>
+// 存储已初始化的评论实例
+var initializedComments = {};
+
+document.addEventListener('DOMContentLoaded', function() {
+  // 预加载 Twikoo
+  if (typeof twikoo !== 'undefined') {
+    console.log('Twikoo loaded, ready for moments comments');
+  }
+});
+
+// 切换单条说说的评论区
+function toggleMomentComment(btn) {
+  var momentId = btn.getAttribute('data-moment-id');
+  var commentBox = document.getElementById('moment-comment-' + momentId);
+  var momentPath = btn.getAttribute('data-moment-path');
+
+  if (!commentBox) return;
+
+  // 切换显示状态
+  var isHidden = commentBox.style.display === 'none' || commentBox.style.display === '';
+
+  // 先隐藏所有其他评论框
+  document.querySelectorAll('.mc-comment-box').forEach(function(box) {
+    box.style.display = 'none';
+  });
+  // 重置所有按钮状态
+  document.querySelectorAll('.mc-comment-btn').forEach(function(b) {
+    b.classList.remove('active');
+  });
+
+  if (isHidden) {
+    // 显示当前评论框
+    commentBox.style.display = 'block';
+    btn.classList.add('active');
+
+    // 滚动到评论框
+    setTimeout(function() {
+      commentBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
+
+    // 如果该说说的评论还没初始化，则初始化
+    if (!initializedComments[momentId]) {
+      initSingleComment(momentId, momentPath, function() {
+        initializedComments[momentId] = true;
+      });
+    }
+  }
+}
+
+// 初始化单条说说的 Twikoo 评论
+function initSingleComment(momentId, path, callback) {
+  var el = document.getElementById('tcomment-' + momentId);
+  if (!el) return;
+
+  if (typeof twikoo !== 'undefined') {
+    twikoo.init({
+      envId: '{{ .Site.Params.comments.twikoo.envId }}',
+      el: el,
+      path: path  // 使用每条说说的唯一路径作为评论标识
+    });
+    if (callback) callback();
+  } else {
+    // 等待 Twikoo 加载完成
+    var checkCount = 0;
+    var checkInterval = setInterval(function() {
+      checkCount++;
+      if (typeof twikoo !== 'undefined') {
+        clearInterval(checkInterval);
+        twikoo.init({
+          envId: '{{ .Site.Params.comments.twikoo.envId }}',
+          el: el,
+          path: path
+        });
+        if (callback) callback();
+      } else if (checkCount > 20) {
+        clearInterval(checkInterval);
+        el.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px;">评论加载失败，请刷新重试</p>';
+      }
+    }, 300);
+  }
+}
+</script>
+{{ end }}
+
+<!-- Fancybox 灯箱（图片预览） -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5/dist/fancybox/fancybox.css">
+<script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5/dist/fancybox/fancybox.umd.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  Fancybox.bind('[data-fancybox]', {
+    Thumbs: { showOnStart: false },
+    Toolbar: { display: ['close'] }
+  });
+});
+</script>
+<style>
+/* ===== 说说页面 - 全局布局（复制音乐页面样式） ===== */
+.main-wrapper:has(#moments-page) .container{max-width:100%!important;padding-left:40px!important;padding-right:40px!important;}
+.main-wrapper:has(#moments-page) .layout-grid{grid-template-columns:1fr!important;max-width:1500px;margin:0 auto;}
+.main-wrapper:has(#moments-page) aside.sidebar,
+.main-wrapper:has(#moments-page) .post-toc-sidebar{display:none!important;}
+
+.moments-page{
+  max-width:1480px;margin:24px auto;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
+}
+[data-theme="dark"] .moments-page {
+  background: linear-gradient(180deg, rgba(15,23,42,.95) 0%, rgba(30,41,59,.9) 50%, rgba(15,23,42,.95) 100%);
+}
+
+/* ===== 头部（强化阴影+参考音乐页面样式） ===== */
+.moments-header {
+  position: relative;
+  padding: 60px 24px 48px;
+  text-align: center;
+  overflow: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px;
+  margin-bottom: 22px;
+  box-shadow:
+    0 8px 40px rgba(102,126,234,.25),
+    0 4px 12px rgba(118,75,162,.18),
+    0 0 0 1px rgba(139,92,246,.1);
+  border: 1px solid rgba(139,92,246,.15);
+}
+/* 径向渐变装饰光效 */
+.moments-header::before {
+  content: '';
+  position: absolute;
+  top: -60%;
+  left: -30%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 30% 40%, rgba(255,255,255,.08) 0%, transparent 55%);
+  pointer-events: none;
+}
+/* 大图标水印 */
+.moments-header::after {
+  content: '\f0e7';
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  position: absolute;
+  top: 50%;
+  right: 8%;
+  transform: translateY(-50%);
+  font-size: 120px;
+  color: rgba(255,255,255,.05);
+  pointer-events: none;
+}
+
+[data-theme="dark"] .moments-header {
+  background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%);
+  border-color: rgba(139,92,246,.2);
+  box-shadow:
+    0 8px 40px rgba(0,0,0,.4),
+    0 4px 12px rgba(124,58,237,.25),
+    0 0 0 1px rgba(139,92,246,.12);
+}
+
+.mh-bg { position: absolute; inset: 0; pointer-events: none; }
+.mh-circle {
+  position: absolute;
+  border-radius: 50%;
+  opacity: .12;
+  background: #fff;
+  animation: float 6s ease-in-out infinite alternate;
+}
+.mh-circle--1 { width: 120px; height: 120px; top: -20px; left: 10%; animation-delay: 0s; }
+.mh-circle--2 { width: 80px; height: 80px; top: 40%; right: 15%; animation-delay: -2s; }
+.mh-circle--3 { width: 160px; height: 160px; bottom: -40px; right: 25%; animation-delay: -4s; }
+
+@keyframes float {
+  from { transform: translateY(0) scale(1); }
+  to   { transform: translateY(-16px) scale(1.06); }
+}
+
+.mh-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 10px;
+  letter-spacing: -0.02em;
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 2px 12px rgba(0,0,0,.18);
+}
+.mh-title i { margin-right: 10px; font-size: 1.75rem; }
+
+.mh-subtitle {
+  color: rgba(255,255,255,.82);
+  font-size: 1rem;
+  margin: 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== 时间线容器（加宽） ===== */
+.moments-timeline {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 20px 48px;
+  position: relative;
+}
+
+/* ===== 日期分组 ===== */
+.mt-date-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 28px 0 18px;
+  padding-left: 36px;
+}
+
+.mt-date-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(148,163,184,.35), transparent);
+}
+
+.mt-date-text {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #64748b;
+  white-space: nowrap;
+  letter-spacing: .03em;
+}
+.mt-date-text small {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #94a3b8;
+  margin-top: 1px;
+}
+[data-theme="dark"] .mt-date-text { color: #94a3b8; }
+[data-theme="dark"] .mt-date-text small { color: #64748b; }
+
+/* ===== 时间线竖线 ===== */
+.moments-timeline::before {
+  content: '';
+  position: absolute;
+  left: 22px;
+  top: 56px;
+  bottom: 80px;
+  width: 2px;
+  background: linear-gradient(180deg, #c084fc, #e879f9, #38bdf8);
+  border-radius: 2px;
+  opacity: .45;
+}
+
+/* ===== 单条说说 ===== */
+.moment-card {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  position: relative;
+  padding-left: 44px;
+}
+
+.mt-dot {
+  flex-shrink: 0;
+  position: absolute;
+  left: 14px;
+  top: 18px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #a78bfa, #ec4899);
+  box-shadow: 0 0 0 4px rgba(168,139,250,.18), 0 2px 8px rgba(168,139,250,.3);
+  z-index: 2;
+  transition: transform .25s ease;
+}
+.moment-card:hover .mt-dot {
+  transform: scale(1.25);
+  box-shadow: 0 0 0 5px rgba(168,139,250,.22), 0 4px 12px rgba(168,139,250,.4);
+}
+
+.mc-body {
+  flex: 1;
+  min-width: 0;
+  background: #fff;
+  border-radius: 16px;
+  padding: 18px 20px 14px;
+  box-shadow: 0 1px 6px rgba(0,0,0,.05), 0 2px 16px rgba(0,0,0,.04);
+  border: 1px solid rgba(226,232,240,.7);
+  transition: all .3s cubic-bezier(.4,0,.2,1);
+}
+.mc-body:hover {
+  box-shadow: 0 4px 20px rgba(168,139,250,.12), 0 2px 8px rgba(0,0,0,.06);
+  border-color: rgba(167,139,250,.25);
+  transform: translateY(-2px);
+}
+[data-theme="dark"] .mc-body {
+  background: rgba(51,65,85,.55);
+  border-color: rgba(71,85,105,.35);
+}
+[data-theme="dark"] .mc-body:hover {
+  background: rgba(51,65,85,.72);
+  border-color: rgba(167,139,250,.2);
+  box-shadow: 0 4px 20px rgba(0,0,0,.3);
+}
+
+/* 内容文字 */
+.mc-content {
+  font-size: 0.92rem;
+  line-height: 1.7;
+  color: #334155;
+  word-break: break-word;
+  margin-bottom: 12px;
+}
+.mc-content p { margin: 0; }
+[data-theme="dark"] .mc-content { color: #cbd5e1; }
+
+/* 图片网格 */
+.mc-images {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+}
+.mc-images--count1 { grid-template-columns: 1fr; }
+.mc-images--count2 { grid-template-columns: 1fr 1fr; }
+.mc-images--count3 { grid-template-columns: 1fr 1fr 1fr; }
+.mc-images--count4 { grid-template-columns: 1fr 1fr; grid-template-rows: repeat(2, auto); }
+.mc-images--count5 { grid-template-columns: repeat(3, 1fr); }
+.mc-images--count6, .mc-images--count7, .mc-images--count8, .mc-images--count9 { grid-template-columns: repeat(3, 1fr); }
+
+.mc-img-wrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  aspect-ratio: 4/3;
+  cursor: pointer;
+  background: #f1f5f9;
+}
+[data-theme="dark"] .mc-img-wrap { background: #334155; }
+
+.mc-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform .35s ease;
+  display: block;
+}
+.mc-img-wrap:hover img {
+  transform: scale(1.06);
+}
+
+/* 视频 */
+.mc-video {
+  margin-top: 12px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+}
+.mc-video iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: none;
+  display: block;
+}
+
+/* 底部信息 */
+.mc-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+}
+[data-theme="dark"] .mc-footer { border-top: solid rgba(71,85,105,.3); }
+
+.mc-time {
+  font-size: 0.73rem;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.mc-time i { font-size: 11px; }
+[data-theme="dark"] .mc-time { color: #475569; }
+
+/* 评论按钮 */
+.mc-comment-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.73rem;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 12px;
+  transition: all 0.25s ease;
+  background: transparent;
+  border: none;
+}
+.mc-comment-btn:hover {
+  color: #8b5cf6;
+  background: rgba(139, 92, 246, 0.08);
+}
+.mc-comment-btn.active {
+  color: #7c3aed;
+  background: rgba(124, 58, 237, 0.1);
+}
+.mc-comment-btn i {
+  font-size: 13px;
+}
+.mc-comment-text {
+  font-size: 0.72rem;
+}
+
+/* 单条说说评论框 */
+.mc-comment-box {
+  margin-top: 14px;
+  animation: slideDown 0.25s ease-out;
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.mc-comment-box .moments-comments-section {
+  max-width: 100%;
+  margin: 0;
+  padding: 18px 16px 14px;
+  background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-sizing: border-box;
+}
+[data-theme="dark"] .mc-comment-box .moments-comments-section {
+  background: linear-gradient(135deg, rgba(30,41,59,.55) 0%, rgba(15,23,42,.45) 100%);
+  border-color: rgba(71,85,105,.25);
+}
+
+/* 空状态 */
+.moments-empty {
+  text-align: center;
+  padding: 80px 20px;
+  color: #94a3b8;
+}
+.moments-empty i {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 16px;
+  opacity: .35;
+}
+.moments-empty p { font-size: 1rem; }
+
+/* 底部装饰 */
+.moments-bottom {
+  text-align: center;
+  padding: 32px 20px 48px;
+  color: #94a3b8;
+  font-size: 0.88rem;
+}
+.moments-bottom i { color: #f472b6; margin-right: 4px; }
+[data-theme="dark"] .moments-bottom { color: #475569; }
+
+/* ===== 评论区 ===== */
+.moments-comments-section {
+  max-width: 100%;
+  margin: 0 auto 48px;
+  padding: 26px 28px 22px;
+  background: linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%);
+  border-radius: 18px;
+  border: 1px solid #e2e8f0;
+  box-sizing: border-box;
+}
+[data-theme="dark"] .moments-comments-section {
+  background: linear-gradient(135deg,rgba(30,41,59,.7) 0%,rgba(15,23,42,.6) 100%);
+  border-color: rgba(148,163,184,.12);
+}
+.moments-comments-section .comments-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid rgba(34,197,94,.12);
+}
+.moments-comments-section .comments-title i { color: #f59e0b; }
+[data-theme="dark"] .moments-comments-section .comments-title { color: #f1f5f9; }
+
+/* Twikoo 暗色适配 */
+[data-theme="dark"] .moments-comments-section #tcomment .twikoo textarea,
+[data-theme="dark"] .moments-comments-section #tcomment .twikoo input[type="text"]{
+  background:#334155!important;border-color:#475569!important;color:#e2e8f0!important;
+}
+
+/* ===== 移动端 ===== */
+@media(max-width:1200px){
+  .main-wrapper:has(#moments-page) .layout-grid{max-width:100%!important;padding-left:24px;padding-right:24px;}
+}
+@media(max-width:768px){
+  .main-wrapper:has(#moments-page) .container{padding-left:16px!important;padding-right:16px!important;}
+
+  .moments-header { padding: 44px 18px 36px; }
+  .mh-title { font-size: 1.6rem; }
+  .mh-circle--1 { width: 80px; height: 80px; }
+  .mh-circle--3 { width: 110px; height: 110px; }
+
+  .moments-timeline { max-width: 100%; padding: 24px 0 36px; }
+  .moments-timeline::before { left: 17px; top: 46px; }
+
+  .mt-date-group { padding-left: 28px; margin: 20px 0 14px; }
+  .mt-dot { left: 9px; width: 16px; height: 16px; top: 14px; }
+  .moment-card { gap: 12px; padding-left: 32px; margin-bottom: 14px; }
+
+  .mc-body { padding: 14px 16px 12px; border-radius: 13px; }
+  .mc-content { font-size: .87rem; }
+  .mc-images { gap: 4px; }
+  .mc-img-wrap { border-radius: 8px; }
+
+  .mc-comment-btn {
+    padding: 4px 8px;
+  }
+
+  .mc-comment-box .moments-comments-section {
+    padding: 14px 12px 10px;
+  }
+
+  .moments-comments-section{
+    margin-left:0;
+    margin-right:0;
+    padding: 20px 16px 18px;
+    border-radius: 14px;
+  }
+  .moments-comments-section .comments-title { font-size: .98rem; margin-bottom: 14px; }
+
+  .moments-bottom { padding: 24px 16px 36px; font-size: .82rem; }
+}
+
+@media(max-width:480px){
+  .mc-images--count2 { grid-template-columns: 1fr; }
+  .mc-images--count3 { grid-template-columns: 1fr; }
+  .mc-images--count4 { grid-template-columns: 1fr; }
+  .mc-images--count5 { grid-template-columns: 1fr 1fr; }
+  .mc-images--count6, .mc-images--count7, .mc-images--count8, .mc-images--count9 { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+{{ end }}
