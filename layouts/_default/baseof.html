@@ -63,7 +63,14 @@
 </head>
 <body class="lumin-body sidebar-{{ .Site.Params.sidebarPosition | default "left" }}{{ if .IsHome }} home-page{{ end }}">
   <a href="#main-content" class="skip-link">跳转到主要内容</a>
-  
+
+  {{/* 阅读进度条（仅文章页显示） */}}
+  {{ if and .IsPage (ne .Kind "home") (ne .Layout "archives") }}
+  <div id="reading-progress" class="reading-progress-bar">
+    <div class="reading-progress-fill"></div>
+  </div>
+  {{ end }}
+
   {{ partial "header.html" . }}
   
   {{ if .IsHome }}

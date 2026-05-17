@@ -2,8 +2,8 @@
 <div class="home-content">
   {{/* 从 hugo.toml 的 [params] homePageSize 读取每页数量，必须为 3 的倍数 */}}
   {{ $pageSize := .Site.Params.homePageSize | default 12 }}
-  {{/* 排除标记为 excludeFromList 的特殊页面（关于/友链/留言板/归档等） */}}
-  {{ $articles := where .Site.RegularPages "Params.excludeFromList" "!=" true }}
+  {{/* 排除标记为 excludeFromList 的特殊页面（关于/友链/留言板/归档等）及说说等非文章类型 */}}
+  {{ $articles := where (where .Site.RegularPages "Params.excludeFromList" "!=" true) "Type" "not in" (slice "moments") }}
   {{ $paginator := .Paginate $articles $pageSize }}
 
   <div class="article-grid">

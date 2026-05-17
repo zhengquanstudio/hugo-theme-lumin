@@ -63,33 +63,39 @@
 [data-theme="dark"] .dt-stat-num{color:#f1f5f9}
 [data-theme="dark"] .dt-stat-label{color:#64748b}
 [data-theme="dark"] .dt-header{background:linear-gradient(135deg,#0c1222 0%,#161b33 50%,#12122a 100%)}
+[data-theme="dark"] .dt-title{color:#e2e8f0}
+[data-theme="dark"] .dt-subtitle{color:#94a3b8}
 
 /* ===== 分类+标签 双栏区域 ===== */
 .dt-middle{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px}
-.dt-section{background:#fff;border-radius:18px;border:1px solid #e2e8f0;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+.dt-section{background:#fff;border-radius:18px;border:1px solid #e2e8f0;overflow:visible;box-shadow:0 2px 10px rgba(0,0,0,.04)}
 .dt-section-head{display:flex;align-items:center;gap:8px;padding:16px 20px;border-bottom:1px solid #e2e8f0;background:rgba(99,102,241,.03)}
 .dt-section-head i{color:#6366f1;font-size:16px}
 .dt-section-head h3{margin:0;font-size:15px;font-weight:700;color:#1e293b}
-.dt-section-body{padding:24px}
+.dt-section-body{padding:48px 32px;overflow:visible}
 
 [data-theme="dark"] .dt-section{background:#1e293b;border-color:#334155}
 [data-theme="dark"] .dt-section-head{border-color:#334155;background:rgba(99,102,241,.05)}
 [data-theme="dark"] .dt-section-head h3{color:#f1f5f9}
 
 /* 饼图容器 */
-.dt-chart-wrap{position:relative;display:flex;align-items:center;justify-content:center;gap:28px;padding:16px 0}
-.dt-chart-legend{display:flex;flex-direction:column;gap:9px;flex-shrink:0}
+.dt-chart-wrap{position:relative;display:flex;align-items:center;justify-content:center;gap:36px;padding:32px 36px;overflow:visible}
+.dt-chart-canvas-wrap{flex-shrink:0;position:relative;min-width:0;padding:24px}
+.dt-chart-legend{display:flex;flex-direction:column;gap:9px;flex-shrink:0;margin-left:16px}
 .dt-chart-legend-item{display:flex;align-items:center;gap:8px;font-size:13px;color:#334155;font-weight:500;cursor:default;transition:opacity .2s}
 .dt-chart-legend-item:hover{opacity:.7}
 .dt-chart-legend-dot{width:13px;height:13px;border-radius:4px;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .dt-chart-legend-val{color:#94a3b8;font-weight:600;margin-left:auto;font-size:12px}
-#dt-category-chart{max-width:300px!important;max-height:300px!important}
+#dt-category-chart{max-width:280px!important;max-height:280px!important}
+
+[data-theme="dark"] .dt-chart-legend-item{color:#cbd5e1}
+[data-theme="dark"] .dt-chart-legend-val{color:#64748b}
 
 /* 标签云 */
 .dt-tag-cloud{display:flex;flex-wrap:wrap;gap:10px;line-height:1.8}
 
 /* 标签墙滚动容器 */
-.dt-tag-scroll{max-height:380px;overflow-y:auto;padding-right:8px;scrollbar-width:thin;scrollbar-color:#cbd5e1 transparent}
+.dt-tag-scroll{max-height:460px;overflow-y:auto;padding-right:8px;scrollbar-width:thin;scrollbar-color:#cbd5e1 transparent}
 .dt-tag-scroll::-webkit-scrollbar{width:6px}
 .dt-tag-scroll::-webkit-scrollbar-track{background:transparent}
 .dt-tag-scroll::-webkit-scrollbar-thumb{background-color:#cbd5e1;border-radius:3px}
@@ -159,6 +165,7 @@
 [data-theme="dark"] .dt-article-link:hover{color:#a5b4fc;background:rgba(99,102,241,.08)}
 [data-theme="dark"] .dt-tag-scroll{scrollbar-color:#475569 transparent}
 [data-theme="dark"] .dt-tag-scroll::-webkit-scrollbar-thumb{background-color:#475569}
+[data-theme="dark"] .dt-tag{color:#1e293b!important}
 
 /* 响应式 */
 @media(max-width:900px){
@@ -232,7 +239,9 @@
       <div class="dt-section-head"><i class="fas fa-chart-pie"></i><h3>分类总览</h3></div>
       <div class="dt-section-body">
         <div class="dt-chart-wrap">
-          <canvas id="dt-category-chart"></canvas>
+          <div class="dt-chart-canvas-wrap">
+            <canvas id="dt-category-chart"></canvas>
+          </div>
         </div>
       </div>
     </div>
@@ -359,24 +368,40 @@
   /* ========== 分类饼图（侧边图例 + 圆角间距扇形） ========== */
   var ctx=document.getElementById('dt-category-chart');
   if(ctx && catData.length > 0){
+    /* 根据当前主题决定扇形边框颜色（亮色模式用白色分隔，暗色模式用背景色分隔） */
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var pieBorder = isDark ? '#1e293b' : '#fff';
     var chart=new Chart(ctx,{
       type:'doughnut',
       data:{
         labels:catData.map(function(x){return x.label}),
         datasets:[{
           data:catData.map(function(x){return x.value}),
+          /* 扇形边框同色 + 圆角 */
           backgroundColor:catData.map(function(x){return x.color}),
-          /* 扇形间白边 + 圆角 */
-          borderColor:'#fff',
-          borderWidth:4,
-          borderRadius:6,
-          hoverOffset:10
+          borderColor:catData.map(function(x){return x.color}),
+          borderWidth:2,
+          borderRadius:8,
+          /* hover：相近色描边+发光半透明+外移 */
+          hoverOffset:8,
+          hoverBorderWidth:4,
+          hoverBorderColor:catData.map(function(c){
+            var hex=c.color.replace('#','');
+            var r=parseInt(hex.substr(0,2),16),g=parseInt(hex.substr(2,2),16),b=parseInt(hex.substr(4,2),16);
+            return 'rgba('+Math.min(r+60,255)+','+Math.min(g+60,255)+','+Math.min(b+60,255)+',0.85)';
+          }),
+          hoverBackgroundColor:catData.map(function(c){
+            var hex=c.color.replace('#','');
+            var r=parseInt(hex.substr(0,2),16),g=parseInt(hex.substr(2,2),16),b=parseInt(hex.substr(4,2),16);
+            return 'rgba('+r+','+g+','+b+',0.45)';
+          })
         }]
       },
       options:{
         responsive:true,
         maintainAspectRatio:true,
         cutout:'55%',
+        animation:{duration:400,easing:'easeOutQuart'},
         plugins:{legend:{display:false}, /* 隐藏默认底部图例，用自定义侧边图例替代 */
           tooltip:{
             backgroundColor:'rgba(15,23,42,.9)',

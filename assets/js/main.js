@@ -234,19 +234,47 @@
     },
 
     search: function() {
-      var q = (this.input ? this.input.value : '').trim().toLowerCase();
+      var q = (this.input ? this.input.value : '').trim();
       if (!q || !this.index) { if (this.results) this.results.innerHTML = ''; return; }
+      var qLower = q.toLowerCase();
       var results = this.index.filter(function(item) {
-        return (item.title && item.title.toLowerCase().indexOf(q) > -1) ||
-               (item.content && item.content.toLowerCase().indexOf(q) > -1);
+        return (item.title && item.title.toLowerCase().indexOf(qLower) > -1) ||
+               (item.content && item.content.toLowerCase().indexOf(qLower) > -1);
       }).slice(0, 10);
       if (this.results) {
-        this.results.innerHTML = results.length === 0
-          ? '<p style="text-align:center;color:var(--text-muted);padding:24px;">没有找到相关结果</p>'
-          : results.map(function(item) {
-              return '<a href="' + item.permalink + '" style="display:block;padding:12px 16px;border-radius:8px;margin-bottom:8px;"><h4 style="font-size:1rem;font-weight:600;color:var(--text-primary);margin-bottom:4px;">' + item.title + '</h4><p style="font-size:0.875rem;color:var(--text-tertiary);">' + (item.summary || '') + '</p></a>';
-            }).join('');
+        if (results.length === 0) {
+          this.results.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:24px;">没有找到相关结果</p>';
+          return;
+        }
+        var self = this;
+        this.results.innerHTML = results.map(function(item) {
+          return '<a href="' + item.permalink + '" style="display:block;padding:12px 16px;border-radius:8px;margin-bottom:8px;">' +
+            '<h4 style="font-size:1rem;font-weight:600;color:var(--text-primary);margin-bottom:4px;">' + self.highlight(item.title, q) + '</h4>' +
+            '<p style="font-size:0.875rem;color:var(--text-tertiary);">' + self.highlight(self.extractSnippet(item.content, q, 60), q) + '</p></a>';
+        }).join('');
       }
+    },
+
+    highlight: function(text, keyword) {
+      if (!text || !keyword) return text || '';
+      try {
+        var escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        var re = new RegExp('(' + escaped + ')', 'gi');
+        return text.replace(re, '<mark class="search-highlight">$1</mark>');
+      } catch(e) { return text; }
+    },
+
+    extractSnippet: function(text, keyword, maxLen) {
+      if (!text) return '';
+      var lower = text.toLowerCase();
+      var idx = lower.indexOf(keyword.toLowerCase());
+      if (idx === -1) return text.substring(0, maxLen).trim() + '...';
+      var start = Math.max(0, idx - Math.floor(maxLen / 2));
+      var end = Math.min(text.length, start + maxLen);
+      var snippet = text.substring(start, end).trim();
+      if (start > 0) snippet = '...' + snippet;
+      if (end < text.length) snippet = snippet + '...';
+      return snippet;
     }
   };
 
@@ -518,6 +546,84 @@
       var m = String(now.getMinutes()).padStart(2, '0');
       var s = String(now.getSeconds()).padStart(2, '0');
       if (this.clock) this.clock.textContent = h + ':' + m + ':' + s;
+    }
+  };
+
+  // ==========================================
+  // TocCollapsible - 目录子级折叠
+  // ==========================================
+  var TocCollapsible = {
+    init: function() {
+      this.tocNav = document.getElementById('toc-nav');
+      if (!this.tocNav) return;
+
+      // 找到所有有子级 ul 的 li，插入折叠按钮
+      var items = this.tocNav.querySelectorAll('li');
+      var self = this;
+      items.forEach(function(li) {
+        var childUl = li.querySelector(':scope > ul');
+        if (!childUl) return;
+
+        // 在第一个 a 或文本前插入折叠按钮
+        var firstChild = li.firstChild;
+        var toggle = document.createElement('span');
+        toggle.className = 'toc-toggle expanded';
+        toggle.setAttribute('role', 'button');
+        toggle.setAttribute('aria-label', '折叠目录');
+
+        if (firstChild && (firstChild.nodeType === 1 || (firstChild.nodeType === 3 && !firstChild.textContent.trim()))) {
+          li.insertBefore(toggle, firstChild);
+        } else {
+          li.prepend(toggle);
+        }
+
+        // 记录原始高度用于动画
+        childUl.dataset.naturalHeight = childUl.scrollHeight + 'px';
+
+        // 点击切换
+        toggle.addEventListener('click', function(e) {
+          e.stopPropagation();
+          self.toggleItem(toggle, childUl);
+        });
+      });
+
+      // 默认折叠所有二级以上子菜单（保留一级展开）
+      this.autoCollapse();
+    },
+
+    toggleItem: function(toggle, ul) {
+      var isExpanded = toggle.classList.contains('expanded');
+      if (isExpanded) {
+        ul.style.maxHeight = ul.scrollHeight + 'px';
+        requestAnimationFrame(function() {
+          ul.classList.add('collapsed');
+          ul.style.maxHeight = '0';
+        });
+        toggle.classList.remove('expanded');
+        toggle.setAttribute('aria-label', '展开目录');
+      } else {
+        ul.style.maxHeight = '0';
+        ul.classList.remove('collapsed');
+        ul.style.maxHeight = ul.scrollHeight + 'px';
+        toggle.classList.add('expanded');
+        toggle.setAttribute('aria-label', '折叠目录');
+        // 动画结束后清除内联 max-height，让 CSS 接管
+        var self = this;
+        setTimeout(function() { if (!ul.classList.contains('collapsed')) ul.style.maxHeight = ''; }, 320);
+      }
+    },
+
+    autoCollapse: function() {
+      // 折叠所有二级及以上子菜单（> ul > li > ul）
+      var subUls = this.tocNav.querySelectorAll('ul ul');
+      var self = this;
+      subUls.forEach(function(ul) {
+        var parentLi = ul.parentElement;
+        var toggle = parentLi.querySelector('.toc-toggle');
+        if (toggle && toggle.classList.contains('expanded')) {
+          self.toggleItem(toggle, ul);
+        }
+      });
     }
   };
 
@@ -847,6 +953,253 @@
     }
   };
 
+  // ==========================================
+  // Reading Progress Bar - 阅读进度条
+  // ==========================================
+  var ReadingProgress = {
+    init: function() {
+      this.bar = document.getElementById('reading-progress');
+      this.fill = document.querySelector('.reading-progress-fill');
+      if (!this.bar || !this.fill) return;
+
+      this.article = document.querySelector('.single-post');
+      if (!this.article) return;
+
+      var self = this;
+      window.addEventListener('scroll', function() { self.update(); }, { passive: true });
+      this.update();
+    },
+
+    update: function() {
+      if (!this.article || !this.fill) return;
+      var articleRect = this.article.getBoundingClientRect();
+      var articleTop = articleRect.top + window.scrollY;
+      var articleHeight = this.article.offsetHeight;
+      var windowHeight = window.innerHeight;
+      // 进度 = 已滚过文章内容的比例（顶部露出到完全离开视口）
+      var scrolled = Math.max(0, window.scrollY - articleTop + windowHeight * 0.3);
+      var total = articleHeight - windowHeight * 0.3;
+      var progress = Math.min(100, Math.max(0, (scrolled / total) * 100));
+      this.fill.style.width = progress.toFixed(2) + '%';
+    }
+  };
+
+  // ==========================================
+  // FriendLinkCheck - 友链失效自动检测
+  // ==========================================
+  var FriendLinkCheck = {
+    TIMEOUT: 8000,       // 单个链接检测超时(ms)
+    CONCURRENT: 3,       // 并发检测数
+    RETRY_DELAY: 1000,   // 重试延迟(ms)
+
+    init: function() {
+      this.grid = document.querySelector('.friends-grid');
+      if (!this.grid) return;
+
+      this.cards = this.grid.querySelectorAll('.friend-card');
+      if (!this.cards.length) return;
+
+      // 创建状态栏
+      this.createStatusBar();
+
+      // 开始检测
+      var self = this;
+      setTimeout(function() { self.startCheck(); }, 500); // 延迟等待页面完全渲染
+    },
+
+    createStatusBar: function() {
+      var bar = document.createElement('div');
+      bar.className = 'friend-check-statusbar';
+      bar.id = 'friend-check-status';
+      bar.innerHTML =
+        '<div class="check-status-inner">' +
+          '<span class="check-icon checking"><i class="fas fa-circle-notch fa-spin"></i></span>' +
+          '<span class="check-text">正在检测友链可用性...</span>' +
+          '<span class="check-progress"></span>' +
+          '<button class="check-retry-btn" style="display:none;" onclick="FriendLinkCheck.retryAll()"><i class="fas fa-redo"></i> 重新检测</button>' +
+        '</div>';
+      this.grid.parentNode.insertBefore(bar, this.grid);
+      this.statusBar = bar;
+    },
+
+    startCheck: function() {
+      this.results = { total: this.cards.length, ok: 0, fail: 0, checked: 0 };
+      this.queue = Array.prototype.slice.call(this.cards);
+      this.updateProgress();
+
+      // 并发执行检测
+      this.processQueue();
+    },
+
+    processQueue: function() {
+      var self = this;
+      while (this.running < this.CONCURRENT && this.queue.length > 0) {
+        var card = this.queue.shift();
+        this.running = (this.running || 0) + 1;
+        this.checkCard(card);
+      }
+    },
+
+    checkCard: function(card) {
+      var url = card.getAttribute('href');
+      if (!url || url === '#' || !url.match(/^https?:\/\//)) {
+        this.markResult(card, 'skip', null);
+        return;
+      }
+
+      var self = this;
+      var controller = new AbortController();
+      var timer = setTimeout(function() { controller.abort(); }, this.TIMEOUT);
+
+      // 使用 no-cors 模式探测（不读取响应体，只判断网络层是否可达）
+      var startTime = Date.now();
+      fetch(url, {
+        method: 'HEAD',
+        mode: 'no-cors',
+        cache: 'no-cache',
+        signal: controller.signal
+      }).then(function() {
+        clearTimeout(timer);
+        var elapsed = Date.now() - startTime;
+        self.markResult(card, elapsed <= self.TIMEOUT ? 'ok' : 'slow', elapsed);
+      }).catch(function(err) {
+        clearTimeout(timer);
+        // TypeError 通常表示网络错误(DNS失败/连接超时/SSL错误)
+        // AbortError 表示超时
+        var isFail = err.name === 'TypeError' || err.name === 'AbortError';
+        self.markResult(card, isFail ? 'fail' : 'unknown', null);
+      });
+    },
+
+    markResult: function(card, status, timeMs) {
+      // 移除旧状态
+      card.classList.remove('friend-ok', 'friend-fail', 'friend-checking', 'friend-skip');
+
+      var badge = card.querySelector('.friend-status-badge');
+      if (badge) badge.remove();
+
+      if (status === 'ok') {
+        card.classList.add('friend-ok');
+        this.results.ok++;
+      } else if (status === 'fail') {
+        card.classList.add('friend-fail');
+        // 添加失效标签
+        var b = document.createElement('span');
+        b.className = 'friend-status-badge fail';
+        b.innerHTML = '<i class="fas fa-unlink"></i> 失效';
+        b.title = '该链接无法访问，可能是网站已关闭或域名过期';
+        card.appendChild(b);
+        this.results.fail++;
+      } else if (status === 'skip') {
+        card.classList.add('friend-skip');
+      }
+
+      this.results.checked++;
+      this.running--;
+      this.updateProgress();
+
+      // 继续处理队列
+      if (this.queue.length > 0) {
+        this.processQueue();
+      } else if (this.running <= 0) {
+        this.finishCheck();
+      }
+    },
+
+    updateProgress: function() {
+      if (!this.statusBar) return;
+      var textEl = this.statusBar.querySelector('.check-text');
+      var progEl = this.statusBar.querySelector('.check-progress');
+      var iconEl = this.statusBar.querySelector('.check-icon');
+      var retryBtn = this.statusBar.querySelector('.check-retry-btn');
+
+      if (textEl) {
+        if (this.results.checked < this.results.total) {
+          textEl.textContent = '正在检测友链可用性... (' + this.results.checked + '/' + this.results.total + ')';
+        }
+      }
+      if (progEl) {
+        var pct = Math.round(this.results.checked / this.results.total * 100);
+        progEl.style.width = pct + '%';
+        progEl.textContent = pct + '%';
+      }
+    },
+
+    finishCheck: function() {
+      if (!this.statusBar) return;
+      var textEl = this.statusBar.querySelector('.check-text');
+      var iconEl = this.statusBar.querySelector('.check-icon i');
+      var retryBtn = this.statusBar.querySelector('.check-retry-btn');
+
+      // 更新状态文本
+      var summary = '';
+      if (this.results.fail === 0) {
+        summary = '全部 ' + this.results.total + ' 个友链均正常访问 ✓';
+        if (iconEl) {
+          iconEl.className = 'fas fa-check-circle ok';
+          iconEl.classList.remove('fa-spin');
+        }
+        this.statusBar.classList.add('all-ok');
+      } else {
+        summary = '检测完成：' + this.results.ok + ' 个正常，' + this.results.fail + ' 个可能失效';
+        if (iconEl) {
+          iconEl.className = 'fas fa-exclamation-triangle warn';
+          iconEl.classList.remove('fa-spin');
+        }
+        this.statusBar.classList.add('has-fail');
+        if (retryBtn) retryBtn.style.display = 'inline-flex';
+      }
+      if (textEl) textEl.textContent = summary;
+
+      // 回填数据到侧边栏"站点统计"组件
+      this.updateSidebarStats();
+    },
+
+    updateSidebarStats: function() {
+      var statRow = document.getElementById('stats-friend-links');
+      if (!statRow) return;
+
+      statRow.style.display = '';
+      var totalEl = document.getElementById('friend-link-total');
+      var failBadge = document.getElementById('friend-link-fail-badge');
+      var failCountEl = document.getElementById('friend-link-fail-count');
+
+      if (totalEl) totalEl.textContent = this.results.ok;
+
+      if (this.results.fail > 0 && failBadge && failCountEl) {
+        failBadge.style.display = 'inline-flex';
+        failCountEl.textContent = this.results.fail;
+      } else if (failBadge) {
+        failBadge.style.display = 'none';
+      }
+    },
+
+    retryAll: function() {
+      // 清除之前的状态
+      var self = this;
+      this.cards.forEach(function(card) {
+        card.classList.remove('friend-ok', 'friend-fail', 'friend-skip', 'friend-checking');
+        var badge = card.querySelector('.friend-status-badge');
+        if (badge) badge.remove();
+      });
+
+      // 重置状态栏
+      if (this.statusBar) {
+        this.statusBar.classList.remove('all-ok', 'has-fail');
+        var iconEl = this.statusBar.querySelector('.check-icon i');
+        var textEl = this.statusBar.querySelector('.check-text');
+        var retryBtn = this.statusBar.querySelector('.check-retry-btn');
+        if (iconEl) { iconEl.className = 'fas fa-circle-notch fa-spin'; }
+        if (textEl) textEl.textContent = '正在重新检测...';
+        if (retryBtn) retryBtn.style.display = 'none';
+      }
+
+      // 重新开始
+      this.running = 0;
+      this.startCheck();
+    }
+  };
+
   // Initialize all modules
   // ==========================================
   document.addEventListener('DOMContentLoaded', function() {
@@ -863,9 +1216,12 @@
     Countdown.init();
     BackToTop.init();
     ScrollDownHint.init();
+    TocCollapsible.init();
     TocHighlight.init();
     ArchiveCollapsible.init();
     CodeBlock.init();
+    ReadingProgress.init();
+    FriendLinkCheck.init();
   });
 
 })();

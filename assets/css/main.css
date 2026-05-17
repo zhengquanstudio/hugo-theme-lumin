@@ -1,4 +1,81 @@
 /* ========================================
+   Breadcrumb - 面包屑导航
+   ======================================== */
+.breadcrumb {
+  margin-bottom: 20px;
+  background: var(--bg-card);
+  border-radius: 10px;
+  padding: 12px 20px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+.breadcrumb-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+.breadcrumb-item {
+  display: inline-flex;
+  align-items: center;
+}
+.breadcrumb-item a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+.breadcrumb-item a:hover {
+  color: var(--accent-color);
+}
+.breadcrumb-item + .breadcrumb-item::before {
+  content: '›';
+  margin-right: 8px;
+  color: var(--text-muted);
+  font-weight: 300;
+  font-size: 1em;
+}
+.breadcrumb-item.active {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+[data-theme="dark"] .breadcrumb-item { color: var(--text-secondary); }
+[data-theme="dark"] .breadcrumb-item a { color: var(--text-secondary); }
+[data-theme="dark"] .breadcrumb-item a:hover { color: #93c5fd; }
+[data-theme="dark"] .breadcrumb-item.active { color: var(--text-primary); }
+
+/* ========================================
+   Reading Progress Bar - 阅读进度条
+   ======================================== */
+.reading-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  z-index: 9999;
+  background: transparent;
+  pointer-events: none;
+}
+.reading-progress-bar .reading-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent-color), var(--accent-hover));
+  border-radius: 0 2px 2px 0;
+  transition: width 0.15s ease-out;
+  box-shadow: 0 0 6px rgba(59,130,246,0.4);
+}
+
+[data-theme="dark"] .reading-progress-bar .reading-progress-fill {
+  box-shadow: 0 0 8px rgba(96,165,250,0.5);
+}
+
+/* ========================================
    Hugo Theme Lumin - Main Stylesheet
    ======================================== */
 
@@ -532,6 +609,18 @@ ul, ol {
   margin-top: 16px;
   max-height: 400px;
   overflow-y: auto;
+}
+
+/* 搜索关键词高亮 */
+.search-highlight {
+  background: linear-gradient(120deg, rgba(59,130,246,0.25) 0%, rgba(99,102,241,0.25) 100%);
+  color: var(--text-primary);
+  padding: 1px 3px;
+  border-radius: 2px;
+  font-weight: 500;
+}
+[data-theme="dark"] .search-highlight {
+  background: linear-gradient(120deg, rgba(96,165,250,0.35) 0%, rgba(167,139,250,0.35) 100%);
 }
 
 /* Banner */
@@ -1215,6 +1304,28 @@ ul, ol {
   font-weight: 400;
   color: var(--text-muted, #999);
   margin-left: 2px;
+}
+
+/* 友链失效标签（侧边栏统计） */
+.stat-fail-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 8px;
+  padding: 1px 7px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border-radius: 4px;
+  line-height: 1.5;
+  vertical-align: middle;
+}
+.stat-fail-badge i {
+  font-size: 0.6rem;
+}
+[data-theme="dark"] .stat-fail-badge {
+  background: linear-gradient(135deg, #f87171, #dc2626);
 }
 
 /* Reward Widget - 打赏 */
@@ -2031,11 +2142,63 @@ ul, ol {
 .post-toc-nav ul ul {
   padding-left: 16px;
   margin-top: 4px;
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.25s ease, transform 0.25s ease;
+}
+
+/* 折叠状态 */
+.post-toc-nav ul ul.collapsed {
+  max-height: 0 !important;
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
 }
 
 .post-toc-nav li {
   margin: 6px 0;
 }
+
+/* 有子级的 li 添加折叠按钮 */
+.post-toc-nav li:has(> ul) {
+  position: relative;
+}
+.toc-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  transition: all var(--transition-fast);
+  vertical-align: middle;
+  margin-right: 2px;
+  flex-shrink: 0;
+  user-select: none;
+  position: relative;
+  top: -1px;
+}
+.toc-toggle:hover {
+  background: rgba(59,130,246,0.12);
+  color: var(--accent-color);
+}
+.toc-toggle::before {
+  content: '';
+  display: block;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg) translateY(-2px) translateX(1px);
+  transition: transform 0.25s ease;
+}
+.toc-toggle.expanded::before {
+  transform: rotate(45deg) translateX(0) translateY(0);
+}
+
+[data-theme="dark"] .toc-toggle:hover { background: rgba(96,165,250,0.15); color: #93c5fd; }
 
 .post-toc-nav a {
   display: block;
