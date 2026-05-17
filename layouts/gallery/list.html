@@ -4,8 +4,9 @@
 
 <!-- Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<!-- Fancybox -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css">
+<!-- Fancybox 5 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5/dist/fancybox/fancybox.css">
+<script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5/dist/fancybox/fancybox.umd.js"></script>
 
 <style>
 /* ===== CSS 变量 ===== */
@@ -160,9 +161,6 @@
   {{ end }}
 </div>
 
-<!-- Fancybox JS -->
-<script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
-
 {{ if .Site.Params.comments.enable }}
 {{ if eq .Site.Params.comments.type "twikoo" }}
 <script src="https://cdn.jsdelivr.net/npm/twikoo@1.7.7/dist/twikoo.all.min.js"></script>
@@ -222,12 +220,13 @@ function openAlbum(slug){
       html+='</a>';
     }
     grid.innerHTML=html;
-    // 绑定 Fancybox
+    // 绑定 Fancybox 灯箱
     Fancybox.bind('[data-fancybox="gallery"]',{
-      Carousel:{infinite:false,Thumbs:{hideOnClose:false}},
-      Toolbar:{display:['zoom','slideshow','fullscreen','download','thumbs','close']},
-      Thumbs:{autoStart:true},
-      caption:function(fancybox,slide){return slide.caption||'';}
+      infinite: true,
+      transition: 'cross-fade',
+      preload: 2,
+      Thumbs: { autoStart: true },
+      Slideshow: { playOnStart: false, timeout: 3000 }
     });
   }
   document.getElementById('current-album-name').textContent=album?album.name:slug;
