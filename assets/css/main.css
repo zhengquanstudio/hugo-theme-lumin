@@ -2089,17 +2089,63 @@ ul, ol {
   font-size: 0.9em;
 }
 
-.post-content pre {
-  padding: 16px;
-  background: var(--bg-code);
-  border-radius: 8px;
-  overflow-x: auto;
+/* Code Wrapper - 包裹代码块和复制按钮 */
+.code-wrapper {
+  position: relative;
   margin: 1em 0;
 }
 
-.post-content pre code {
-  padding: 0;
-  background: none;
+/* 代码块 - 固定深色背景（独立于主题模式，类似 GitHub） */
+.code-wrapper pre {
+  padding: 20px 16px 12px;
+  background: #282c34;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 0;
+}
+
+/* 确保代码块内文字可见（Chroma/monokai 会覆盖具体 token 颜色） */
+.code-wrapper pre code {
+  color: #abb2bf; /* monokai 默认前景色 */
+  background: transparent !important;
+}
+
+/* 复制按钮 - 右上角 */
+.code-copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.45);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 2;
+  line-height: 1.4;
+}
+.code-copy-btn:hover {
+  color: rgba(255,255,255,0.85);
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.25);
+}
+.code-copy-btn.copied {
+  color: #4ade80 !important;
+  border-color: rgba(74,222,128,0.35);
+  background: rgba(74,222,128,0.1);
+}
+.code-copy-btn.copied .copy-icon { display: none; }
+.code-copy-btn.copied .check-icon { display: inline-block !important; }
+.code-copy-btn.copied .copy-text { content: 'Copied!'; }
+
+/* 行内代码（非代码块）保持主题色 */
+.post-content :not(pre) > code {
+  background: var(--bg-code);
 }
 
 .post-content blockquote {

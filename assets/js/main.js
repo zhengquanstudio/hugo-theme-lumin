@@ -727,6 +727,46 @@
   };
 
   // ==========================================
+  // ==========================================
+  // CodeBlock - 代码块复制按钮
+  // ==========================================
+  var CodeBlock = {
+    init: function() {
+      var blocks = document.querySelectorAll('.post-content pre');
+      if (!blocks.length) return;
+
+      blocks.forEach(function(pre) {
+        var codeEl = pre.querySelector('code');
+        if (!codeEl) return;
+        if (pre.querySelector('.code-copy-btn')) return;
+
+        var wrapper = document.createElement('div');
+        wrapper.className = 'code-wrapper';
+        pre.parentNode.insertBefore(wrapper, pre);
+        wrapper.appendChild(pre);
+
+        var btn = document.createElement('button');
+        btn.className = 'code-copy-btn';
+        btn.type = 'button';
+        btn.setAttribute('aria-label', '\u590d\u5236\u4ee3\u7801');
+        btn.innerHTML =
+          '<svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
+          '<svg class="check-icon" style="display:none" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>' +
+          '<span class="copy-text">Copy</span>';
+
+        btn.addEventListener('click', function() {
+          var text = codeEl.textContent || '';
+          navigator.clipboard.writeText(text).then(function() {
+            btn.classList.add('copied');
+            setTimeout(function() { btn.classList.remove('copied'); }, 2000);
+          }).catch(function() {});
+        });
+
+        wrapper.appendChild(btn);
+      });
+    }
+  };
+
   // Initialize all modules
   // ==========================================
   document.addEventListener('DOMContentLoaded', function() {
@@ -745,6 +785,7 @@
     ScrollDownHint.init();
     TocHighlight.init();
     ArchiveCollapsible.init();
+    CodeBlock.init();
   });
 
 })();

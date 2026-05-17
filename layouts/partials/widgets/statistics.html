@@ -52,7 +52,8 @@
     {{ if gt $articleCount 0 }}
     {{ $lastPost := index ($posts.ByDate.Reverse) 0 }}
     {{ with $lastPost }}
-    {{ $daysAgo := int (now.Sub .Date).Hours | div 24 }}
+    {{ $totalHours := int (now.Sub .Date).Hours }}
+    {{ $daysAgo := cond (gt $totalHours 24) (div $totalHours 24) 1 }}
     <div class="stat-row">
       <span class="stat-label">最后活动时间</span>
       <span class="stat-value">{{ $daysAgo }} 天前</span>
