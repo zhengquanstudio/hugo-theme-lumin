@@ -99,7 +99,7 @@
               {{ end }}
               <li class="dropdown-item">
                 <a href="{{ .URL }}" class="dropdown-link">
-                  <span style="font-size:0.85rem;margin-right:4px;">{{ $subIcon | safeHTML }}</span>{{ .Name }}
+                  {{- if $subIcon }}<span style="font-size:0.85rem;margin-right:4px;">{{ $subIcon | safeHTML }}</span>{{ end }}{{ .Name }}
                 </a>
               </li>
               {{ end }}
@@ -236,9 +236,9 @@
             {{ else if eq .Identifier "guestbook" }}{{ $subIcon = "💬" }}
             {{ else if eq .Identifier "about-page" }}{{ $subIcon = "👤" }}
             {{ end }}
-            <li><a href="{{ .URL }}" class="mobile-nav-link sub-item"><span style="margin-right:4px;">{{ $subIcon | safeHTML }}</span>{{ .Name }}</a></li>
-            {{ end }}
-          </ul>
+            <li><a href="{{ .URL }}" class="mobile-nav-link sub-item">{{- if $subIcon }}<span style="margin-right:4px;">{{ $subIcon | safeHTML }}</span>{{ end }}{{ .Name }}</a></li>
+          {{ end }}
+        </ul>
         </li>
         {{ else }}
         <li class="mobile-nav-item">

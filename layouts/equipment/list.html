@@ -1,0 +1,143 @@
+{{ define "main" }}
+{{ $items := .Params.items }}
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+  --eq-bg-card:#fff;--eq-text-primary:#1e293b;--eq-text-secondary:#475569;--eq-text-tertiary:#94a3b8;
+  --eq-accent:#6366f1;--eq-border:#e2e8f0;--eq-hover-bg:#f1f5f9;
+  --eq-shadow-sm:0 1px 3px rgba(0,0,0,.06);--eq-shadow-md:0 4px 20px rgba(0,0,0,.08);--eq-shadow-lg:0 8px 40px rgba(0,0,0,.12);
+}
+[data-theme="dark"]{
+  --eq-bg-card:#1e293b;--eq-text-primary:#f1f5f9;--eq-text-secondary:#94a3b8;--eq-text-tertiary:#64748b;
+  --eq-border:#334155;--eq-hover-bg:#334155;
+  --eq-shadow-sm:0 1px 3px rgba(0,0,0,.2);--eq-shadow-md:0 4px 20px rgba(0,0,0,.35);--eq-shadow-lg:0 8px 40px rgba(0,0,0,.45);
+}
+
+/* 突破布局 */
+.main-wrapper:has(#equipment-page) .container{max-width:100%!important;padding-left:40px!important;padding-right:40px!important;}
+.main-wrapper:has(#equipment-page) .layout-grid{grid-template-columns:1fr!important;max-width:1500px;margin:0 auto;}
+.main-wrapper:has(#equipment-page) aside.sidebar,
+.main-wrapper:has(#equipment-page) .post-toc-sidebar{display:none!important}
+#equipment-page{max-width:1480px;margin:24px auto;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;}
+
+@media(max-width:1200px){.main-wrapper:has(#equipment-page) .layout-grid{max-width:100%!important;padding-left:24px;padding-right:24px;} }
+@media(max-width:900px){.main-wrapper:has(#equipment-page) .container{padding-left:16px!important;padding-right:16px!important;}}
+
+/* 头部 */
+.eq-header{text-align:center;padding:34px 24px;background:linear-gradient(135deg,#eef2ff 0%,#e0e7ff 50%,#f5f3ff 100%);border-radius:20px;margin-bottom:26px;box-shadow:var(--eq-shadow-md);position:relative;overflow:hidden;border:1px solid rgba(99,102,241,.12);}
+.eq-title{font-size:2rem;font-weight:800;color:var(--eq-text-primary);margin:0 0 10px;display:inline-flex;align-items:center;gap:12px;position:relative;z-index:1;}
+.eq-title-icon{font-size:1.35em;color:var(--eq-accent);animation:eq-bounce 2.5s ease-in-out infinite;}
+@keyframes eq-bounce{0%,100%{transform:scale(1) rotate(-5deg)}50%{transform:scale(1.08) rotate(5deg)}}
+.eq-subtitle{font-size:.95rem;color:var(--eq-text-secondary);margin:0;line-height:1.6;z-index:1;position:relative;}
+
+/* 分类标签 */
+.eq-categories{display:flex;justify-content:center;gap:10px;margin-bottom:26px;flex-wrap:wrap;padding:14px 20px;background:var(--eq-bg-card);border-radius:16px;box-shadow:var(--eq-shadow-sm);border:1px solid var(--eq-border);}
+.eq-cat-btn{padding:8px 20px;border:1.5px solid var(--eq-border);background:var(--eq-bg-card);color:var(--eq-text-secondary);border-radius:25px;cursor:pointer;transition:all .25s ease;font-size:13.5px;display:inline-flex;align-items:center;gap:6px;font-weight:500;}
+.eq-cat-btn:hover{border-color:var(--eq-accent);color:var(--eq-accent);transform:translateY(-1px);box-shadow:0 4px 12px rgba(99,102,241,.2);}
+.eq-cat-btn.active{background:linear-gradient(135deg,var(--eq-accent),#4f46e5);color:#fff;border-color:transparent;box-shadow:0 4px 16px rgba(99,102,241,.25);}
+
+/* 网格 */
+.eq-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;margin-bottom:28px;}
+
+/* 卡片 */
+.eq-card{background:var(--eq-bg-card);border-radius:18px;overflow:hidden;box-shadow:var(--eq-shadow-sm);border:1px solid var(--eq-border);transition:all .3s ease;cursor:default;position:relative;}
+.eq-card:hover{transform:translateY(-5px);box-shadow:var(--eq-shadow-lg);border-color:rgba(99,102,241,.25);}
+
+/* 图片区 */
+.eq-card-img{position:relative;width:100%;aspect-ratio:16/10;overflow:hidden;background:#fafafa;}
+[data-theme="dark"] .eq-card-img{background:#1a2332;}
+.eq-card-img img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .4s ease;}
+.eq-card:hover .eq-card-img img{transform:scale(1.06);}
+.eq-card-badge{display:none;}
+
+/* 信息区 */
+.eq-card-info{padding:15px 17px 16px;}
+.eq-card-name{font-size:15px;font-weight:700;color:var(--eq-text-primary);margin:0 0 7px;line-height:1.35;}
+.eq-card-desc{font-size:12.5px;color:var(--eq-text-tertiary);margin:0 0 12px;line-height:1.65;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+
+/* 底部栏 */
+.eq-card-footer{display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid var(--eq-border);}
+.eq-card-price{font-size:15px;font-weight:700;color:#ef4444;display:inline-flex;align-items:center;gap:4px;}
+.eq-card-status{font-size:11.5px;color:var(--eq-text-secondary);background:var(--eq-hover-bg);padding:4px 12px;border-radius:10px;font-weight:500;white-space:nowrap;}
+
+/* 底部 - 固定在视口底部 */
+.eq-bottom{position:fixed;bottom:0;left:0;right:0;text-align:center;padding:14px 24px;background:rgba(255,255,255,.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--eq-border);font-size:13px;color:var(--eq-text-secondary);z-index:9999;box-shadow:0 -2px 20px rgba(0,0,0,.08)}
+[data-theme="dark"] .eq-bottom{background:rgba(15,23,42,.92)}
+
+@media(max-width:600px){
+  #equipment-page{padding:0 4px;}
+  .eq-grid{grid-template-columns:1fr 1fr;gap:10px;}
+  .eq-categories{padding:10px 14px;gap:7px;}
+  .eq-cat-btn{padding:6px 14px;font-size:12px;}
+  .eq-card-info{padding:12px 13px 13px;}
+  .eq-header{padding:24px 14px}.eq-title{font-size:1.45rem;}
+}
+</style>
+
+<div id="equipment-page">
+  <div class="eq-header">
+    <h1 class="eq-title"><span class="eq-title-icon"><i class="fas fa-toolbox"></i></span> 我的装备</h1>
+    <p class="eq-subtitle">工欲善其事，必先利其器 ✨</p>
+  </div>
+
+  <div class="eq-categories" id="eq-categories">
+    <button class="eq-cat-btn active" onclick="filterEq('all',this)"><i class="fas fa-border-all"></i> 全部</button>
+    <button class="eq-cat-btn" onclick="filterEq('phone',this)"><i class="fas fa-mobile-alt"></i> 手机数码</button>
+    <button class="eq-cat-btn" onclick="filterEq('computer',this)"><i class="fas fa-laptop"></i> 电脑设备</button>
+    <button class="eq-cat-btn" onclick="filterEq('peripheral',this)"><i class="fas fa-keyboard"></i> 外设配件</button>
+    <button class="eq-cat-btn" onclick="filterEq('life',this)"><i class="fas fa-watch"></i> 生活穿戴</button>
+  </div>
+
+  <div class="eq-grid" id="eq-grid"></div>
+  <div class="eq-bottom"><i class="fas fa-heart"></i> 好工具让生活更美好 · 持续更新中</div>
+</div>
+
+<script>
+// ===== 装备数据 =====
+var equipmentData = [
+  {{- $first := true -}}
+  {{- range $items -}}
+  {{- if not $first -}},{{- end -}}
+  {{- $first = false -}}
+  {"n":"{{ .name | safeHTML }}","d":"{{ .desc | safeHTML }}","p":"{{ .price | safeHTML }}","c":"{{ .category | safeHTML }}","s":"{{ .status | safeHTML }}","i":"{{ .img }}"}
+  {{- end -}}
+];
+
+function render(cat){
+  cat=(cat==='all')?null:cat;
+  var g=document.getElementById('eq-grid');
+  var list=cat?equipmentData.filter(function(x){return x.c===cat}):equipmentData;
+  if(!list.length){
+    g.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:50px 20px;color:#94a3b8;font-size:14px;">暂无装备</div>';
+    return;
+  }
+  var map={phone:'手机数码',computer:'电脑设备',peripheral:'外设配件',life:'生活穿戴'},h='';
+  for(var j=0;j<list.length;j++){
+    var e=list[j],lb=map[e.c]||e.c;
+    h+='<div class="eq-card">';
+    h+='<div class="eq-card-img">';
+    h+='<img src="'+e.i+'" alt="'+e.n+'" loading="lazy" referrerpolicy="no-referrer" onerror="this.src=\'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 160 100%22><rect fill=%22%23f1f5f9%22 width=%22160%22 height=%22100%22/><text x=%2280%22 y=%2255%22 text-anchor=%22middle%22 fill=%22%23cbd5e1%22 font-size=%2212%22>'+encodeURIComponent(e.n)+'</text></svg>\'">';
+    h+='<span class="eq-card-badge">'+lb+'</span>';
+    h+='</div>';
+    h+='<div class="eq-card-info">';
+    h+='<h3 class="eq-card-name">'+e.n+'</h3>';
+    h+='<p class="eq-card-desc">'+e.d+'</p>';
+    h+='<div class="eq-card-footer">';
+    h+='<span class="eq-card-price"><i class="fas fa-tag"></i> '+e.p+'</span>';
+    h+='<span class="eq-card-status">'+e.s+'</span>';
+    h+='</div></div></div>';
+  }
+  g.innerHTML=h;
+}
+
+function filterEq(c,b){
+  document.querySelectorAll('.eq-cat-btn').forEach(function(x){x.classList.remove('active')});
+  b.classList.add('active');render(c);
+}
+
+render('all');
+</script>
+{{ end }}
