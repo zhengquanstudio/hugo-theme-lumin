@@ -218,6 +218,25 @@ transition:box-shadow .5s ease;
 [data-theme="dark"] #tcomment .twikoo textarea,
 [data-theme="dark"] #tcomment .twikoo input[type="text"]{background:#334155!important;border-color:#475569!important;color:#e2e8f0!important;}
 
+/* ===== 评论区 - 移动端宽松适配 ===== */
+@media(max-width:600px){
+.music-comments-section{margin-top:18px;padding:20px 16px!important;border-radius:14px}
+#music-comments .comments-title{font-size:15px;margin-bottom:14px}
+#tcomment .twikoo .tk-submit{padding:16px 0 8px!important}
+#tcomment .twikoo .el-input__inner{padding:10px 12px!important;font-size:14px!important;border-radius:10px!important}
+#tcomment .twikoo .tk-input{margin-bottom:10px!important}
+#tcomment .twikoo .el-textarea__inner{min-height:100px!important;padding:10px 12px!important;font-size:14px!important;border-radius:10px!important;line-height:1.6!important}
+#tcomment .twikoo .tk-action{gap:8px!important;margin-top:6px!important;flex-wrap:wrap}
+#tcomment .twikoo .tk-comment-actions{gap:4px!important}
+#tcomment .twikoo .tk-avatar{width:36px!important;height:36px!important;flex-shrink:0}
+#tcomment .twikoo .tk-main{padding-left:10px!important}
+#tcomment .twikoo .tk-content{font-size:13.5px!important;line-height:1.7!important;margin-top:2px!important}
+#tcomment .twikoo .tk-nick{font-size:13px!important}
+#tcomment .twikoo .tk-time{font-size:11px!important;color:var(--mp-text-tertiary)!important}
+#tcomment .twikoo .tk-comments-container>.tk-comment{padding:12px 0!important}
+#tcomment .twikoo .tk-empty{padding:30px 16px!important;font-size:13px!important}
+}
+
 /* ===== 响应式 ===== */
 @media(max-width:1200px){.main-wrapper:has(#music-player) .layout-grid{max-width:100%!important;padding-left:24px;padding-right:24px;}}
 @media(max-width:900px){

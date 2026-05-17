@@ -1,6 +1,9 @@
 {{ if .Site.Params.comments.enable }}
-<div class="post-comments">
-  <h3 class="comments-title">评论</h3>
+<div class="post-comments" id="post-comments">
+  <div class="comments-header">
+    <span class="cmt-icon"><i class="far fa-comment-dots"></i></span>
+    <h3 class="comments-title-text">留言评论</h3>
+  </div>
   
   {{ if eq .Site.Params.comments.type "disqus" }}
     <div id="disqus_thread"></div>

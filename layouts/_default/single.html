@@ -82,9 +82,15 @@
   <footer class="post-footer">
     {{ if .Site.Params.article.showLicense }}
     <div class="post-license">
-      <p>本文作者：{{ .Site.Params.author }}</p>
-      <p>本文链接：<a href="{{ .Permalink }}">{{ .Permalink }}</a></p>
-      <p>版权声明：本博客所有文章除特别声明外，均采用 <a href="{{ .Site.Params.article.licenseLink }}" target="_blank" rel="noopener">{{ .Site.Params.article.license }}</a> 许可协议。转载请注明出处！</p>
+      <div class="license-header">
+        <span class="license-icon"><i class="far fa-copyright"></i></span>
+        <span class="license-title-text">版权声明</span>
+      </div>
+      <div class="license-body">
+        <p><span class="lb-label">本文作者</span> {{ .Site.Params.author }}</p>
+        <p><span class="lb-label">本文链接</span> <a href="{{ .Permalink }}" target="_blank">{{ .Permalink }}</a></p>
+        <p><span class="lb-label">许可协议</span> 本博客所有文章除特别声明外，均采用 <a href="{{ .Site.Params.article.licenseLink }}" target="_blank" rel="noopener">{{ .Site.Params.article.license }}</a> 许可协议。转载请注明出处！</p>
+      </div>
     </div>
     {{ end }}
     
@@ -95,6 +101,11 @@
   
   {{ if not .Params.excludeFromList }}
   <nav class="post-nav">
+    <div class="post-nav-header">
+      <span class="pn-icon"><i class="fas fa-exchange-alt"></i></span>
+      <span class="pn-title-text">文章导航</span>
+    </div>
+    <div class="post-nav-inner">
     {{ with .PrevInSection }}
     <a href="{{ .Permalink }}" class="post-nav-item prev">
       <span class="nav-label">上一篇</span>
@@ -107,22 +118,44 @@
       <span class="nav-title">{{ .Title }}</span>
     </a>
     {{ end }}
+    </div>
   </nav>
   {{ end }}
   
-  {{ $related := .Site.RegularPages.Related . | first 5 }}
+  {{ $related := .Site.RegularPages.Related . | first 6 }}
   {{ with $related }}
-  <section class="related-posts">
-    <h3 class="related-title">相关文章</h3>
-    <ul class="related-list">
+  <section class="related-posts" id="related-posts">
+    <div class="related-header">
+      <span class="related-icon"><i class="fas fa-book-open"></i></span>
+      <h3 class="related-title">相关文章</h3>
+    </div>
+    <div class="related-grid">
       {{ range . }}
-      <li><a href="{{ .Permalink }}">{{ .Title }}</a></li>
+      {{ $rpCover := .Params.featured_image | default .Params.image | default $.Site.Params.article.defaultFeaturedImage }}
+      {{ $rpCat := index .Params.categories 0 }}
+      {{ $rpDesc := .Description | default (printf "%s" .Plain | truncate 55 "...") }}
+      <a href="{{ .Permalink }}" class="related-card">
+        <div class="rp-cover">
+          <img src="{{ $rpCover | absURL }}" alt="{{ .Title }}" loading="lazy"
+               class="{{ if eq $rpCover $.Site.Params.article.defaultFeaturedImage }}default-cover{{ end }}">
+        </div>
+        <div class="rp-info">
+          <h4 class="rp-title">{{ .Title }}</h4>
+          <p class="rp-desc">{{ $rpDesc }}</p>
+          <div class="rp-meta-row">
+            <span class="rp-date"><i class="far fa-clock"></i> {{ .Date.Format "01-02" }}</span>
+            {{ with $rpCat }}
+            <span class="rp-cat">{{ partial "category-display-name.html" (dict "Site" $.Site "Slug" .) }}</span>
+            {{ end }}
+          </div>
+        </div>
+      </a>
       {{ end }}
-    </ul>
+    </div>
   </section>
   {{ end }}
   
-  {{ if and .Site.Params.comments.enable .Params.comments }}
+  {{ if and .Site.Params.comments.enable (ne .Params.comments false) }}
   {{ partial "comments.html" . }}
   {{ end }}
 </article>
