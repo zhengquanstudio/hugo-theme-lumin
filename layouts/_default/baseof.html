@@ -107,7 +107,7 @@
   </button>
   
   <!-- JavaScript -->
-  {{ $mainJS := resources.Get "js/main.js" | resources.Minify | resources.Fingerprint }}
+  {{ $mainJS := resources.Get "js/main.js" | resources.Fingerprint }}
   <script src="{{ $mainJS.RelPermalink }}" defer></script>
   
   <!-- Busuanzi -->

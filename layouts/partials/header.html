@@ -45,6 +45,28 @@
               {{ end }}
             </ul>
           </li>
+          {{ else if and (eq .Identifier "about") .Children }}
+          <!-- 关于下拉菜单 -->
+          <li class="nav-item nav-item-dropdown">
+            <a href="javascript:void(0)" class="nav-link nav-link-dropdown">
+              <span class="nav-icon">{{ $icon | safeHTML }}</span>{{ .Name }}
+              <svg class="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </a>
+            <ul class="dropdown-menu">
+              {{ range .Children }}
+              {{ $subIcon := "" }}
+              {{ if eq .Identifier "friends" }}{{ $subIcon = "🤝" }}
+              {{ else if eq .Identifier "guestbook" }}{{ $subIcon = "💬" }}
+              {{ else if eq .Identifier "about-page" }}{{ $subIcon = "👤" }}
+              {{ end }}
+              <li class="dropdown-item">
+                <a href="{{ .URL }}" class="dropdown-link">
+                  <span style="font-size:0.85rem;margin-right:4px;">{{ $subIcon | safeHTML }}</span>{{ .Name }}
+                </a>
+              </li>
+              {{ end }}
+            </ul>
+          </li>
           {{ else }}
           <li class="nav-item">
             <a href="{{ .URL }}" class="nav-link{{ if $.IsMenuCurrent "main" . }} active{{ end }}">
@@ -128,6 +150,24 @@
             {{ $label := index $.Site.Params.categoryLabels .Page.Title }}
             {{ if not $label }}{{ $label = .Page.Title }}{{ end }}
             <li><a href="{{ .Page.Permalink }}" class="mobile-nav-link sub-item">{{ $label }}</a></li>
+            {{ end }}
+          </ul>
+        </li>
+        {{ else if and (eq .Identifier "about") .Children }}
+        <!-- 移动端关于折叠列表 -->
+        <li class="mobile-nav-item">
+          <div class="mobile-nav-link mobile-nav-toggle">
+            <span class="nav-icon">{{ $icon | safeHTML }}</span>{{ .Name }}
+            <svg class="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <ul class="mobile-dropdown-menu">
+            {{ range .Children }}
+            {{ $subIcon := "" }}
+            {{ if eq .Identifier "friends" }}{{ $subIcon = "🤝" }}
+            {{ else if eq .Identifier "guestbook" }}{{ $subIcon = "💬" }}
+            {{ else if eq .Identifier "about-page" }}{{ $subIcon = "👤" }}
+            {{ end }}
+            <li><a href="{{ .URL }}" class="mobile-nav-link sub-item"><span style="margin-right:4px;">{{ $subIcon | safeHTML }}</span>{{ .Name }}</a></li>
             {{ end }}
           </ul>
         </li>

@@ -10,20 +10,12 @@
   <div class="friends-content">
     {{ .Content }}
   </div>
-  
-  <div class="friends-list">
-    {{ range .Site.Data.friends }}
-    <a href="{{ .url }}" target="_blank" rel="noopener" class="friend-card">
-      <div class="friend-avatar">
-        <img src="{{ .avatar }}" alt="{{ .name }}" loading="lazy">
-      </div>
-      <div class="friend-info">
-        <h3 class="friend-name">{{ .name }}</h3>
-        <p class="friend-description">{{ .description }}</p>
-      </div>
-    </a>
-    {{ end }}
+
+  {{ if and .Site.Params.comments.enable (ne .Params.comments false) }}
+  <div class="comments-section">
+    {{ partial "comments.html" . }}
   </div>
+  {{ end }}
 </div>
 
 <style>

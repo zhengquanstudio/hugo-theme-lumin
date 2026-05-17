@@ -1,28 +1,202 @@
 <footer class="site-footer">
   <div class="container">
-    <div class="footer-content">
-      <div class="footer-left">
-        <p class="footer-copyright">
-          &copy; {{ .Site.Params.footer.since | default now.Year }} - {{ now.Year }} 
-          <a href="{{ .Site.BaseURL }}">{{ .Site.Params.author | default .Site.Title }}</a>
-        </p>
-        {{ with .Site.Params.footer.icp }}
-        <p class="footer-icp">{{ . }}</p>
-        {{ end }}
-        {{ with .Site.Params.footer.customText }}
-        <p class="footer-custom">{{ . | safeHTML }}</p>
-        {{ end }}
-      </div>
-      
-      <div class="footer-right">
-        {{ if .Site.Params.footer.poweredBy }}
-        <p class="footer-powered">
-          Powered by <a href="https://gohugo.io" target="_blank" rel="noopener">Hugo</a>
-          <span class="separator">|</span>
-          Theme <a href="https://github.com/yourname/hugo-theme-lumin" target="_blank" rel="noopener">Lumin</a>
-        </p>
-        {{ end }}
-      </div>
+    <!-- 技术栈标签栏 -->
+    {{ if .Site.Params.footer.poweredBy }}
+    <div class="footer-tech">
+      <span class="tech-badge"><a href="https://gohugo.io" target="_blank" rel="noopener">Hugo</a></span>
+      <span class="tech-badge">Theme <a href="https://github.com/zhengquanstudio/hugo-theme-lumin" target="_blank" rel="noopener">Lumin</a></span>
+      {{ with .Site.Params.article.license }}
+        <span class="tech-badge">Copyright <a href="{{ $.Site.Params.article.licenseLink }}" target="_blank" rel="noopener">{{ . }}</a></span>
+      {{ end }}
+      {{ if .Site.Params.comments.enable }}
+        <span class="tech-badge">Comment
+          {{- if eq .Site.Params.comments.type "twikoo" }} <a href="https://twikoo.js.org/" target="_blank" rel="noopener">Twikoo</a>
+          {{- else if eq .Site.Params.comments.type "waline" }} <a href="https://waline.js.org/" target="_blank" rel="noopener">Waline</a>
+          {{- else if eq .Site.Params.comments.type "giscus" }} <a href="https://giscus.app/" target="_blank" rel="noopener">Giscus</a>
+          {{- else if eq .Site.Params.comments.type "artalk" }} <a href="https://artalk.js.org/" target="_blank" rel="noopener">Artalk</a>
+          {{- else if eq .Site.Params.comments.type "gitalk" }} <a href="https://github.com/gitalk/gitalk" target="_blank" rel="noopener">Gitalk</a>
+          {{- else if eq .Site.Params.comments.type "valine" }} <a href="https://valine.js.org/" target="_blank" rel="noopener">Valine</a>
+          {{- else if eq .Site.Params.comments.type "disqus" }} <a href="https://disqus.com/" target="_blank" rel="noopener">Disqus</a>
+          {{- else }} {{ .Site.Params.comments.type }}
+          {{- end -}}
+        </span>
+      {{ end }}
+      {{ if .Site.Params.search.enable }}
+        <span class="tech-badge">Search FlexSearch</span>
+      {{ end }}
+      {{ with .Site.Params.footer.server }}
+        <span class="tech-badge">Server <a{{ if .url }} href="{{ .url }}" target="_blank" rel="noopener"{{ end }}>{{ .name }}</a></span>
+      {{ end }}
+      {{ with .Site.Params.footer.cdn }}
+        <span class="tech-badge">CDN <a{{ if .url }} href="{{ .url }}" target="_blank" rel="noopener"{{ end }}>{{ .name }}</a></span>
+      {{ end }}
     </div>
+    {{ end }}
+
+    <!-- 版权信息栏 -->
+    <div class="footer-bottom">
+      <span class="footer-item">
+        &copy; {{ .Site.Params.footer.since | default now.Year }}-{{ now.Year }}
+        {{ with .Site.Params.author }}{{ . }}{{ else }}{{ .Site.Title }}{{ end }}
+      </span>
+      <span class="footer-sep">|</span>
+      <span class="footer-item">保留所有权利</span>
+      <span class="footer-sep">|</span>
+      <a href="{{ "index.xml" | relURL }}" target="_blank" rel="noopener" class="footer-link">RSS订阅</a>
+      <span class="footer-sep">|</span>
+      <a href="{{ "sitemap.xml" | relURL }}" target="_blank" rel="noopener" class="footer-link">站点地图</a>
+      {{ $hasFiling := or .Site.Params.footer.icp .Site.Params.footer.publicSecurity }}
+      {{ with $hasFiling }}
+      <span class="footer-sep">|</span>
+      <span class="footer-item">
+        {{- with $.Site.Params.footer.icp -}}
+          {{- $icpLink := $.Site.Params.footer.icpLink | default "https://beian.miit.gov.cn/" -}}
+          <a href="{{ $icpLink }}" target="_blank" rel="noopener" class="footer-link footer-icp">{{ . }}</a>
+        {{- end -}}
+        {{- if and $.Site.Params.footer.icp $.Site.Params.footer.publicSecurity }} | {{ end -}}
+        {{- with $.Site.Params.footer.publicSecurity -}}
+          {{- $psLink := "" -}}
+          {{- if $.Site.Params.footer.publicSecurityLink -}}{{- $psLink = $.Site.Params.footer.publicSecurityLink -}}{{- end -}}
+          <a{{ if $psLink }} href="{{ $psLink }}" target="_blank" rel="noopener"{{ end }} class="footer-link footer-ps">{{ . }}</a>
+        {{- end -}}
+      </span>
+      {{ end }}
+      {{ with .Site.Params.statistics.runningSince }}
+      <span class="footer-sep">|</span>
+      <span class="footer-item footer-uptime" data-since="{{ . }}">本站已运行 <strong>0</strong> 天</span>
+      {{ end }}
+    </div>
+
+    {{ with .Site.Params.footer.customText }}
+    <div class="footer-custom">{{ . | safeHTML }}</div>
+    {{ end }}
   </div>
 </footer>
+
+<script>
+(function() {
+  var el = document.querySelector('.footer-uptime');
+  if (!el) return;
+  var since = el.getAttribute('data-since');
+  if (!since) return;
+  function update() {
+    var diff = Math.floor((new Date() - new Date(since)) / 86400000);
+    el.querySelector('strong').textContent = diff;
+  }
+  update();
+  setInterval(update, 86400000);
+})();
+</script>
+
+<style>
+.site-footer {
+  background: var(--bg-secondary, #f8f9fa);
+  border-top: 1px solid var(--border-color, #e5e7eb);
+  padding: 20px 0 16px;
+  margin-top: auto;
+}
+
+/* ===== 技术栈标签栏（深色徽章风格）===== */
+.footer-tech {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(128,128,128,0.12);
+}
+
+.tech-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 4px;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+}
+.tech-badge:hover { transform: translateY(-1px); box-shadow: 0 3px 6px rgba(0,0,0,0.18); }
+.tech-badge a { color: #fff; text-decoration: none; font-weight: 500; }
+
+/* 各标签独立配色 */
+.tech-badge:nth-child(1)  { background: linear-gradient(135deg, #7c3aed, #6d28d9); } /* Hugo - 紫色 */
+.tech-badge:nth-child(2)  { background: linear-gradient(135deg, #2563eb, #1d4ed8); } /* Theme - 蓝色 */
+.tech-badge:nth-child(3)  { background: linear-gradient(135deg, #dc2626, #b91c1c); } /* License - 红色 */
+.tech-badge:nth-child(4)  { background: linear-gradient(135deg, #0891b2, #0e7490); } /* Comment - 青蓝 */
+.tech-badge:nth-child(5)  { background: linear-gradient(135deg, #4b5563, #374151); } /* Search - 灰 */
+.tech-badge:nth-child(6)  { background: linear-gradient(135deg, #0369a1, #075985); } /* Server - 深蓝 */
+.tech-badge:nth-child(7)  { background: linear-gradient(135deg, #0d9488, #0f766e); } /* CDN - 青 */
+
+/* 版权信息栏 */
+.footer-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #6b7280);
+  line-height: 1.8;
+}
+
+.footer-item { white-space: nowrap; }
+
+.footer-sep {
+  margin: 0 6px;
+  opacity: 0.35;
+  user-select: none;
+}
+
+.footer-link {
+  color: var(--text-secondary, #6b7280);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+.footer-link:hover {
+  color: var(--accent-color, #6366f1);
+}
+
+.footer-uptime strong {
+  color: var(--accent-color, #6366f1);
+  font-weight: 600;
+  min-width: 1.5em;
+  display: inline-block;
+  text-align: left;
+}
+
+/* 自定义文字 */
+.footer-custom {
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--text-muted, #9ca3af);
+  margin-top: 8px;
+  line-height: 1.6;
+}
+
+/* 响应式 */
+@media (max-width: 640px) {
+  .footer-tech { gap: 5px; margin-bottom: 10px; padding-bottom: 10px; }
+  .tech-badge { font-size: 0.65rem; padding: 2px 7px; }
+  .footer-bottom { font-size: 0.75rem; }
+  .footer-sep { margin: 0 3px; }
+}
+
+/* 暗色模式 */
+[data-theme="dark"] .site-footer {
+  background: rgba(20, 20, 28, 0.95);
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+[data-theme="dark"] .tech-badge {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.35);
+}
+[data-theme="dark"] .tech-badge:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+}
+</style>
