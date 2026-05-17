@@ -99,6 +99,7 @@
     {{ end }}
   </footer>
   
+  {{ if not .Params.excludeFromList }}
   <nav class="post-nav">
     {{ with .PrevInSection }}
     <a href="{{ .Permalink }}" class="post-nav-item prev">
@@ -113,6 +114,7 @@
     </a>
     {{ end }}
   </nav>
+  {{ end }}
   
   {{ $related := .Site.RegularPages.Related . | first 5 }}
   {{ with $related }}
