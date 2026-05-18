@@ -1,7 +1,8 @@
 {{ define "main" }}
 <div class="home-content">
-  {{/* 从 hugo.toml 的 [params] homePageSize 读取每页数量，必须为 3 的倍数 */}}
-  {{ $pageSize := .Site.Params.homePageSize | default 12 }}
+  {{/* 自动从 rowsPerPage 计算首页文章数（每行3篇）*/}}
+  {{ $rowsPer := .Site.Params.homePageSort.rowsPerPage | default 6 }}
+  {{ $pageSize := mul $rowsPer 3 }}
   {{/* 排除标记为 excludeFromList 的特殊页面（关于/友链/留言板/归档等）及说说等非文章类型 */}}
   {{ $articles := where (where .Site.RegularPages "Params.excludeFromList" "!=" true) "Type" "not in" (slice "moments") }}
   {{ $paginator := .Paginate $articles $pageSize }}
@@ -50,19 +51,21 @@
 
           <div class="article-meta">
             <span class="meta-item meta-date">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
               {{ .Date.Format "2006-01-02" }}
             </span>
             {{ with .Params.categories }}
+            {{ $c0 := index . 0 }}
             <span class="meta-item meta-category">
-              <svg class="folder-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-              {{ $c0 := index . 0 }}
-              <a href="{{ "/categories/" | relLangURL }}{{ $c0 | urlize }}/">{{ partial "category-display-name.html" (dict "Site" $.Site "Slug" $c0) }}</a>
+              <a href="{{ "/categories/" | relLangURL }}{{ $c0 | urlize }}/" class="meta-category-link">
+                <svg class="meta-icon folder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                {{ partial "category-display-name.html" (dict "Site" $.Site "Slug" $c0) }}
+              </a>
             </span>
             {{ end }}
             {{ if .Params.tags }}
             <span class="meta-item meta-tags">
-              <svg class="tag-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+              <svg class="meta-icon tag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
               {{ range first 3 .Params.tags }}
               <a href="{{ "/tags/" | relLangURL }}{{ . | urlize }}/" class="meta-tag">#{{ . }}</a>
               {{ end }}

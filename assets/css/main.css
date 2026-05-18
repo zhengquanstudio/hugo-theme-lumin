@@ -183,6 +183,14 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* ===== 主题切换动画：切换期间禁用各元素过渡，让遮罩层控制视觉效果 ===== */
+body.is-switching-theme,
+body.is-switching-theme *,
+body.is-switching-theme *::before,
+body.is-switching-theme *::after {
+  transition: none !important;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
   font-size: 16px;
@@ -1876,82 +1884,86 @@ ul, ol {
   overflow: hidden;
 }
 
+/* ===== 文章卡片元数据行（日期-分类-标签） ===== */
 .article-meta {
-  display: flex;
+  display: flex !important;
   align-items: center;
-  flex-wrap: nowrap;
-  gap: 14px;
-  font-size: 0.85rem;
+  flex-wrap: nowrap !important;
+  gap: 16px;
+  font-size: 0.82rem;
   color: var(--text-secondary);
   margin-top: auto;
-  padding-top: 10px;
+  padding-top: 8px;
   border-top: 1px solid var(--border-light);
-  white-space: nowrap;
   overflow: hidden;
 }
 
+/* 元信息子项基础样式 */
 .meta-item {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+/* 日期：无任何交互，颜色固定不变 */
+.meta-date {
+  flex-shrink: 0 !important;
+  pointer-events: none !important;
+  cursor: default !important;
+  color: var(--text-secondary) !important;
+}
+
+/* 鼠标悬停卡片时，日期也不变色 */
+.article-card:hover .meta-date {
+  color: var(--text-secondary) !important;
+}
+
+/* 分类区 */
+.meta-category {
+  flex-shrink: 0 !important;
+}
+
+.meta-category-link {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  flex-shrink: 0;
-}
-
-/* 日期样式 - 无交互 */
-.meta-date {
-  color: var(--text-secondary);
-  pointer-events: none;
-}
-
-.meta-date svg {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-  color: var(--text-muted);
-}
-
-/* 分类样式 - 文件夹图标 + 文字颜色 */
-.meta-category {
-  color: var(--text-secondary);
-}
-
-.meta-category .folder-icon {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-  color: var(--text-muted);
-}
-
-.meta-category a {
+  gap: 3px;
   color: var(--text-secondary);
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
-.meta-category a:hover {
+.meta-category-link:hover {
   color: var(--accent-color);
 }
 
-/* 标签样式 */
-.meta-tags {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-  color: var(--text-secondary);
-}
-
-.meta-tags .tag-icon {
+/* 统一图标样式 */
+.meta-icon {
   width: 14px;
   height: 14px;
   flex-shrink: 0;
   color: var(--text-muted);
+}
+
+/* 标签区 */
+.meta-tags {
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .meta-tag {
   color: var(--text-secondary);
   text-decoration: none;
   transition: color 0.2s ease;
+  white-space: nowrap;
+  margin-left: 2px;
+}
+
+.meta-tag:first-of-type {
+  margin-left: 0;
 }
 
 .meta-tag:hover {
@@ -2186,47 +2198,24 @@ ul, ol {
   margin: 6px 0;
 }
 
-/* 有子级的 li 添加折叠按钮 */
+/* 有子级的 li 样式（移除折叠箭头，保持简洁） */
 .post-toc-nav li:has(> ul) {
   position: relative;
 }
+
+/* 隐藏 TOC 折叠按钮 */
 .toc-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
-  cursor: pointer;
-  color: var(--text-muted);
-  font-size: 0.65rem;
-  transition: all var(--transition-fast);
-  vertical-align: middle;
-  margin-right: 2px;
-  flex-shrink: 0;
-  user-select: none;
-  position: relative;
-  top: -1px;
-}
-.toc-toggle:hover {
-  background: rgba(59,130,246,0.12);
-  color: var(--accent-color);
-}
-.toc-toggle::before {
-  content: '';
-  display: block;
-  width: 7px;
-  height: 7px;
-  border-right: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
-  transform: rotate(-45deg) translateY(-2px) translateX(1px);
-  transition: transform 0.25s ease;
-}
-.toc-toggle.expanded::before {
-  transform: rotate(45deg) translateX(0) translateY(0);
+  display: none !important;
 }
 
-[data-theme="dark"] .toc-toggle:hover { background: rgba(96,165,250,0.15); color: #93c5fd; }
+/* 移除箭头后强制展开所有子菜单 */
+.post-toc-nav ul ul {
+  max-height: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+  overflow: visible !important;
+  pointer-events: auto !important;
+}
 
 .post-toc-nav a {
   display: block;
@@ -2431,6 +2420,56 @@ ul, ol {
 
 .post-content li {
   margin: 0.5em 0;
+}
+
+/* Table - 表格样式 */
+.post-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5em 0;
+  font-size: 0.95rem;
+  background: var(--bg-card, #fff);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.post-content table th,
+.post-content table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-light, #e5e7eb);
+}
+
+.post-content table th {
+  background: var(--bg-secondary, #f9fafb);
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.post-content table tr:hover {
+  background: var(--bg-secondary, #f9fafb);
+}
+
+.post-content table tr:last-child td {
+  border-bottom: none;
+}
+
+/* 首列和末列单元格圆角 */
+.post-content table thead tr:first-child th:first-child {
+  border-top-left-radius: 8px;
+}
+.post-content table thead tr:first-child th:last-child {
+  border-top-right-radius: 8px;
+}
+.post-content table tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 8px;
+}
+.post-content table tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 8px;
 }
 
 .post-footer {

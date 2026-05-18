@@ -148,9 +148,12 @@
   };
 
   // ==========================================
-  // Theme Toggle
+  // Theme Toggle (with circular reveal animation)
   // ==========================================
   var ThemeToggle = {
+    DURATION: 500,
+    transitioning: false,
+
     init: function() {
       this.toggle = document.getElementById('theme-toggle');
       if (!this.toggle) return;
@@ -161,12 +164,68 @@
       if (saved) this.html.setAttribute('data-theme', saved);
 
       var self = this;
-      this.toggle.addEventListener('click', function() {
-        var cur = self.html.getAttribute('data-theme') || 'light';
-        var next = cur === 'dark' ? 'light' : 'dark';
-        self.html.setAttribute('data-theme', next);
-        localStorage.setItem(self.key, next);
+      this.toggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        self.switchWithAnimation();
       });
+    },
+
+    switchWithAnimation: function() {
+      if (this.transitioning) return;
+      this.transitioning = true;
+
+      var cur = this.html.getAttribute('data-theme') || 'light';
+      var next = cur === 'dark' ? 'light' : 'dark';
+
+      /* 禁用所有元素的 CSS 过渡，让颜色瞬间切换 */
+      document.body.classList.add('is-switching-theme');
+
+      /* 获取按钮位置（扩散起点） */
+      var rect = this.toggle.getBoundingClientRect();
+      var x = rect.left + rect.width / 2;
+      var y = rect.top + rect.height / 2;
+
+      /* 计算覆盖全屏所需的最大半径 */
+      var maxX = Math.max(x, window.innerWidth - x);
+      var maxY = Math.max(y, window.innerHeight - y);
+      var endRadius = Math.sqrt(maxX * maxX + maxY * maxY);
+
+      /* 创建遮罩层 */
+      var overlay = document.createElement('div');
+      overlay.className = 'theme-transition-overlay';
+      overlay.style.cssText =
+        'position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;' +
+        'pointer-events:none;' +
+        'clip-path:circle(0px at ' + x + 'px ' + y + 'px);' +
+        'background:' + (next === 'dark' ? '#0f0f1a' : '#ffffff') + ';';
+
+      document.body.appendChild(overlay);
+
+      /* 瞬间切换主题（各元素无过渡） */
+      this.html.setAttribute('data-theme', next);
+      localStorage.setItem(this.key, next);
+
+      var self = this;
+
+      /* 触发浏览器重绘后开始扩散动画 */
+      requestAnimationFrame(function() {
+        overlay.style.transition = 'clip-path ' + self.DURATION + 'ms cubic-bezier(.4,0,.2,1)';
+        overlay.style.clipPath = 'circle(' + endRadius + 'px at ' + x + 'px ' + y + 'px)';
+      });
+
+      /* 扩散完成后：恢复过渡能力，遮罩收缩消失 */
+      setTimeout(function() {
+        document.body.classList.remove('is-switching-theme');
+        requestAnimationFrame(function() {
+          overlay.style.opacity = '0';
+          overlay.style.transition = 'opacity 200ms ease 50ms, clip-path 280ms cubic-bezier(.4,0,.2,1)';
+          overlay.style.clipPath = 'circle(0px at ' + x + 'px ' + y + 'px)';
+        });
+        setTimeout(function() {
+          if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+          self.transitioning = false;
+        }, 530);
+      }, self.DURATION + 80);
     }
   };
 
@@ -594,8 +653,11 @@
         });
       });
 
-      // 默认折叠所有二级以上子菜单（保留一级展开）
-      this.autoCollapse();
+      // 根据 hugo.toml 配置决定是否折叠子目录
+      // tocExpandAll: true = 全部展开, false = 折叠二级以下
+      if (!(window.siteConfig && window.siteConfig.tocExpandAll)) {
+        this.autoCollapse();
+      }
     },
 
     toggleItem: function(toggle, ul) {
@@ -992,218 +1054,18 @@
   };
 
   // ==========================================
-  // FriendLinkCheck - 友链失效自动检测
+  // FriendLinkCount - 仅获取友链数量，不检测可用性
   // ==========================================
-  var FriendLinkCheck = {
-    TIMEOUT: 8000,       // 单个链接检测超时(ms)
-    CONCURRENT: 3,       // 并发检测数
-    RETRY_DELAY: 1000,   // 重试延迟(ms)
-
+  var FriendLinkCount = {
     init: function() {
-      this.grid = document.querySelector('.friends-grid');
-      if (!this.grid) return;
-
-      this.cards = this.grid.querySelectorAll('.friend-card');
-      if (!this.cards.length) return;
-
-      // 创建状态栏
-      this.createStatusBar();
-
-      // 开始检测
-      var self = this;
-      setTimeout(function() { self.startCheck(); }, 500); // 延迟等待页面完全渲染
-    },
-
-    createStatusBar: function() {
-      var bar = document.createElement('div');
-      bar.className = 'friend-check-statusbar';
-      bar.id = 'friend-check-status';
-      bar.innerHTML =
-        '<div class="check-status-inner">' +
-          '<span class="check-icon checking"><i class="fas fa-circle-notch fa-spin"></i></span>' +
-          '<span class="check-text">正在检测友链可用性...</span>' +
-          '<span class="check-progress"></span>' +
-          '<button class="check-retry-btn" style="display:none;" onclick="FriendLinkCheck.retryAll()"><i class="fas fa-redo"></i> 重新检测</button>' +
-        '</div>';
-      this.grid.parentNode.insertBefore(bar, this.grid);
-      this.statusBar = bar;
-    },
-
-    startCheck: function() {
-      this.results = { total: this.cards.length, ok: 0, fail: 0, checked: 0 };
-      this.queue = Array.prototype.slice.call(this.cards);
-      this.updateProgress();
-
-      // 并发执行检测
-      this.processQueue();
-    },
-
-    processQueue: function() {
-      var self = this;
-      while (this.running < this.CONCURRENT && this.queue.length > 0) {
-        var card = this.queue.shift();
-        this.running = (this.running || 0) + 1;
-        this.checkCard(card);
-      }
-    },
-
-    checkCard: function(card) {
-      var url = card.getAttribute('href');
-      if (!url || url === '#' || !url.match(/^https?:\/\//)) {
-        this.markResult(card, 'skip', null);
-        return;
-      }
-
-      var self = this;
-      var controller = new AbortController();
-      var timer = setTimeout(function() { controller.abort(); }, this.TIMEOUT);
-
-      // 使用 no-cors 模式探测（不读取响应体，只判断网络层是否可达）
-      var startTime = Date.now();
-      fetch(url, {
-        method: 'HEAD',
-        mode: 'no-cors',
-        cache: 'no-cache',
-        signal: controller.signal
-      }).then(function() {
-        clearTimeout(timer);
-        var elapsed = Date.now() - startTime;
-        self.markResult(card, elapsed <= self.TIMEOUT ? 'ok' : 'slow', elapsed);
-      }).catch(function(err) {
-        clearTimeout(timer);
-        // TypeError 通常表示网络错误(DNS失败/连接超时/SSL错误)
-        // AbortError 表示超时
-        var isFail = err.name === 'TypeError' || err.name === 'AbortError';
-        self.markResult(card, isFail ? 'fail' : 'unknown', null);
-      });
-    },
-
-    markResult: function(card, status, timeMs) {
-      // 移除旧状态
-      card.classList.remove('friend-ok', 'friend-fail', 'friend-checking', 'friend-skip');
-
-      var badge = card.querySelector('.friend-status-badge');
-      if (badge) badge.remove();
-
-      if (status === 'ok') {
-        card.classList.add('friend-ok');
-        this.results.ok++;
-      } else if (status === 'fail') {
-        card.classList.add('friend-fail');
-        // 添加失效标签
-        var b = document.createElement('span');
-        b.className = 'friend-status-badge fail';
-        b.innerHTML = '<i class="fas fa-unlink"></i> 失效';
-        b.title = '该链接无法访问，可能是网站已关闭或域名过期';
-        card.appendChild(b);
-        this.results.fail++;
-      } else if (status === 'skip') {
-        card.classList.add('friend-skip');
-      }
-
-      this.results.checked++;
-      this.running--;
-      this.updateProgress();
-
-      // 继续处理队列
-      if (this.queue.length > 0) {
-        this.processQueue();
-      } else if (this.running <= 0) {
-        this.finishCheck();
-      }
-    },
-
-    updateProgress: function() {
-      if (!this.statusBar) return;
-      var textEl = this.statusBar.querySelector('.check-text');
-      var progEl = this.statusBar.querySelector('.check-progress');
-      var iconEl = this.statusBar.querySelector('.check-icon');
-      var retryBtn = this.statusBar.querySelector('.check-retry-btn');
-
-      if (textEl) {
-        if (this.results.checked < this.results.total) {
-          textEl.textContent = '正在检测友链可用性... (' + this.results.checked + '/' + this.results.total + ')';
-        }
-      }
-      if (progEl) {
-        var pct = Math.round(this.results.checked / this.results.total * 100);
-        progEl.style.width = pct + '%';
-        progEl.textContent = pct + '%';
-      }
-    },
-
-    finishCheck: function() {
-      if (!this.statusBar) return;
-      var textEl = this.statusBar.querySelector('.check-text');
-      var iconEl = this.statusBar.querySelector('.check-icon i');
-      var retryBtn = this.statusBar.querySelector('.check-retry-btn');
-
-      // 更新状态文本
-      var summary = '';
-      if (this.results.fail === 0) {
-        summary = '全部 ' + this.results.total + ' 个友链均正常访问 ✓';
-        if (iconEl) {
-          iconEl.className = 'fas fa-check-circle ok';
-          iconEl.classList.remove('fa-spin');
-        }
-        this.statusBar.classList.add('all-ok');
-      } else {
-        summary = '检测完成：' + this.results.ok + ' 个正常，' + this.results.fail + ' 个可能失效';
-        if (iconEl) {
-          iconEl.className = 'fas fa-exclamation-triangle warn';
-          iconEl.classList.remove('fa-spin');
-        }
-        this.statusBar.classList.add('has-fail');
-        if (retryBtn) retryBtn.style.display = 'inline-flex';
-      }
-      if (textEl) textEl.textContent = summary;
-
-      // 回填数据到侧边栏"站点统计"组件
-      this.updateSidebarStats();
-    },
-
-    updateSidebarStats: function() {
-      var statRow = document.getElementById('stats-friend-links');
-      if (!statRow) return;
-
-      statRow.style.display = '';
+      var grid = document.querySelector('.friends-grid');
+      if (!grid) return;
+      var count = grid.querySelectorAll('.friend-card').length;
+      /* 回填到侧边栏"站点统计"组件 */
       var totalEl = document.getElementById('friend-link-total');
-      var failBadge = document.getElementById('friend-link-fail-badge');
-      var failCountEl = document.getElementById('friend-link-fail-count');
-
-      if (totalEl) totalEl.textContent = this.results.ok;
-
-      if (this.results.fail > 0 && failBadge && failCountEl) {
-        failBadge.style.display = 'inline-flex';
-        failCountEl.textContent = this.results.fail;
-      } else if (failBadge) {
-        failBadge.style.display = 'none';
-      }
-    },
-
-    retryAll: function() {
-      // 清除之前的状态
-      var self = this;
-      this.cards.forEach(function(card) {
-        card.classList.remove('friend-ok', 'friend-fail', 'friend-skip', 'friend-checking');
-        var badge = card.querySelector('.friend-status-badge');
-        if (badge) badge.remove();
-      });
-
-      // 重置状态栏
-      if (this.statusBar) {
-        this.statusBar.classList.remove('all-ok', 'has-fail');
-        var iconEl = this.statusBar.querySelector('.check-icon i');
-        var textEl = this.statusBar.querySelector('.check-text');
-        var retryBtn = this.statusBar.querySelector('.check-retry-btn');
-        if (iconEl) { iconEl.className = 'fas fa-circle-notch fa-spin'; }
-        if (textEl) textEl.textContent = '正在重新检测...';
-        if (retryBtn) retryBtn.style.display = 'none';
-      }
-
-      // 重新开始
-      this.running = 0;
-      this.startCheck();
+      var statRow = document.getElementById('stats-friend-links');
+      if (totalEl) totalEl.textContent = count;
+      if (statRow) statRow.style.display = '';
     }
   };
 
@@ -1228,7 +1090,7 @@
     ArchiveCollapsible.init();
     CodeBlock.init();
     ReadingProgress.init();
-    FriendLinkCheck.init();
+    FriendLinkCount.init();
   });
 
   // PWA - 安装提示（beforeinstallprompt 事件）

@@ -13,28 +13,14 @@
       <nav class="header-nav" aria-label="主导航">
         <ul class="nav-list">
           {{ range .Site.Menus.main }}
-          {{ $icon := "" }}
-          {{ if eq .Identifier "home" }}{{ $icon = "🏠" }}
-          {{ else if eq .Identifier "archives" }}{{ $icon = "📅" }}
-          {{ else if eq .Identifier "categories" }}{{ $icon = "🗂️" }}
-          {{ else if eq .Identifier "tags" }}{{ $icon = "🏷️" }}
-          {{ else if eq .Identifier "gallery" }}{{ $icon = "📷" }}
-          {{ else if eq .Identifier "movies" }}{{ $icon = "🎬" }}
-          {{ else if eq .Identifier "music" }}{{ $icon = "🎵" }}
-          {{ else if eq .Identifier "diary" }}{{ $icon = "📔" }}
-          {{ else if eq .Identifier "moments" }}{{ $icon = "📝" }}
-          {{ else if eq .Identifier "entertainment" }}{{ $icon = "🎪" }}
-          {{ else if eq .Identifier "topics" }}{{ $icon = "🛠️" }}
-          {{ else if eq .Identifier "friends" }}{{ $icon = "🤝" }}
-          {{ else if eq .Identifier "guestbook" }}{{ $icon = "💬" }}
-          {{ else if eq .Identifier "about" }}{{ $icon = "👤" }}
-          {{ end }}
+          {{/* 从 navIcons 配置读取图标 */}}
+          {{ $icon := index $.Site.Params.navIcons .Identifier | default "" }}
 
           {{ if eq .Identifier "categories" }}
           <!-- 分类下拉菜单 -->
           <li class="nav-item nav-item-dropdown">
             <a href="javascript:void(0)" class="nav-link nav-link-dropdown">
-              <span class="nav-icon">{{ $icon | safeHTML }}</span>{{ .Name }}
+              {{- if $icon }}<i class="nav-icon {{ $icon }}"></i> {{ end }}{{ .Name }}
               <svg class="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </a>
             <ul class="dropdown-menu">
@@ -45,18 +31,11 @@
               {{ range $k, $v := $.Site.Params.categoryLabels }}
                 {{ if eq $v $label }}{{ $catSlug = $k }}{{ end }}
               {{ end }}
-              {{ $catIcon := "" }}
-              {{ if eq $catSlug "life" }}{{ $catIcon = "✏️" }}
-              {{ else if eq $catSlug "tech" }}{{ $catIcon = "💻" }}
-              {{ else if eq $catSlug "smart" }}{{ $catIcon = "🏠" }}
-              {{ else if eq $catSlug "game" }}{{ $catIcon = "🕹️" }}
-              {{ else if eq $catSlug "share" }}{{ $catIcon = "📦" }}
-              {{ else if eq $catSlug "code" }}{{ $catIcon = "⌨️" }}
-              {{ else }}{{ $catIcon = "📁" }}
-              {{ end }}
+              {{/* 从 categoryIcons 配置读取分类图标 */}}
+              {{ $catIcon := index $.Site.Params.categoryIcons $catSlug | default "" }}
               <li class="dropdown-item">
                 <a href="{{ .Page.Permalink }}" class="dropdown-link">
-                  <span style="font-size:0.85rem;">{{ $catIcon | safeHTML }}</span>{{ $label }}
+                  {{- if $catIcon }}<i style="font-size:0.85rem;" class="{{ $catIcon }}"></i> {{ end }}{{ $label }}
                 </a>
               </li>
               {{ end }}
@@ -66,19 +45,15 @@
           <!-- 娱乐下拉菜单 -->
           <li class="nav-item nav-item-dropdown">
             <a href="javascript:void(0)" class="nav-link nav-link-dropdown">
-              <span class="nav-icon">{{ $icon | safeHTML }}</span>{{ .Name }}
+              {{- if $icon }}<i class="nav-icon {{ $icon }}"></i> {{ end }}{{ .Name }}
               <svg class="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </a>
             <ul class="dropdown-menu">
               {{ range .Children }}
-              {{ $subIcon := "" }}
-              {{ if eq .Identifier "gallery" }}{{ $subIcon = "📷" }}
-              {{ else if eq .Identifier "movies" }}{{ $subIcon = "🎬" }}
-              {{ else if eq .Identifier "music" }}{{ $subIcon = "🎵" }}
-              {{ end }}
+              {{ $subIcon := index $.Site.Params.navIcons .Identifier | default "" }}
               <li class="dropdown-item">
                 <a href="{{ .URL }}" class="dropdown-link">
-                  <span style="font-size:0.85rem;margin-right:4px;">{{ $subIcon | safeHTML }}</span> {{ .Name }}
+                  {{- if $subIcon }}<i style="font-size:0.85rem;margin-right:4px;" class="{{ $subIcon }}"></i> {{ end }}{{ .Name }}
                 </a>
               </li>
               {{ end }}
@@ -88,21 +63,15 @@
           <!-- 关于下拉菜单 -->
           <li class="nav-item nav-item-dropdown">
             <a href="javascript:void(0)" class="nav-link nav-link-dropdown">
-              <span class="nav-icon">{{ $icon | safeHTML }}</span>{{ .Name }}
+              {{- if $icon }}<i class="nav-icon {{ $icon }}"></i> {{ end }}{{ .Name }}
               <svg class="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </a>
             <ul class="dropdown-menu">
               {{ range .Children }}
-              {{ $subIcon := "" }}
-              {{ if eq .Identifier "friends" }}{{ $subIcon = "🤝" }}
-              {{ else if eq .Identifier "guestbook" }}{{ $subIcon = "💬" }}
-              {{ else if eq .Identifier "about-page" }}{{ $subIcon = "👤" }}
-              {{ else if eq .Identifier "equipment" }}{{ $subIcon = "🧰" }}
-              {{ else if eq .Identifier "data" }}{{ $subIcon = "📊" }}
-              {{ end }}
+              {{ $subIcon := index $.Site.Params.navIcons .Identifier | default "" }}
               <li class="dropdown-item">
                 <a href="{{ .URL }}" class="dropdown-link">
-                  {{- if $subIcon }}<span style="font-size:0.85rem;margin-right:4px;">{{ $subIcon | safeHTML }}</span>{{ end }} {{ .Name }}
+                  {{- if $subIcon }}<i style="font-size:0.85rem;margin-right:4px;" class="{{ $subIcon }}"></i> {{ end }}{{ .Name }}
                 </a>
               </li>
               {{ end }}
@@ -111,7 +80,7 @@
           {{ else }}
           <li class="nav-item">
             <a href="{{ .URL }}" class="nav-link{{ if $.IsMenuCurrent "main" . }} active{{ end }}">
-              <span class="nav-icon">{{ $icon | safeHTML }}</span>{{ .Name }}
+              {{- if $icon }}<i class="nav-icon {{ $icon }}"></i> {{ end }}{{ .Name }}
             </a>
           </li>
           {{ end }}
@@ -164,28 +133,13 @@
     <div class="container">
       <ul class="mobile-nav-list">
         {{ range .Site.Menus.main }}
-        {{ $icon := "" }}
-        {{ if eq .Identifier "home" }}{{ $icon = "🏠" }}
-        {{ else if eq .Identifier "archives" }}{{ $icon = "📅" }}
-        {{ else if eq .Identifier "categories" }}{{ $icon = "📂" }}
-        {{ else if eq .Identifier "tags" }}{{ $icon = "🏷️" }}
-        {{ else if eq .Identifier "gallery" }}{{ $icon = "📷" }}
-        {{ else if eq .Identifier "movies" }}{{ $icon = "🎬" }}
-        {{ else if eq .Identifier "music" }}{{ $icon = "🎵" }}
-        {{ else if eq .Identifier "diary" }}{{ $icon = "📔" }}
-        {{ else if eq .Identifier "moments" }}{{ $icon = "📝" }}
-        {{ else if eq .Identifier "entertainment" }}{{ $icon = "🎪" }}
-        {{ else if eq .Identifier "topics" }}{{ $icon = "🛠️" }}
-        {{ else if eq .Identifier "friends" }}{{ $icon = "🤝" }}
-        {{ else if eq .Identifier "guestbook" }}{{ $icon = "💬" }}
-        {{ else if eq .Identifier "about" }}{{ $icon = "👤" }}
-        {{ end }}
+        {{ $icon := index $.Site.Params.navIcons .Identifier | default "" }}
 
         {{ if eq .Identifier "categories" }}
         <!-- 移动端分类折叠列表 -->
         <li class="mobile-nav-item">
           <div class="mobile-nav-link mobile-nav-toggle">
-            <span class="nav-icon">{{ $icon | safeHTML }}</span>{{ .Name }}
+            {{- if $icon }}<i class="nav-icon {{ $icon }}"></i> {{ end }}{{ .Name }}
             <svg class="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </div>
           <ul class="mobile-dropdown-menu">
@@ -195,16 +149,8 @@
             {{ range $k, $v := $.Site.Params.categoryLabels }}
               {{ if eq $v $label }}{{ $catSlug = $k }}{{ end }}
             {{ end }}
-            {{ $catIcon := "" }}
-            {{ if eq $catSlug "life" }}{{ $catIcon = "✏️" }}
-            {{ else if eq $catSlug "tech" }}{{ $catIcon = "💻" }}
-            {{ else if eq $catSlug "smart" }}{{ $catIcon = "🏠" }}
-            {{ else if eq $catSlug "game" }}{{ $catIcon = "🕹️" }}
-            {{ else if eq $catSlug "share" }}{{ $catIcon = "📦" }}
-            {{ else if eq $catSlug "code" }}{{ $catIcon = "⌨️" }}
-            {{ else }}{{ $catIcon = "📁" }}
-            {{ end }}
-            <li><a href="{{ .Page.Permalink }}" class="mobile-nav-link sub-item"><span style="margin-right:4px;">{{ $catIcon | safeHTML }}</span> {{ $label }}</a></li>
+            {{ $catIcon := index $.Site.Params.categoryIcons $catSlug | default "" }}
+            <li><a href="{{ .Page.Permalink }}" class="mobile-nav-link sub-item">{{- if $catIcon }}<i style="margin-right:4px;" class="{{ $catIcon }}"></i> {{ end }}{{ $label }}</a></li>
             {{ end }}
           </ul>
         </li>
@@ -212,17 +158,13 @@
         <!-- 移动端娱乐折叠列表 -->
         <li class="mobile-nav-item">
           <div class="mobile-nav-link mobile-nav-toggle">
-            <span class="nav-icon">{{ $icon | safeHTML }}</span>{{ .Name }}
+            {{- if $icon }}<i class="nav-icon {{ $icon }}"></i> {{ end }}{{ .Name }}
             <svg class="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </div>
           <ul class="mobile-dropdown-menu">
             {{ range .Children }}
-            {{ $subIcon := "" }}
-            {{ if eq .Identifier "gallery" }}{{ $subIcon = "📷" }}
-            {{ else if eq .Identifier "movies" }}{{ $subIcon = "🎬" }}
-            {{ else if eq .Identifier "music" }}{{ $subIcon = "🎵" }}
-            {{ end }}
-            <li><a href="{{ .URL }}" class="mobile-nav-link sub-item"><span style="margin-right:4px;">{{ $subIcon | safeHTML }}</span> {{ .Name }}</a></li>
+            {{ $subIcon := index $.Site.Params.navIcons .Identifier | default "" }}
+            <li><a href="{{ .URL }}" class="mobile-nav-link sub-item">{{- if $subIcon }}<i style="margin-right:4px;" class="{{ $subIcon }}"></i> {{ end }}{{ .Name }}</a></li>
             {{ end }}
           </ul>
         </li>
@@ -230,25 +172,20 @@
         <!-- 移动端关于折叠列表 -->
         <li class="mobile-nav-item">
           <div class="mobile-nav-link mobile-nav-toggle">
-            <span class="nav-icon">{{ $icon | safeHTML }}</span>{{ .Name }}
+            {{- if $icon }}<i class="nav-icon {{ $icon }}"></i> {{ end }}{{ .Name }}
             <svg class="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </div>
           <ul class="mobile-dropdown-menu">
             {{ range .Children }}
-            {{ $subIcon := "" }}
-            {{ if eq .Identifier "friends" }}{{ $subIcon = "🤝" }}
-            {{ else if eq .Identifier "guestbook" }}{{ $subIcon = "💬" }}
-            {{ else if eq .Identifier "about-page" }}{{ $subIcon = "👤" }}
-            {{ else if eq .Identifier "equipment" }}{{ $subIcon = "🧰" }}
-            {{ else if eq .Identifier "data" }}{{ $subIcon = "📊" }}
+            {{ $subIcon := index $.Site.Params.navIcons .Identifier | default "" }}
+            <li><a href="{{ .URL }}" class="mobile-nav-link sub-item">{{- if $subIcon }}<i style="margin-right:4px;" class="{{ $subIcon }}"></i> {{ end }}{{ .Name }}</a></li>
             {{ end }}
-            <li><a href="{{ .URL }}" class="mobile-nav-link sub-item">{{- if $subIcon }}<span style="margin-right:4px;">{{ $subIcon | safeHTML }}</span>{{ end }} {{ .Name }}</a></li>
-          {{ end }}
+          </ul>
         </ul>
         </li>
         {{ else }}
         <li class="mobile-nav-item">
-          <a href="{{ .URL }}" class="mobile-nav-link"><span class="nav-icon">{{ $icon | safeHTML }}</span>{{ .Name }}</a>
+          <a href="{{ .URL }}" class="mobile-nav-link">{{- if $icon }}<i class="nav-icon {{ $icon }}"></i> {{ end }}{{ .Name }}</a>
         </li>
         {{ end }}
         {{ end }}

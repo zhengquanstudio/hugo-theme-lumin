@@ -1,7 +1,7 @@
 {{ define "main" }}
-{{/* 面包屑导航 */}}
-{{ $pageIcons := dict "about" "fa-user-circle" "guestbook" "fa-comment-dots" "archives" "fa-box-archive" "movies" "fa-film" "music" "fa-music" }}
-{{ $currentIcon := index $pageIcons .Page.File.TranslationBaseName | default "" }}
+{{/* 面包屑导航 - 图标从 hugo.toml [params.breadcrumbIcons] 读取 */}}
+{{ $pageSlug := .Page.File.TranslationBaseName }}
+{{ $currentIcon := index .Site.Params.breadcrumbIcons $pageSlug | default "" }}
 <nav class="breadcrumb" aria-label="面包屑导航">
   <ol class="breadcrumb-list">
     <li class="breadcrumb-item"><a href="{{ .Site.BaseURL }}"><i class="fas fa-home" style="font-size:0.9em;margin-right:2px;"></i> 首页</a></li>
@@ -90,6 +90,7 @@
     {{ end }}
   </header>
 
+  {{ if ne .Params.toolbar false }}
   <!-- 文章工具栏 -->
   <div class="post-toolbar" role="toolbar" aria-label="文章操作">
     <button type="button" id="btn-export-pdf" class="post-tool-btn" title="导出为PDF">
@@ -101,6 +102,7 @@
       <span>打印</span>
     </button>
   </div>
+  {{ end }}
 
   <div class="post-content">
     {{ .Content }}

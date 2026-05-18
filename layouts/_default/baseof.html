@@ -236,6 +236,11 @@
   </button>
   
   <!-- JavaScript -->
+  <script>
+    window.siteConfig = {
+      tocExpandAll: {{ .Site.Params.article.tocExpandAll | default false }}
+    };
+  </script>
   {{ $mainJS := resources.Get "js/main.js" | resources.Fingerprint }}
   <script src="{{ $mainJS.RelPermalink }}" defer></script>
   

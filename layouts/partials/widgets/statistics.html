@@ -61,10 +61,11 @@
     {{ end }}
     {{ end }}
 
-    <!-- 友链数量 (由 JS 检测完成后回填) -->
-    <div class="stat-row" id="stats-friend-links" style="display:none;">
+    <!-- 友链数量 -->
+    {{ $friendCount := len (where .Site.Pages "Type" "friends") }}
+    <div class="stat-row">
       <span class="stat-label">友情链接</span>
-      <span class="stat-value"><span id="friend-link-total">--</span> <span class="stat-unit">个</span><span id="friend-link-fail-badge" class="stat-fail-badge" style="display:none;"><i class="fas fa-exclamation-triangle"></i> <span id="friend-link-fail-count">0</span> 失效</span></span>
+      <span class="stat-value">{{ $friendCount }} <span class="stat-unit">个</span></span>
     </div>
 
     {{ if .Site.Params.statistics.busuanzi }}
