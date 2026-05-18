@@ -1,86 +1,98 @@
 {{ define "main" }}
+{{/* ===== 文章加密检测 ===== */}}
+{{ $hasPassword := and .Params.password (ne .Params.password "") }}
+
 {{/* 面包屑导航 - 图标从 hugo.toml [params.breadcrumbIcons] 读取 */}}
 {{ $pageSlug := .Page.File.TranslationBaseName }}
-{{ $currentIcon := index .Site.Params.breadcrumbIcons $pageSlug | default "" }}
+{{ $currentIcon := index site.Params.breadcrumbIcons $pageSlug | default "" }}
 <nav class="breadcrumb" aria-label="面包屑导航">
   <ol class="breadcrumb-list">
-    <li class="breadcrumb-item"><a href="{{ .Site.BaseURL }}"><i class="fas fa-home" style="font-size:0.9em;margin-right:2px;"></i> 首页</a></li>
+    <li class="breadcrumb-item"><a href="{{ site.BaseURL }}"><i class="fas fa-home" style="font-size:0.9em;margin-right:2px;"></i> 首页</a></li>
     {{ with .Params.categories }}
       {{ $catSlug := index . 0 }}
-      <li class="breadcrumb-item"><a href="{{ "categories" | relURL }}/{{ $catSlug | urlize }}/"><i class="fas fa-folder-open" style="font-size:0.85em;margin-right:3px;"></i>{{ partial "category-display-name.html" (dict "Site" $.Site "Slug" $catSlug) }}</a></li>
+      <li class="breadcrumb-item"><a href="/{{ $catSlug }}/"><i class="fas fa-folder-open" style="font-size:0.85em;margin-right:3px;"></i>{{ partial "category-display-name.html" (dict "Site" site "Slug" $catSlug) }}</a></li>
     {{ end }}
     <li class="breadcrumb-item active" aria-current="page">
       {{ if $currentIcon }}<i class="fas {{ $currentIcon }}" style="font-size:0.85em;margin-right:4px;opacity:0.8;"></i>{{ end }}{{ .Title }}</li>
   </ol>
 </nav>
 
+{{/* ===== 加密文章：显示锁定界面 ===== */}}
+{{ if $hasPassword }}
+<div id="encrypted-content" class="encrypt-wrapper">
+  <div class="encrypt-lock-screen">
+    <div class="encrypt-lock-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+      </svg>
+    </div>
+    <h3 class="encrypt-title">这是一篇加密文章</h3>
+    <p class="encrypt-hint">{{ .Params.passwordHint | default "请输入密码以查看内容" }}</p>
+    <form class="encrypt-form" autocomplete="off">
+      <div class="encrypt-input-group">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><circle cx="12" cy="16" r="1"/></svg>
+        <input type="password" id="encrypt-pwd" placeholder="请输入访问密码" autofocus />
+        <button type="submit" id="encrypt-submit">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          解锁
+        </button>
+      </div>
+      <p class="encrypt-error"></p>
+    </form>
+  </div>
+  {{/* 文章完整内容（隐藏存储） */}}
+  <article class="single-post encrypted-article" id="encrypted-article" style="display:none">
+{{ else }}
 <article class="single-post">
+{{ end }}
+
   <header class="post-header">
     {{ with .Params.categories }}
     <div class="post-categories">
       {{ range . }}
       {{ $slug := . }}
-      <a href="{{ "categories" | relURL }}/{{ $slug | urlize }}/" class="category-link">{{ partial "category-display-name.html" (dict "Site" $.Site "Slug" $slug) }}</a>
+      <a href="/{{ $slug }}/" class="category-link">{{ partial "category-display-name.html" (dict "Site" site "Slug" $slug) }}</a>
       {{ end }}
     </div>
     {{ end }}
-    
+
     <h1 class="post-title">{{ .Title }}</h1>
-    
+
     <div class="post-meta">
-      {{ if .Site.Params.article.showAuthor }}
+      {{ if site.Params.article.showAuthor }}
       <span class="meta-item">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-          <circle cx="12" cy="7" r="4"></circle>
-        </svg>
-        {{ .Params.author | default .Site.Params.author }}
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        {{ .Params.author | default site.Params.author }}
       </span>
       {{ end }}
-      
+
       <span class="meta-item">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-          <line x1="16" y1="2" x2="16" y2="6"></line>
-          <line x1="8" y1="2" x2="8" y2="6"></line>
-          <line x1="3" y1="10" x2="21" y2="10"></line>
-        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         {{ .Date.Format "2006-01-02" }}
       </span>
-      
-      {{ if and .Site.Params.article.showWordCount }}
+
+      {{ if and site.Params.article.showWordCount }}
       <span class="meta-item">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-          <polyline points="14 2 14 8 20 8"></polyline>
-          <line x1="16" y1="13" x2="8" y2="13"></line>
-          <line x1="16" y1="17" x2="8" y2="17"></line>
-        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         {{ .WordCount }} 字
       </span>
       {{ end }}
-      
-      {{ if and .Site.Params.article.showReadingTime }}
+
+      {{ if and site.Params.article.showReadingTime }}
       <span class="meta-item">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"></circle>
-          <polyline points="12 6 12 12 16 14"></polyline>
-        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         {{ .ReadingTime }} 分钟
       </span>
       {{ end }}
-      
-      {{ if and .Site.Params.statistics.busuanzi }}
+
+      {{ if and site.Params.statistics.busuanzi }}
       <span class="meta-item">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-          <circle cx="12" cy="12" r="3"></circle>
-        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         <span id="busuanzi_value_page_pv">--</span> 阅读
       </span>
       {{ end }}
     </div>
-    
+
     {{ with .Params.tags }}
     <div class="post-tags">
       {{ range . }}
@@ -91,14 +103,13 @@
   </header>
 
   {{ if ne .Params.toolbar false }}
-  <!-- 文章工具栏 -->
   <div class="post-toolbar" role="toolbar" aria-label="文章操作">
     <button type="button" id="btn-export-pdf" class="post-tool-btn" title="导出为PDF">
-      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       <span>导出PDF</span>
     </button>
     <button type="button" id="btn-print-article" class="post-tool-btn" title="打印文章">
-      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v-5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
       <span>打印</span>
     </button>
   </div>
@@ -107,27 +118,27 @@
   <div class="post-content">
     {{ .Content }}
   </div>
-  
+
   <footer class="post-footer">
-    {{ if .Site.Params.article.showLicense }}
+    {{ if site.Params.article.showLicense }}
     <div class="post-license">
       <div class="license-header">
         <span class="license-icon"><i class="far fa-copyright"></i></span>
         <span class="license-title-text">版权声明</span>
       </div>
       <div class="license-body">
-        <p><span class="lb-label">本文作者</span> {{ .Site.Params.author }}</p>
+        <p><span class="lb-label">本文作者</span> {{ site.Params.author }}</p>
         <p><span class="lb-label">本文链接</span> <a href="{{ .Permalink }}" target="_blank">{{ .Permalink }}</a></p>
-        <p><span class="lb-label">许可协议</span> 本博客所有文章除特别声明外，均采用 <a href="{{ .Site.Params.article.licenseLink }}" target="_blank" rel="noopener">{{ .Site.Params.article.license }}</a> 许可协议。转载请注明出处！</p>
+        <p><span class="lb-label">许可协议</span> 本博客所有文章除特别声明外，均采用 <a href="{{ site.Params.article.licenseLink }}" target="_blank" rel="noopener">{{ site.Params.article.license }}</a> 许可协议。转载请注明出处！</p>
       </div>
     </div>
     {{ end }}
-    
-    {{ if and .Site.Params.reward.enable .Params.reward }}
+
+    {{ if and site.Params.reward.enable .Params.reward }}
     {{ partial "reward.html" . }}
     {{ end }}
   </footer>
-  
+
   {{ if not .Params.excludeFromList }}
   <nav class="post-nav">
     <div class="post-nav-header">
@@ -150,8 +161,8 @@
     </div>
   </nav>
   {{ end }}
-  
-  {{ $related := .Site.RegularPages.Related . | first 6 }}
+
+  {{ $related := site.RegularPages.Related . | first 6 }}
   {{ with $related }}
   <section class="related-posts" id="related-posts">
     <div class="related-header">
@@ -160,13 +171,13 @@
     </div>
     <div class="related-grid">
       {{ range . }}
-      {{ $rpCover := .Params.featured_image | default .Params.image | default $.Site.Params.article.defaultFeaturedImage }}
+      {{ $rpCover := .Params.featured_image | default .Params.image | default site.Params.article.defaultFeaturedImage }}
       {{ $rpCat := index .Params.categories 0 }}
       {{ $rpDesc := .Description | default (printf "%s" .Plain | truncate 55 "...") }}
       <a href="{{ .Permalink }}" class="related-card">
         <div class="rp-cover">
           <img src="{{ $rpCover | absURL }}" alt="{{ .Title }}" loading="lazy"
-               class="{{ if eq $rpCover $.Site.Params.article.defaultFeaturedImage }}default-cover{{ end }}">
+               class="{{ if eq $rpCover site.Params.article.defaultFeaturedImage }}default-cover{{ end }}">
         </div>
         <div class="rp-info">
           <h4 class="rp-title">{{ .Title }}</h4>
@@ -174,7 +185,7 @@
           <div class="rp-meta-row">
             <span class="rp-date"><i class="far fa-clock"></i> {{ .Date.Format "01-02" }}</span>
             {{ with $rpCat }}
-            <span class="rp-cat">{{ partial "category-display-name.html" (dict "Site" $.Site "Slug" .) }}</span>
+            <span class="rp-cat">{{ partial "category-display-name.html" (dict "Site" site "Slug" .) }}</span>
             {{ end }}
           </div>
         </div>
@@ -183,15 +194,25 @@
     </div>
   </section>
   {{ end }}
-  
-  {{ if and .Site.Params.comments.enable (ne .Params.comments false) }}
+
+  {{ if and site.Params.comments.enable (ne .Params.comments false) }}
   {{ partial "comments.html" . }}
   {{ end }}
+
+  {{ if $hasPassword }}
+  </article>
+  {{/* 密码哈希配置（客户端验证用） */}}
+  <div id="encrypt-config" style="display:none"
+    data-pwd-hash="{{ .Params.password | sha256 }}"
+    data-hint="{{ .Params.passwordHint }}"></div>
+  </div>
+  {{ else }}
 </article>
+  {{ end }}
 {{ end }}
 
 {{ define "toc-sidebar" }}
-{{ if and .Site.Params.article.showToc .TableOfContents }}
+{{ if and site.Params.article.showToc .TableOfContents }}
 <aside class="post-toc-sidebar" id="post-toc-sidebar">
   <div class="post-toc-card">
     <h4 class="post-toc-title">目录</h4>

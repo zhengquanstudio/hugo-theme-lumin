@@ -2238,6 +2238,72 @@ ul, ol {
   font-weight: 500;
 }
 
+/* ====== KaTeX 数学公式样式 ====== */
+.post-content .katex {
+  font-size: 1.05em;
+  color: var(--text-primary);
+}
+
+.post-content .katex-display {
+  margin: 1.5em 0;
+  padding: 16px 20px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-radius: 8px;
+  background: var(--bg-secondary, #f9fafb);
+  border: 1px solid var(--border-light, #e5e7eb);
+}
+
+/* 深色模式下数学公式背景微调 */
+[data-theme="dark"] .post-content .katex-display {
+  background: rgba(255,255,255,0.03);
+  border-color: rgba(255,255,255,0.08);
+}
+
+[data-theme="dark"] .post-content .katex {
+  color: #e5e7eb;
+}
+
+/* ====== Mermaid 图表样式 ====== */
+.mermaid-container {
+  margin: 1.5em 0;
+  padding: 16px;
+  border-radius: 10px;
+  overflow-x: auto;
+  background: var(--bg-secondary, #f9fafb);
+  border: 1px solid var(--border-light, #e5e7eb);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  display: flex;
+  justify-content: center;
+}
+
+.mermaid-container svg {
+  max-width: 100%;
+  height: auto;
+}
+
+[data-theme="dark"] .mermaid-container {
+  background: rgba(255,255,255,0.02);
+  border-color: rgba(255,255,255,0.06);
+}
+
+/* Mermaid 渲染失败时的错误提示 */
+.mermaid-error {
+  padding: 16px;
+  border-radius: 8px;
+  background: #fef2f2;
+  border-left: 4px solid #ef4444;
+  color: #991b1b;
+  font-size: 0.875rem;
+  overflow-x: auto;
+}
+
+[data-theme="dark"] .mermaid-error {
+  background: rgba(239,68,68,0.1);
+  border-left-color: #f87171;
+  color: #fca5a5;
+}
+
 .post-content {
   font-size: 1rem;
   line-height: 1.8;

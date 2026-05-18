@@ -1,0 +1,16 @@
+{{/* 网易云音乐单曲嵌入 */}}
+{{ $id := .Get 0 | default (.Get "id") }}
+{{ $type := .Get "type" | default "song" }}
+<div class="netease-music-wrapper" style="max-width:430px;margin:1.2em auto;">
+  <iframe
+    frameborder="no"
+    border="0"
+    marginwidth="0"
+    marginheight="0"
+    width="100%"
+    height="{{ if eq $type "song" }}86{{ else }}450{{ end }}"
+    src="//music.163.com/outchain/player?type={{ if eq $type "song" }}2{{ else }}0{{ end }}&id={{ $id }}&auto=0&height=66"
+    style="border-radius:8px;box-shadow:0 1px 6px rgba(0,0,0,.08);"
+    loading="lazy">
+  </iframe>
+</div>

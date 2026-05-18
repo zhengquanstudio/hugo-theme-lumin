@@ -5,10 +5,11 @@
   {{- $pg := . }}
   <article class="term-item-card">
     {{/* 缩略图：优先级 featured_image > image > 默认封面 */}}
-    {{ $imgSrc := $pg.Params.featured_image | default $pg.Params.image | default $.Site.Params.article.defaultFeaturedImage }}
+    {{ $defCover := site.Params.article.defaultFeaturedImage | default "/images/default-cover.webp" }}
+    {{ $imgSrc := $pg.Params.featured_image | default $pg.Params.image | default $defCover }}
     {{ with $imgSrc }}
     <a href="{{ $pg.Permalink }}" class="term-thumb">
-      <img src="{{ . | absURL }}" alt="{{ $pg.Title }}" loading="lazy" class="{{ if eq $imgSrc $.Site.Params.article.defaultFeaturedImage }}default-cover{{ end }}">
+      <img src="{{ . | absURL }}" alt="{{ $pg.Title }}" loading="lazy" class="{{ if eq $imgSrc $defCover }}default-cover{{ end }}">
     </a>
     {{ end }}
 

@@ -1,0 +1,12 @@
+{{/* 爱奇艺视频嵌入 */}}
+{{ $id := .Get 0 }}
+<div class="iqiyi-wrapper" style="position:relative;width:100%;max-width:720px;margin:1.5em auto;padding-bottom:56.25%;overflow:hidden;border-radius:10px;">
+  <iframe
+    src="//open.iqiyi.com/developer/player_api/coopPlayerIndex.html?vid={{ $id }}"
+    style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
+    scrolling="no"
+    frameborder="0"
+    allowfullscreen="true"
+    loading="lazy">
+  </iframe>
+</div>

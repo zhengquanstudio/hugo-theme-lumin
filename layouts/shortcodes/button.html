@@ -1,0 +1,38 @@
+{{/* 按钮 */}}
+{{ $url := .Get "href" | default (.Get "link") | default (.Get 0) }}
+{{ $text := .Get "text" | default (.Get 0) | default "点击跳转" }}
+{{ $type := .Get "type" | default "primary" }}
+{{ $size := .Get "size" | default "normal" }}
+{{ $target := .Get "target" | default "_blank" }}
+{{ $newtab := .Get "newtab" | default "true" }}
+
+{{ $types := dict
+  "primary" (dict "bg" "#2a9d8f" "hover" "#21817a" "fg" "#fff")
+  "success" (dict "bg" "#10b981" "hover" "#059669" "fg" "#fff")
+  "warning" (dict "bg" "#f59e0b" "hover" "#d97706" "fg" "#fff")
+  "danger"  (dict "bg" "#ef4444" "hover" "#dc2626" "fg" "#fff")
+  "dark"    (dict "bg" "#374151" "hover" "#1f2937" "fg" "#fff")
+  "light"   (dict "bg" "#f3f4f6" "hover" "#e5e7eb" "fg" "#374151")
+}}
+
+{{ $t := index $types $type | default (index $types "primary") }}
+{{ $sizes := dict
+  "small"  "padding:6px 16px;font-size:.82rem;"
+  "normal" "padding:10px 24px;font-size:.9rem;"
+  "large"  "padding:14px 32px;font-size:1rem;"
+}}
+{{ $s := index $sizes $size | default (index $sizes "normal") }}
+
+<a href="{{ $url }}"
+   {{ if eq $newtab "true" }}target="_blank" rel="noopener"{{ end }}
+   class="btn-{{ $type }}"
+   style="display:inline-flex;align-items:center;gap:6px;{{ $s }}
+          color:{{ $t.fg }};background:{{ $t.bg }};
+          border:none;border-radius:8px;text-decoration:none;
+          font-weight:500;cursor:pointer;transition:all .2s ease;
+          box-shadow:0 2px 4px rgba(0,0,0,.1);"
+   onmouseover="this.style.background='{{ $t.hover }}';this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,.15)'"
+   onmouseout="this.style.background='{{ $t.bg }}';this.style.transform='';this.style.boxShadow='0 2px 4px rgba(0,0,0,.1)'">
+  {{ $text }}
+  <i class="fas fa-arrow-right" style="font-size:.78rem;"></i>
+</a>

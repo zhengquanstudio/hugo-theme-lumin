@@ -171,6 +171,14 @@
     crossorigin="anonymous" referrerpolicy="no-referrer"
     onerror="this.onerror=null;this.href='https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css'">
 
+  <!-- KaTeX 数学公式渲染（仅文章页加载）-->
+  {{ if and .IsPage (not .IsHome) }}
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
+    integrity="sha384-nB0miv6/jRmo5YADР2KmR/HOtbOoPD/IxG+8QIhVInC2j8uC9bIQ/K5aS8meUzP"
+    crossorigin="anonymous">
+  {{ end }}
+
   {{ block "head" . }}{{ end }}
 
   <!-- Analytics (Google / Baidu / Clarity) -->
@@ -192,8 +200,15 @@
     {{ partial "banner.html" . }}
   {{ end }}
   
-  {{/* 判断是否为全宽列表页（分类/标签汇总页等完全无侧边栏） */}}
-  {{ $isFullWidth := or (eq .Kind "section") (eq .Type "taxonomy") (eq .Type "term") }}
+  {{/* 判断是否为全宽列表页（标签汇总页等完全无侧边栏；分类 section 保留侧边栏） */}}
+  {{/* 分类 section 列表：demo/ code/ tech/ life/ smart/ game/ share/ 等 */}}
+  {{ $isCategorySection := false }}
+  {{ if eq .Kind "section" }}
+    {{ range $slug, $_ := site.Params.categoryLabels }}
+      {{ if eq $.Section $slug }}{{ $isCategorySection = true }}{{ end }}
+    {{ end }}
+  {{ end }}
+  {{ $isFullWidth := or (and (eq .Kind "section") (not $isCategorySection)) (eq .Type "taxonomy") (eq .Type "term") }}
   {{/* 归档页：保留左侧侧边栏，仅隐藏右侧 TOC */}}
   {{ $isArchives := eq .Layout "archives" }}
 
@@ -244,6 +259,10 @@
   {{ $mainJS := resources.Get "js/main.js" | resources.Fingerprint }}
   <script src="{{ $mainJS.RelPermalink }}" defer></script>
   
+  <!-- 加密文章解密脚本（自动检测，无加密页面时无副作用） -->
+  {{ $encryptJS := resources.Get "js/encrypt.js" | resources.Fingerprint }}
+  <script src="{{ $encryptJS.RelPermalink }}" defer></script>
+  
   <!-- Busuanzi (不蒜子访客统计，带错误降级) -->
   {{ if .Site.Params.statistics.busuanzi }}
   <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
@@ -285,6 +304,101 @@
       window.addEventListener('online', function() { document.body.classList.remove('is-offline'); });
       window.addEventListener('offline', function() { document.body.classList.add('is-offline'); });
     }
+  </script>
+  <!-- KaTeX 数学公式渲染（仅文章页，同步加载确保渲染可靠）-->
+  {{ if and .IsPage (not .IsHome) }}
+  <script
+    src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"
+    integrity="sha384-7zkQQkACJVAJnGeEJ5ZOO4bAq2sfS6i+gY9BqNnnX1gg7CgI0ctYvXspLf/CVc"
+    crossorigin="anonymous"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+    integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZJ/NN8BpMm3OwrlSKTZGKzvMhYsRiKpYHi2oXNo"
+    crossorigin="anonymous"></script>
+  <script>
+    (function() {
+      function renderKaTeX() {
+        if (typeof renderMathInElement === 'undefined') {
+          console.warn('[KaTeX] renderMathInElement 未定义，等待重试...');
+          return false;
+        }
+        try {
+          renderMathInElement(document.body, {
+            delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false}
+            ],
+            throwOnError: false,
+            ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+          });
+          console.log('[KaTeX] 公式渲染完成 ✓');
+          return true;
+        } catch(e) {
+          console.error('[KaTeX] 渲染异常:', e);
+          return false;
+        }
+      }
+
+      // 立即尝试渲染（脚本已同步加载完毕）
+      if (!renderKaTeX()) {
+        document.addEventListener('DOMContentLoaded', function() { renderKaTeX(); });
+        window.addEventListener('load', function() {
+          setTimeout(function() { renderKaTeX(); }, 200);
+        });
+      }
+    })();
+  </script>
+  {{ end }}
+
+  <!-- Mermaid 图表渲染（全局，按需加载） -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js" defer></script>
+
+  <!-- Mermaid 图表初始化 -->
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof mermaid !== 'undefined') {
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default',
+        securityLevel: 'loose',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+        flowchart: { useMaxWidth: true, htmlLabels: { style: 'font-size:13px' } },
+        sequence: { useMaxWidth: true, wrap: true, width: 200 },
+        gantt: { useMaxWidth: true }
+      });
+
+      var mermaidBlocks = document.querySelectorAll('code.language-mermaid');
+      if (mermaidBlocks.length > 0) {
+        mermaidBlocks.forEach(function(block) {
+          var parentPre = block.parentElement;
+          if (!parentPre || !parentPre.classList.contains('mermaid-wrapper')) {
+            var container = document.createElement('div');
+            container.className = 'mermaid-container';
+            container.textContent = block.textContent;
+            parentPre.replaceWith(container);
+            try {
+              mermaid.run({ nodes: [container] });
+            } catch(e) {
+              console.warn('[Mermaid] 渲染失败:', e);
+              container.outerHTML = '<pre class="mermaid-error"><code>' + escapeHtml(block.textContent) + '</code></pre>';
+            }
+          }
+        });
+        console.log('[Mermaid] 图表渲染完成，共 ' + mermaidBlocks.length + ' 个 ✓');
+      }
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    var observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(m) {
+        if (m.attributeName === 'data-theme' && typeof mermaid !== 'undefined') {}
+      });
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  });
   </script>
 </body>
 </html>

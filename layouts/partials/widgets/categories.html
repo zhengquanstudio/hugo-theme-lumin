@@ -9,9 +9,16 @@
   <ul class="categories-list">
     {{ $categoryCount := .Site.Params.widgets.categoriesCount | default 10 }}
     {{ range first $categoryCount .Site.Taxonomies.categories.ByCount }}
+    {{/* 从 categoryLabels 反查 slug（中文标签 → 英文 slug） */}}
+    {{ $label := partial "category-display-name.html" (dict "Site" $.Site "Slug" .Name) }}
+    {{ $catSlug := .Name }}
+    {{ range $k, $v := $.Site.Params.categoryLabels }}
+      {{ if eq $v (string $label) }}{{ $catSlug = $k }}{{ end }}
+    {{ end }}
+    {{ $catIcon := index $.Site.Params.categoryIcons $catSlug | default "" }}
     <li class="category-item">
-      <a href="{{ .Page.Permalink }}">
-        <span class="category-name">{{ partial "category-display-name.html" (dict "Site" $.Site "Slug" .Name) }}</span>
+      <a href="/{{ $catSlug }}/">
+        <span class="category-name">{{ $label }}</span>
         <span class="category-count">{{ .Count }}</span>
       </a>
     </li>

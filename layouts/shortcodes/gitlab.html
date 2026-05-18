@@ -1,0 +1,10 @@
+{{/* GitLab Snippet Embed */}}
+{{ $id := .Get 0 }}
+{{ $host := .Get "host" | default "gitlab.com" }}
+<div class="gitlab-snippet-wrapper" style="max-width:800px;margin:1.5em auto;">
+  <iframe
+    src="https://{{ $host }}/snippets/{{ $id }}/embed.js"
+    style="width:100%;min-height:200px;border:1px solid var(--border-light,#e5e7eb);border-radius:8px;"
+    loading="lazy">
+  </iframe>
+</div>

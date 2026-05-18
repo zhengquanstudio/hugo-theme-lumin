@@ -1,0 +1,26 @@
+{{/* 通用提示框 - 支持 tip/info/warning/danger/note */}}
+{{ $type := .Get "type" | default (.Get 0) | default "info" }}
+{{ $title := .Get "title" | default "" }}
+
+{{ $colors := dict
+  "info"    (dict "bg" "#eff6ff" "border" "#3b82f6" "icon" "fa-info-circle"     "name" "提示")
+  "tip"     (dict "bg" "#ecfdf5" "border" "#10b981" "icon" "fa-lightbulb"      "name" "小贴士")
+  "warning" (dict "bg" "#fffbeb" "border" "#f59e0b" "icon" "fa-exclamation-triangle" "name" "注意")
+  "danger"  (dict "bg" "#fef2f2" "border" "#ef4444" "icon" "fa-skull-crossbones"   "name" "警告")
+  "note"    (dict "bg" "#f5f3ff" "border" "#8b5cf6" "icon" "fa-pen-fancy"       "name" "笔记")
+}}
+
+{{ $c := index $colors $type | default (index $colors "info") }}
+
+<div class="admonition {{ $type }}" style="
+  margin:1.2em 0;padding:14px 18px;border-radius:8px;border-left:4px solid {{ $c.border }};
+  background:{{ $c.bg }};color:var(--text-primary,#111827);
+">
+  <div style="display:flex;align-items:flex-start;gap:10px;">
+    <i class="fas {{ $c.icon }}" style="color:{{ $c.border }};margin-top:2px;font-size:.95rem;"></i>
+    <div style="flex:1;">
+      {{ if $title }}<strong>{{ $title }}</strong><br>{{ end }}
+      <div style="font-size:.9rem;line-height:1.65;">{{ .Inner | markdownify }}</div>
+    </div>
+  </div>
+</div>

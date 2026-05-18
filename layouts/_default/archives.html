@@ -78,8 +78,7 @@
                     <div class="archive-item-tags">
                       {{ range . }}
                       {{ $catSlug := . }}
-                      {{/* 直接拼接分类URL */}}
-                      <a href="{{ printf "/categories/%s/" $catSlug | relLangURL }}" class="archive-tag archive-tag--category">{{ partial "category-display-name.html" (dict "Site" $.Site "Slug" $catSlug) }}</a>
+                      <a href="/{{ $catSlug }}/" class="archive-tag archive-tag--category">{{ partial "category-display-name.html" (dict "Site" $.Site "Slug" $catSlug) }}</a>
                       {{ end }}
                     </div>
                     {{ end }}
@@ -115,8 +114,14 @@
       </h2>
       <div class="archives-cloud">
         {{ range . }}
-          <a href="{{ .Page.Permalink }}" class="archives-cloud-item archives-cloud-item--cat">
-            {{ partial "category-display-name.html" (dict "Site" $.Site "Slug" .Page.Title) }}
+          {{/* 反查 slug */}}
+          {{ $arcLabel := partial "category-display-name.html" (dict "Site" $.Site "Slug" .Page.Title) }}
+          {{ $arcSlug := .Page.Title }}
+          {{ range $k, $v := $.Site.Params.categoryLabels }}
+            {{ if eq $v (string $arcLabel) }}{{ $arcSlug = $k }}{{ end }}
+          {{ end }}
+          <a href="/{{ $arcSlug }}/" class="archives-cloud-item archives-cloud-item--cat">
+            {{ $arcLabel }}
             <span class="archives-cloud-count">{{ len .Pages }}</span>
           </a>
         {{ end }}

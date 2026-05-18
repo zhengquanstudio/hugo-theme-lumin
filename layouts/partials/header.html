@@ -34,7 +34,7 @@
               {{/* 从 categoryIcons 配置读取分类图标 */}}
               {{ $catIcon := index $.Site.Params.categoryIcons $catSlug | default "" }}
               <li class="dropdown-item">
-                <a href="{{ .Page.Permalink }}" class="dropdown-link">
+                <a href="/{{ $catSlug }}/" class="dropdown-link">
                   {{- if $catIcon }}<i style="font-size:0.85rem;" class="{{ $catIcon }}"></i> {{ end }}{{ $label }}
                 </a>
               </li>
@@ -150,7 +150,7 @@
               {{ if eq $v $label }}{{ $catSlug = $k }}{{ end }}
             {{ end }}
             {{ $catIcon := index $.Site.Params.categoryIcons $catSlug | default "" }}
-            <li><a href="{{ .Page.Permalink }}" class="mobile-nav-link sub-item">{{- if $catIcon }}<i style="margin-right:4px;" class="{{ $catIcon }}"></i> {{ end }}{{ $label }}</a></li>
+            <li><a href="/{{ $catSlug }}/" class="mobile-nav-link sub-item">{{- if $catIcon }}<i style="margin-right:4px;" class="{{ $catIcon }}"></i> {{ end }}{{ $label }}</a></li>
             {{ end }}
           </ul>
         </li>

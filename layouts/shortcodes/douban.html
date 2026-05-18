@@ -1,0 +1,20 @@
+{{/* 豆瓣书籍/电影/专辑卡片 */}}
+{{ $id := .Get 0 | default (.Get "id") }}
+{{ $type := .Get "type" | default "book" }}
+{{ $title := .Get "title" | default "" }}
+
+<iframe
+  src="https://douban.com/embed/{{ $type }}/?doid={{ $id }}"
+  style="
+    width:100%;
+    max-width:550px;
+    margin:1.2em auto;
+    min-height:200px;
+    border:1px solid var(--border-light,#e5e7eb);
+    border-radius:10px;
+    box-sizing:border-box;
+  "
+  frameborder="0"
+  scrolling="no"
+  data-dblazyload="true">
+</iframe>

@@ -29,8 +29,14 @@
         </h2>
         <div class="archives-cloud">
           {{ range . }}
-            <a href="{{ .Page.Permalink }}" class="archives-cloud-item archives-cloud-item--cat">
-              {{ partial "category-display-name.html" (dict "Site" site "Slug" .Page.Title) }}
+            {{/* 反查 slug */}}
+            {{ $catLabel := partial "category-display-name.html" (dict "Site" site "Slug" .Page.Title) }}
+            {{ $catSlug := .Page.Title }}
+            {{ range $k, $v := site.Params.categoryLabels }}
+              {{ if eq $v (string $catLabel) }}{{ $catSlug = $k }}{{ end }}
+            {{ end }}
+            <a href="/{{ $catSlug }}/" class="archives-cloud-item archives-cloud-item--cat">
+              {{ $catLabel }}
               <span class="archives-cloud-count">{{ len .Pages }}</span>
             </a>
           {{ end }}

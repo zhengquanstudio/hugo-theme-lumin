@@ -1,0 +1,22 @@
+{{/* 折叠/展开内容 */}}
+{{ $open := .Get "open" | default "false" }}
+{{ $summary := .Get "summary" | default (.Get 0) | default "点击展开/收起" }}
+
+<details {{ if eq $open "true" }}open{{ end }}
+  style="margin:1.2em 0;border-radius:8px;border:1px solid var(--border-light,#e5e7eb);
+         background:var(--bg-secondary,#f9fafb);overflow:hidden;">
+  <summary style="
+    padding:12px 16px;cursor:pointer;font-weight:500;color:var(--text-primary,#111827);
+    user-select:none;display:flex;align-items:center;gap:8px;
+    transition:background .2s ease;
+  " onmouseover="this.style.background='rgba(0,0,0,.03)'"
+     onmouseout="this.style.background='transparent'">
+    <i class="fas fa-chevron-right" style="transition:transform .2s;font-size:.78rem;color:var(--text-muted,#9ca3af);"></i>
+    {{ $summary }}
+  </summary>
+  <div style="padding:0 16px 16px;font-size:.92rem;line-height:1.7;color:var(--text-primary,#374151);">
+    {{ .Inner | markdownify }}
+  </div>
+</details>
+
+<script>document.querySelectorAll('details summary').forEach(function(s){s.addEventListener('toggle',function(){s.querySelector('i').style.transform=this.open?'rotate(90deg)':''})});</script>
