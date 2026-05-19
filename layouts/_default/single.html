@@ -19,6 +19,40 @@
 
 {{/* ===== 加密文章：显示锁定界面 ===== */}}
 {{ if $hasPassword }}
+<style>
+.encrypt-wrapper{position:relative;min-height:400px}
+.encrypt-wrapper:not(.unlocked) .encrypted-article{visibility:hidden!important;height:0!important;overflow:hidden!important;margin:0!important;padding:0!important;opacity:0!important;position:absolute!important;pointer-events:none!important}
+.encrypt-wrapper.unlocked .encrypt-lock-screen{display:none!important}
+.encrypt-lock-screen{display:flex!important;flex-direction:column;align-items:center;justify-content:center;min-height:420px;padding:48px 24px;margin:2em 0;border-radius:16px;background:linear-gradient(135deg,#f0f4ff 0%,#e8efff 50%,#f5f0ff 100%);border:1px solid #d0d7e8;text-align:center;animation:lockFadeIn .5s ease-out}
+[data-theme="dark"] .encrypt-lock-screen{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#1a1a3e 100%);border-color:#2a2a4a}
+@keyframes lockFadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.encrypt-lock-icon{width:72px;height:72px;margin-bottom:20px;padding:16px;border-radius:50%;background:linear-gradient(135deg,#3b82f6 0%,#8b5cf6 100%);color:#fff;box-shadow:0 4px 20px rgba(59,130,246,.3);animation:lockBounce 2s ease-in-out infinite}
+@keyframes lockBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.encrypt-lock-icon svg{width:40px;height:40px}
+.encrypt-title{font-size:1.35rem;font-weight:700;color:var(--text-primary,#1e293b);margin:0 0 8px}
+[data-theme="dark"] .encrypt-title{color:#e2e8f0}
+.encrypt-hint{font-size:.9rem;color:var(--text-muted,#64748b);margin:0 0 28px;max-width:320px;line-height:1.5}
+.encrypt-form{width:100%;max-width:380px}
+.encrypt-input-group{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 16px;border-radius:12px;background:#fff;border:2px solid #cbd5e1;box-shadow:0 2px 8px rgba(0,0,0,.06);transition:border-color .2s,box-shadow .2s}
+.encrypt-input:focus-within{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.15),0 2px 8px rgba(0,0,0,.06)}
+[data-theme="dark"] .encrypt-input-group{background:#0f172a;border-color:#334155}
+[data-theme="dark"] .encrypt-input:focus-within{border-color:#60a5fa;box-shadow:0 0 0 3px rgba(96,165,250,.15)}
+.encrypt-input-group svg{flex-shrink:0;color:#94a3b8;width:18px;height:18px}
+.encrypt-input-group input[type=password]{flex:1;min-width:0;border:none;outline:none;background:transparent;font-size:.95rem;color:var(--text-primary,#1e293b);padding:10px 4px;letter-spacing:.5px}
+[data-theme="dark"] .encrypt-input-group input[type=password]{color:#e2e8f0}
+.encrypt-input-group input[type=password]::placeholder{color:#94a3b8}
+#encrypt-submit{flex-shrink:0;padding:9px 18px;border:none;border-radius:10px;background:linear-gradient(135deg,#3b82f6 0%,#6366f1 100%);color:#fff;font-size:.88rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:transform .15s,box-shadow .15s,opacity .15s}
+#submit:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(59,130,246,.35)}
+#encrypt-submit:active{transform:translateY(0)}
+#encrypt-submit:disabled{opacity:.6;cursor:not-allowed;transform:none}
+#encrypt-submit svg{width:16px;height:16px;vertical-align:-2px;margin-right:4px}
+.encrypt-error{display:none;margin-top:12px;padding:8px 16px;border-radius:8px;background:#fef2f2;color:#dc2626;font-size:.85rem;font-weight:500;animation:shakeError .4s ease}
+[data-theme="dark"] .encrypt-error{background:#450a0a;color:#f87171}
+@keyframes shakeError{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.encrypt-input-group input.shake{animation:inputShake .4s ease}
+@keyframes inputShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}
+</style>
+<noscript><style>.encrypted-article{display:none!important}.encrypt-lock-screen{display:flex!important}</style></noscript>
 <div id="encrypted-content" class="encrypt-wrapper">
   <div class="encrypt-lock-screen">
     <div class="encrypt-lock-icon">

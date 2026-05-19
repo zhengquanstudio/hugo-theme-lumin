@@ -164,19 +164,12 @@
     <link rel="stylesheet" href="{{ $customCSS.RelPermalink }}">
   {{ end }}
 
-  <!-- Font Awesome (全局，带 CDN fallback) -->
-  <link rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
-    crossorigin="anonymous" referrerpolicy="no-referrer"
-    onerror="this.onerror=null;this.href='https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css'">
+  <!-- Font Awesome（本地文件，零网络延迟） -->
+  <link rel="stylesheet" href="/css/fontawesome-all.min.css">
 
-  <!-- KaTeX 数学公式渲染（仅文章页加载）-->
+  <!-- KaTeX 数学公式渲染（本地文件，仅文章页加载）-->
   {{ if and .IsPage (not .IsHome) }}
-  <link rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
-    integrity="sha384-nB0miv6/jRmo5YADР2KmR/HOtbOoPD/IxG+8QIhVInC2j8uC9bIQ/K5aS8meUzP"
-    crossorigin="anonymous">
+  <link rel="stylesheet" href="/katex/katex.min.css">
   {{ end }}
 
   {{ block "head" . }}{{ end }}
@@ -208,20 +201,25 @@
       {{ if eq $.Section $slug }}{{ $isCategorySection = true }}{{ end }}
     {{ end }}
   {{ end }}
-  {{ $isFullWidth := or (and (eq .Kind "section") (not $isCategorySection)) (eq .Type "taxonomy") (eq .Type "term") }}
+  {{ $forceAside := .Params.aside }}
+  {{/* 特殊自定义页面（datastatistics/equipment/friends/guestbook 等）强制保留侧边栏 */}}
+  {{ $isCustomListPage := or (eq .Layout "datastatistics") (eq .Layout "equipment") (eq .Layout "friends") (eq .Layout "guestbook") (eq .Layout "website") (eq .Layout "about") }}
+  {{/* 这些自定义页面不需要右侧 TOC 目录 */}}
+  {{ $noToc := $isCustomListPage }}
+  {{ $isFullWidth := or (and (eq .Kind "section") (not $isCategorySection) (not $forceAside) (not $isCustomListPage)) (eq .Type "taxonomy") (eq .Type "term") }}
   {{/* 归档页：保留左侧侧边栏，仅隐藏右侧 TOC */}}
-  {{ $isArchives := eq .Layout "archives" }}
+  {{ $isArchives := or (eq .Layout "archives") (eq .Type "archives") }}
 
-  <div class="main-wrapper{{ if and .IsPage (not $isFullWidth) (not $isArchives) }} has-toc{{ end }}{{ if $isFullWidth }} fullwidth-page{{ end }}{{ if $isArchives }} archives-page-layout{{ end }}">
+  <div class="main-wrapper{{ if and .IsPage (not $isFullWidth) (not $isArchives) (not $noToc) }} has-toc{{ end }}{{ if and $isFullWidth (not $isArchives) }} fullwidth-page{{ end }}{{ if $isArchives }} archives-page-layout{{ end }}">
     <div class="container">
       <div class="layout-grid">
-        {{ if and (not $isFullWidth) (eq (.Site.Params.sidebarPosition | default "left") "left") }}
+        {{ if or (and (not $isFullWidth) (eq (.Site.Params.sidebarPosition | default "left") "left")) $isArchives }}
           <aside class="sidebar">
             {{ partial "sidebar.html" . }}
           </aside>
         {{ end }}
 
-        <main id="main-content" class="main-content{{ if $isFullWidth }} content-fullwidth{{ end }}{{ if $isArchives }} content-archives{{ end }}">
+        <main id="main-content" class="main-content{{ if and $isFullWidth (not $isArchives) }} content-fullwidth{{ end }}{{ if $isArchives }} content-archives{{ end }}">
           {{ block "main" . }}{{ end }}
         </main>
 
@@ -234,7 +232,7 @@
           </aside>
         {{ end }}
 
-        {{ if and .IsPage (not $isFullWidth) }}
+        {{ if and .IsPage (not $isFullWidth) (not $noToc) }}
           {{ block "toc-sidebar" . }}{{ end }}
         {{ end }}
       </div>
@@ -280,9 +278,9 @@
   </script>
   {{ end }}
 
-  <!-- PWA: 注册 Service Worker（离线支持） -->
+  <!-- PWA: Service Worker 暂时禁用（调试缓存问题） -->
   <script>
-    if ('serviceWorker' in navigator) {
+    if (false && 'serviceWorker' in navigator) {
       window.addEventListener('load', function() {
         navigator.serviceWorker.register('/sw.js')
           .then(function(reg) {
@@ -305,28 +303,52 @@
       window.addEventListener('offline', function() { document.body.classList.add('is-offline'); });
     }
   </script>
-  <!-- KaTeX 数学公式渲染（仅文章页，同步加载确保渲染可靠）-->
+  <!-- KaTeX 数学公式 + 化学公式渲染（本地文件，仅文章页，异步加载避免阻塞）-->
   {{ if and .IsPage (not .IsHome) }}
-  <script
-    src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"
-    integrity="sha384-7zkQQkACJVAJnGeEJ5ZOO4bAq2sfS6i+gY9BqNnnX1gg7CgI0ctYvXspLf/CVc"
-    crossorigin="anonymous"></script>
-  <script
-    src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
-    integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZJ/NN8BpMm3OwrlSKTZGKzvMhYsRiKpYHi2oXNo"
-    crossorigin="anonymous"></script>
   <script>
     (function() {
-      function renderKaTeX() {
+      var katexLoaded = false;
+
+      function loadKaTeX() {
+        if (katexLoaded) return;
+
+        var css = document.createElement('link');
+        css.rel = 'stylesheet';
+        css.href = '/katex/katex.min.css';
+        document.head.appendChild(css);
+
+        var s1 = document.createElement('script');
+        s1.src = '/katex/katex.min.js';
+        s1.onload = function() {
+          var s2 = document.createElement('script');
+          s2.src = '/katex/mhchem.min.js';
+          s2.onload = function() {
+            var s3 = document.createElement('script');
+            s3.src = '/katex/auto-render.min.js';
+            s3.onload = function() {
+              katexLoaded = true;
+              renderMath();
+              console.log('[KaTeX] 异步加载完成（含化学公式扩展）✓');
+            };
+            document.head.appendChild(s3);
+          };
+          document.head.appendChild(s2);
+        };
+        document.head.appendChild(s1);
+      }
+
+      function renderMath() {
         if (typeof renderMathInElement === 'undefined') {
-          console.warn('[KaTeX] renderMathInElement 未定义，等待重试...');
+          console.warn('[KaTeX] renderMathInElement 未定义');
           return false;
         }
         try {
           renderMathInElement(document.body, {
             delimiters: [
               {left: '$$', right: '$$', display: true},
-              {left: '$', right: '$', display: false}
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
             ],
             throwOnError: false,
             ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
@@ -339,19 +361,26 @@
         }
       }
 
-      // 立即尝试渲染（脚本已同步加载完毕）
-      if (!renderKaTeX()) {
-        document.addEventListener('DOMContentLoaded', function() { renderKaTeX(); });
-        window.addEventListener('load', function() {
-          setTimeout(function() { renderKaTeX(); }, 200);
-        });
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadKaTeX);
+      } else {
+        loadKaTeX();
       }
+
+      window.renderKaTeXRetry = function() {
+        if (!katexLoaded) {
+          loadKaTeX();
+          setTimeout(renderMath, 500);
+        } else {
+          renderMath();
+        }
+      };
     })();
   </script>
   {{ end }}
 
-  <!-- Mermaid 图表渲染（全局，按需加载） -->
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js" defer></script>
+  <!-- Mermaid 图表渲染（本地文件，零网络延迟） -->
+  <script src="/js/mermaid.min.js" defer></script>
 
   <!-- Mermaid 图表初始化 -->
   <script>
@@ -374,7 +403,9 @@
           if (!parentPre || !parentPre.classList.contains('mermaid-wrapper')) {
             var container = document.createElement('div');
             container.className = 'mermaid-container';
-            container.textContent = block.textContent;
+            var src = block.textContent.trim();
+            container.dataset.source = src;
+            container.textContent = src;
             parentPre.replaceWith(container);
             try {
               mermaid.run({ nodes: [container] });
@@ -394,11 +425,82 @@
 
     var observer = new MutationObserver(function(mutations) {
       mutations.forEach(function(m) {
-        if (m.attributeName === 'data-theme' && typeof mermaid !== 'undefined') {}
+        if (m.attributeName === 'data-theme' && typeof mermaid !== 'undefined') {
+          var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+          mermaid.initialize({ startOnLoad: false, theme: isDark ? 'dark' : 'default', securityLevel: 'loose',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+            flowchart: { useMaxWidth: true, htmlLabels: { style: 'font-size:13px' } },
+            sequence: { useMaxWidth: true, wrap: true, width: 200 }, gantt: { useMaxWidth: true }
+          });
+          var containers = document.querySelectorAll('.mermaid-container');
+          containers.forEach(function(c) { c.removeAttribute('data-processed'); c.innerHTML = c.textContent || c.dataset.source || ''; });
+          if (containers.length > 0) {
+            setTimeout(function() { mermaid.run({ nodes: Array.from(containers) }); }, 100);
+            console.log('[Mermaid] 主题切换重新渲染 ✓ (' + (isDark ? '暗色' : '亮色') + ')');
+          }
+        }
       });
     });
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   });
   </script>
+
+  {{/* 鼠标点击效果 */}}
+  {{ if .Site.Params.clickEffect.enable }}
+  <script>
+    window.__CLICK_EFFECT_CONFIG__ = {
+      enable: {{ .Site.Params.clickEffect.enable }},
+      type: "{{ .Site.Params.clickEffect.type | default "fireworks" }}",
+      {{ with .Site.Params.clickEffect.fireworks }}
+      fireworks: {
+        particleCount: {{ .particleCount | default 30 }},
+        spread: {{ .spread | default 60 }},
+        colors: {{ .colors | jsonify | safeJS | default `["#ff3366","#ff6b35","#f7c948","#2ed573","#1e90ff","#a55eea"]` }}
+      },
+      {{ end }}
+      {{ with .Site.Params.clickEffect.text }}
+      text: {
+        messages: {{ .messages | jsonify | safeJS | default `["✨"]` }},
+        fontSize: "{{ .fontSize | default "16px" }}",
+        color: "{{ .color | default "#ff6b6b" }}",
+        duration: {{ .duration | default 1000 }}
+      },
+      {{ end }}
+      {{ with .Site.Params.clickEffect.heart }}
+      heart: {
+        color: "{{ .color | default "#ff4757" }}",
+        size: {{ .size | default 20 }},
+        count: {{ .count | default 5 }}
+      },
+      {{ end }}
+      {{ with .Site.Params.clickEffect.star }}
+      star: {
+        color: "{{ .color | default "#ffd700" }}",
+        size: {{ .size | default 15 }},
+        count: {{ .count | default 8 }}
+      },
+      {{ end }}
+      {{ with .Site.Params.clickEffect.bubble }}
+      bubble: {
+        colors: {{ .colors | jsonify | safeJS | default `["#ff6b81","#70a1ff","#7bed9f","#ffa502","#a55eea"]` }},
+        sizeRange: [{{ index .sizeRange 0 | default 8 }}, {{ index .sizeRange 1 | default 25 }}],
+        count: {{ .count | default 12 }}
+      },
+      {{ end }}
+      {{ with .Site.Params.clickEffect.snow }}
+      snow: {
+        color: "{{ .color | default "#ffffff" }}",
+        sizeRange: [{{ index .sizeRange 0 | default 5 }}, {{ index .sizeRange 1 | default 15 }}],
+        count: {{ .count | default 20 }}
+      }
+      {{ end }}
+    };
+  </script>
+  {{ $clickEffectJs := resources.Get "js/click-effects.js" }}
+  {{ if $clickEffectJs }}
+    {{ $clickEffectJs = $clickEffectJs | resources.Minify | resources.Fingerprint }}
+    <script src="{{ $clickEffectJs.RelPermalink }}" defer></script>
+  {{ end }}
+  {{ end }}
 </body>
 </html>

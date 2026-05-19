@@ -1,28 +1,28 @@
 {{ define "main" }}
 <style>
 /* 极简标题 - 统一样式 */
-.main-wrapper:has(.friends-page) .layout-grid{gap:36px!important}
-.friends-page .list-header{padding:28px 0;margin-bottom:32px;border-bottom:2px solid var(--border-color,#e5e7eb);background:transparent}
-.friends-page .list-title{font-size:1.8rem;font-weight:700;color:var(--text-primary,#1f2937);margin:0 0 10px 0;letter-spacing:-0.02em}
-.friends-page .list-description{font-size:0.95rem;color:var(--text-secondary,#6b7280);margin:0;line-height:1.6}
+.main-wrapper:has(.about-page) .layout-grid{gap:36px!important}
+.about-page .list-header{padding:28px 0;margin-bottom:32px;border-bottom:2px solid var(--border-color,#e5e7eb);background:transparent}
+.about-page .list-title{font-size:1.8rem;font-weight:700;color:var(--text-primary,#1f2937);margin:0 0 10px 0;letter-spacing:-0.02em}
+.about-page .list-description{font-size:0.95rem;color:var(--text-secondary,#6b7280);margin:0;line-height:1.6}
 </style>
 {{/* 面包屑导航 */}}
 <nav class="breadcrumb" aria-label="面包屑导航">
   <ol class="breadcrumb-list">
     <li class="breadcrumb-item"><a href="{{ .Site.BaseURL }}"><i class="fas fa-home" style="font-size:0.9em;margin-right:2px;"></i> 首页</a></li>
-    <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-link" style="font-size:0.85em;margin-right:4px;opacity:0.8;"></i>{{ .Title }}</li>
+    <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-user" style="font-size:0.85em;margin-right:4px;opacity:0.8;"></i>{{ .Title }}</li>
   </ol>
 </nav>
 
-<div class="list-page friends-page">
+<div class="list-page about-page">
   <header class="list-header">
     <h1 class="list-title">{{ .Title }}</h1>
     {{ with .Description }}
     <p class="list-description">{{ . }}</p>
     {{ end }}
   </header>
-  
-  <div class="post-content friends-content">
+
+  <div class="post-content about-content">
     {{ .Content }}
   </div>
 

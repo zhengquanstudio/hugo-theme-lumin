@@ -1,0 +1,135 @@
+{{ define "main" }}
+{{ $items := .Params.items }}
+
+<style>
+/* 极简标题 - 统一样式（与 about/friends/guestbook 完全一致） */
+.main-wrapper:has(.equipment-page) .layout-grid{gap:36px!important}
+.equipment-page{max-width:100%;margin:0;padding:24px 28px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;}
+
+.equipment-page .list-header{padding:28px 0;margin-bottom:32px;border-bottom:2px solid var(--border-color,#e5e7eb);background:transparent}
+.equipment-page .list-title{font-size:1.8rem;font-weight:700;color:var(--text-primary,#1f2937);margin:0 0 10px 0;letter-spacing:-0.02em;display:inline-flex;align-items:center;gap:10px;}
+.equipment-page .list-description{font-size:0.95rem;color:var(--text-secondary,#6b7280);margin:0;line-height:1.6}
+
+/* 分类标签 */
+.eq-categories{display:flex;justify-content:center;gap:10px;margin-bottom:26px;flex-wrap:wrap;padding:14px 20px;background:var(--bg-card,#fff);border-radius:16px;box-shadow:var(--shadow-sm,0 1px 3px rgba(0,0,0,.06));border:1px solid var(--border-color,#e2e8f0);}
+.eq-cat-btn{padding:8px 20px;border:1.5px solid var(--border-color,#e2e8f0);background:var(--bg-card,#fff);color:var(--text-secondary,#6b7280);border-radius:25px;cursor:pointer;transition:all .25s ease;font-size:13.5px;display:inline-flex;align-items:center;gap:6px;font-weight:500;}
+.eq-cat-btn:hover{border-color:var(--accent-color,#6366f1);color:var(--accent-color,#6366f1);transform:translateY(-1px);box-shadow:0 4px 12px rgba(99,102,241,.2);}
+.eq-cat-btn.active{background:linear-gradient(135deg,var(--accent-color,#6366f1),#4f46e5);color:#fff;border-color:transparent;box-shadow:0 4px 16px rgba(99,102,241,.25);}
+
+/* 网格 */
+.eq-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:24px;margin-bottom:32px;}
+
+/* 卡片 */
+.eq-card{background:var(--bg-card,#fff);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-sm,0 1px 3px rgba(0,0,0,.06));border:1px solid var(--border-color,#e2e8f0);transition:all .3s cubic-bezier(.4,0,.2,1);cursor:default;position:relative;}
+.eq-card:hover{transform:translateY(-6px);box-shadow:0 8px 40px rgba(0,0,0,.12);border-color:rgba(99,102,241,.3);}
+
+/* 图片区 */
+.eq-card-img{position:relative;width:100%;aspect-ratio:4/3;overflow:hidden;background:linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%);}
+[data-theme="dark"] .eq-card-img{background:linear-gradient(135deg,#1a2332 0%,#0f172a 100%);}
+.eq-card-img img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s cubic-bezier(.4,0,.2,1);}
+.eq-card:hover .eq-card-img img{transform:scale(1.08);}
+.eq-card-badge{display:none;}
+
+/* 信息区 */
+.eq-card-info{padding:18px 20px 20px;}
+.eq-card-name{font-size:16px;font-weight:700;color:var(--text-primary,#1e293b);margin:0 0 8px;line-height:1.4;}
+.eq-card-desc{font-size:13px;color:var(--text-tertiary,#94a3b8);margin:0 0 14px;line-height:1.7;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+
+/* 底部栏 */
+.eq-card-footer{display:flex;align-items:center;justify-content:space-between;padding-top:14px;border-top:1px solid var(--border-color,#e2e8f0);}
+.eq-card-price{font-size:16px;font-weight:700;color:#ef4444;display:inline-flex;align-items:center;gap:5px;}
+.eq-card-status{font-size:12px;color:var(--text-secondary,#6b7280);background:linear-gradient(135deg,#f1f5f9,#f8fafc);padding:5px 14px;border-radius:12px;font-weight:600;white-space:nowrap;letter-spacing:.3px;}
+[data-theme="dark"] .eq-card-status{background:linear-gradient(135deg,#334155,#1e293b)}
+
+/* 底部 - 正常文档流 */
+.eq-bottom{text-align:center;padding:28px 20px;margin-top:20px;background:linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%);border-radius:16px;border:1px solid var(--border-color,#e2e8f0);font-size:14px;color:var(--text-secondary,#6b7280);font-weight:500;letter-spacing:.5px;}
+[data-theme="dark"] .eq-bottom{background:linear-gradient(135deg,#1e293b 0%,#334155 100%)}
+
+@media(max-width:600px){
+  .equipment-page{padding:16px 12px;}
+  .eq-grid{grid-template-columns:1fr 1fr;gap:12px;}
+  .equipment-page .list-header{padding:20px 18px;}
+  .eq-categories{padding:12px 14px;gap:8px;}
+  .eq-cat-btn{padding:7px 15px;font-size:12.5px;}
+  .eq-card-info{padding:14px 15px 16px;}
+  .eq-bottom{padding:20px 16px;margin-top:16px;font-size:13px;}
+}
+</style>
+
+{{/* 面包屑导航 */}}
+<nav class="breadcrumb" aria-label="面包屑导航">
+  <ol class="breadcrumb-list">
+    <li class="breadcrumb-item"><a href="{{ .Site.BaseURL }}"><i class="fas fa-home" style="font-size:0.9em;margin-right:2px;"></i> 首页</a></li>
+    <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-toolbox" style="font-size:0.85em;margin-right:4px;opacity:0.8;"></i>{{ .Title }}</li>
+  </ol>
+</nav>
+
+<div class="list-page equipment-page">
+  <!-- 极简标题 -->
+  <header class="list-header">
+    <h1 class="list-title"><i class="fas fa-toolbox" style="color:var(--accent-color,#6366f1);"></i> {{ .Title }}</h1>
+    {{ with .Description }}
+    <p class="list-description">{{ . }}</p>
+    {{ else }}
+    <p class="list-description">工欲善其事，必先利其器 ✨</p>
+    {{ end }}
+  </header>
+
+  <div class="eq-categories" id="eq-categories">
+    <button class="eq-cat-btn active" onclick="filterEq('all',this)"><i class="fas fa-border-all"></i> 全部</button>
+    <button class="eq-cat-btn" onclick="filterEq('phone',this)"><i class="fas fa-mobile-alt"></i> 手机数码</button>
+    <button class="eq-cat-btn" onclick="filterEq('computer',this)"><i class="fas fa-laptop"></i> 电脑设备</button>
+    <button class="eq-cat-btn" onclick="filterEq('peripheral',this)"><i class="fas fa-keyboard"></i> 外设配件</button>
+    <button class="eq-cat-btn" onclick="filterEq('life',this)"><i class="fas fa-watch"></i> 生活穿戴</button>
+  </div>
+
+  <div class="eq-grid" id="eq-grid"></div>
+  <div class="eq-bottom"><i class="fas fa-heart"></i> 好工具让生活更美好 · 持续更新中</div>
+</div>
+
+<script>
+// ===== 装备数据 =====
+var equipmentData = [
+  {{- $first := true -}}
+  {{- range $items -}}
+  {{- if not $first -}},{{- end -}}
+  {{- $first = false -}}
+  {"n":"{{ .name | safeHTML }}","d":"{{ .desc | safeHTML }}","p":"{{ .price | safeHTML }}","c":"{{ .category | safeHTML }}","s":"{{ .status | safeHTML }}","i":"/images/zhuangbei.jpg"}
+  {{- end -}}
+];
+
+function render(cat){
+  cat=(cat==='all')?null:cat;
+  var g=document.getElementById('eq-grid');
+  var list=cat?equipmentData.filter(function(x){return x.c===cat}):equipmentData;
+  if(!list.length){
+    g.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:50px 20px;color:#94a3b8;font-size:14px;">暂无装备</div>';
+    return;
+  }
+  var map={phone:'手机数码',computer:'电脑设备',peripheral:'外设配件',life:'生活穿戴'},h='';
+  for(var j=0;j<list.length;j++){
+    var e=list[j],lb=map[e.c]||e.c;
+    h+='<div class="eq-card">';
+    h+='<div class="eq-card-img">';
+    h+='<img src="'+e.i+'" alt="'+e.n+'" loading="lazy" referrerpolicy="no-referrer">';
+    h+='<span class="eq-card-badge">'+lb+'</span>';
+    h+='</div>';
+    h+='<div class="eq-card-info">';
+    h+='<h3 class="eq-card-name">'+e.n+'</h3>';
+    h+='<p class="eq-card-desc">'+e.d+'</p>';
+    h+='<div class="eq-card-footer">';
+    h+='<span class="eq-card-price"><i class="fas fa-tag"></i> '+e.p+'</span>';
+    h+='<span class="eq-card-status">'+e.s+'</span>';
+    h+='</div></div></div>';
+  }
+  g.innerHTML=h;
+}
+
+function filterEq(c,b){
+  document.querySelectorAll('.eq-cat-btn').forEach(function(x){x.classList.remove('active')});
+  b.classList.add('active');render(c);
+}
+
+render('all');
+</script>
+{{ end }}

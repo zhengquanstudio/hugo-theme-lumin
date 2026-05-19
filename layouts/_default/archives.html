@@ -7,14 +7,14 @@
 
 <div class="list-page archives-page">
   <header class="list-header archives-header">
-    <h1 class="list-title">{{ .Title }}</h1>
+    <h1 class="list-title">归档</h1>
     <div class="list-count">共 {{ len $allPages }} 篇文章</div>
   </header>
 
   <div class="archives-timeline" id="archives-timeline">
     {{ range $idx, $yearGroup := ($allPages.GroupByDate "2006") }}
     <!-- 年份区块 -->
-    <div class="archive-year archive-collapsible{{ if gt $idx 0 }} collapsed{{ end }}">
+    <div class="archive-year archive-collapsible collapsed">
       <div class="archive-year-header" data-toggle="year">
         <span class="timeline-dot timeline-dot--year"></span>
         <span class="archive-toggle-icon">▶</span>
@@ -25,7 +25,7 @@
       <div class="archive-year-content">
         {{ range ($yearGroup.Pages.GroupByDate "01") }}
         <!-- 月份区块 -->
-        <div class="archive-month archive-collapsible{{ if gt $idx 0 }} collapsed{{ end }}">
+        <div class="archive-month archive-collapsible collapsed">
           <div class="archive-month-header" data-toggle="month">
             <span class="timeline-dot timeline-dot--month"></span>
             <span class="archive-toggle-icon">▶</span>
@@ -37,61 +37,26 @@
             <div class="archive-items">
               {{ range .Pages }}
               {{ $pg := . }}
-              <!-- 文章卡片 -->
+              <!-- 文章行 -->
               <article class="archive-item-card">
-                {{/* 缩略图：优先级 featured_image > image > 默认封面 */}}
-                {{ $imgSrc := $pg.Params.featured_image | default $pg.Params.image | default $.Site.Params.article.defaultFeaturedImage }}
-                {{ with $imgSrc }}
-                <a href="{{ $pg.Permalink }}" class="archive-thumb">
-                  <img src="{{ . | absURL }}" alt="{{ $pg.Title }}" loading="lazy" class="{{ if eq $imgSrc $.Site.Params.article.defaultFeaturedImage }}default-cover{{ end }}">
-                </a>
-                {{ end }}
+                <time class="archive-item-date">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  {{ $pg.Date.Format "01-02" }}
+                </time>
 
                 <div class="archive-item-body">
-                  <div class="archive-item-top">
-                    <time class="archive-item-date">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                      {{ $pg.Date.Format "01-02" }}
-                    </time>
-                    {{ with $pg.ReadingTime }}
-                    <span class="archive-item-meta">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                      {{ . }} 分钟
-                    </span>
-                    {{ end }}
-                    {{ with $pg.WordCount }}
-                    <span class="archive-item-meta">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
-                      {{ . }} 字
-                    </span>
-                    {{ end }}
-                  </div>
-
                   <a href="{{ $pg.Permalink }}" class="archive-item-title">{{ $pg.Title }}</a>
+                </div>
 
-                  {{ with $pg.Description }}
-                  <p class="archive-item-desc">{{ . | truncate 80 "..." }}</p>
-                  {{ end }}
-
-                  <div class="archive-item-footer">
-                    {{ with $pg.Params.categories }}
-                    <div class="archive-item-tags">
-                      {{ range . }}
-                      {{ $catSlug := . }}
-                      <a href="/{{ $catSlug }}/" class="archive-tag archive-tag--category">{{ partial "category-display-name.html" (dict "Site" $.Site "Slug" $catSlug) }}</a>
-                      {{ end }}
-                    </div>
-                    {{ end }}
-                    {{ with $pg.Params.tags }}
-                    <div class="archive-item-tags">
-                      {{ range first 4 . }}
-                      {{ $tagSlug := . }}
-                      <a href="{{ printf "/tags/%s/" $tagSlug | relLangURL }}" class="archive-tag archive-tag--tag">#{{ $tagSlug }}</a>
-                      {{ end }}
-                      {{ if gt (len .) 4 }}<span class="archive-tag-more">+{{ sub (len .) 4 }}</span>{{ end }}
-                    </div>
+                <div class="archive-item-footer">
+                  {{ with $pg.Params.categories }}
+                  <div class="archive-item-tags">
+                    {{ range first 1 . }}
+                    {{ $catSlug := . }}
+                    <a href="/{{ $catSlug }}/" class="archive-tag archive-tag--category">{{ partial "category-display-name.html" (dict "Site" $.Site "Slug" $catSlug) }}</a>
                     {{ end }}
                   </div>
+                  {{ end }}
                 </div>
               </article>
               {{ end }}
@@ -137,7 +102,7 @@
       </h2>
       <div class="archives-cloud archives-cloud--tags">
         {{ range . }}
-          <a href="{{ .Page.Permalink }}" class="archives-cloud-item archives-cloud-item--tag">#{{ .Page.Title }}
+          <a href="{{ .Page.Permalink }}" class="archives-cloud-item archives-cloud-item--tag">{{ .Page.Title }}
             <span class="archives-cloud-count">{{ len .Pages }}</span>
           </a>
         {{ end }}

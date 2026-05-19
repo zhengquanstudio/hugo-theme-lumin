@@ -4,9 +4,18 @@
     <span class="cmt-icon"><i class="far fa-comment-dots"></i></span>
     <h3 class="comments-title-text">留言评论</h3>
   </div>
-  
+
+  <!-- 评论 Loading 状态 -->
+  <div id="comments-loading" style="text-align:center;padding:40px 20px;color:var(--text-muted);">
+    <div style="display:inline-block;width:32px;height:32px;border:3px solid var(--border-light);border-top-color:var(--accent-color);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px;"></div>
+    <p style="font-size:0.875rem;margin-top:8px;">评论加载中...</p>
+  </div>
+  <style>
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+
   {{ if eq .Site.Params.comments.type "disqus" }}
-    <div id="disqus_thread"></div>
+    <div id="disqus_thread" style="display:none;"></div>
     <script>
       var disqus_config = function () {
         this.page.url = "{{ .Permalink }}";
@@ -16,12 +25,22 @@
         var d = document, s = d.createElement('script');
         s.src = 'https://{{ .Site.Params.comments.disqus.shortname }}.disqus.com/embed.js';
         s.setAttribute('data-timestamp', +new Date());
+        s.onload = function() {
+          var loading = document.getElementById('comments-loading');
+          var thread = document.getElementById('disqus_thread');
+          if (loading) loading.style.display = 'none';
+          if (thread) thread.style.display = '';
+        };
+        s.onerror = function() {
+          var loading = document.getElementById('comments-loading');
+          if (loading) loading.innerHTML = '<p style="color:#ef4444;">❌ 评论加载失败，请刷新重试</p>';
+        };
         (d.head || d.body).appendChild(s);
       })();
     </script>
-  
+
   {{ else if eq .Site.Params.comments.type "gitalk" }}
-    <div id="gitalk-container"></div>
+    <div id="gitalk-container" style="display:none;"></div>
     <!-- Gitalk (带 CDN fallback) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css"
       onerror="this.onerror=null;this.href='https://unpkg.com/gitalk@1/dist/gitalk.css'">
@@ -29,32 +48,65 @@
     <script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"
       onerror="var s=document.createElement('script');s.src='https://unpkg.com/gitalk@1/dist/gitalk.min.js';document.head.appendChild(s);"></script>
     <script>
-      var gitalk = new Gitalk({
-        clientID: '{{ .Site.Params.comments.gitalk.clientID }}',
-        clientSecret: '{{ .Site.Params.comments.gitalk.clientSecret }}',
-        repo: '{{ .Site.Params.comments.gitalk.repo }}',
-        owner: '{{ .Site.Params.comments.gitalk.owner }}',
-        admin: {{ .Site.Params.comments.gitalk.admin | jsonify }},
-        id: location.pathname,
-        distractionFreeMode: false
-      });
-      gitalk.render('gitalk-container');
+      function initGitalk() {
+        var gitalk = new Gitalk({
+          clientID: '{{ .Site.Params.comments.gitalk.clientID }}',
+          clientSecret: '{{ .Site.Params.comments.gitalk.clientSecret }}',
+          repo: '{{ .Site.Params.comments.gitalk.repo }}',
+          owner: '{{ .Site.Params.comments.gitalk.owner }}',
+          admin: {{ .Site.Params.comments.gitalk.admin | jsonify }},
+          id: location.pathname,
+          distractionFreeMode: false
+        });
+        gitalk.render('gitalk-container');
+        var loading = document.getElementById('comments-loading');
+        var container = document.getElementById('gitalk-container');
+        if (loading) loading.style.display = 'none';
+        if (container) container.style.display = '';
+      }
+
+      if (typeof Gitalk !== 'undefined') {
+        initGitalk();
+      } else {
+        window.addEventListener('load', function() {
+          setTimeout(initGitalk, 500);
+        });
+      }
     </script>
-  
+
   {{ else if eq .Site.Params.comments.type "twikoo" }}
-    <div id="tcomment"></div>
+    <div id="tcomment" style="display:none;"></div>
     <!-- Twikoo (带 CDN fallback) -->
     <script src="https://cdn.jsdelivr.net/npm/twikoo@1.7.7/dist/twikoo.all.min.js"
       onerror="var s=document.createElement('script');s.src='https://unpkg.com/twikoo@1.7.7/dist/twikoo.all.min.js';document.head.appendChild(s);"></script>
     <script>
-      twikoo.init({
-        envId: '{{ .Site.Params.comments.twikoo.envId }}',
-        el: '#tcomment',
-      });
+      function initTwikoo() {
+        twikoo.init({
+          envId: '{{ .Site.Params.comments.twikoo.envId }}',
+          el: '#tcomment',
+        }).then(function() {
+          var loading = document.getElementById('comments-loading');
+          var container = document.getElementById('tcomment');
+          if (loading) loading.style.display = 'none';
+          if (container) container.style.display = '';
+        }).catch(function(err) {
+          console.error('[Twikoo] 初始化失败:', err);
+          var loading = document.getElementById('comments-loading');
+          if (loading) loading.innerHTML = '<p style="color:#ef4444;">❌ 评论加载失败</p>';
+        });
+      }
+
+      if (typeof twikoo !== 'undefined') {
+        initTwikoo();
+      } else {
+        window.addEventListener('load', function() {
+          setTimeout(initTwikoo, 500);
+        });
+      }
     </script>
-  
+
   {{ else if eq .Site.Params.comments.type "waline" }}
-    <div id="waline"></div>
+    <div id="waline" style="display:none;"></div>
     <link rel="stylesheet" href="https://unpkg.com/@waline/client@v2/dist/waline.css"
       onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/@waline/client@v2/dist/waline.css'" />
     <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client@v2/dist/waline.css"></noscript>
@@ -63,6 +115,15 @@
       init({
         el: '#waline',
         serverURL: '{{ .Site.Params.comments.waline.serverURL }}',
+      }).then(function() {
+        var loading = document.getElementById('comments-loading');
+        var container = document.getElementById('waline');
+        if (loading) loading.style.display = 'none';
+        if (container) container.style.display = '';
+      }).catch(function(err) {
+        console.error('[Waline] 初始化失败:', err);
+        var loading = document.getElementById('comments-loading');
+        if (loading) loading.innerHTML = '<p style="color:#ef4444;">❌ 评论加载失败</p>';
       });
     </script>
   {{ end }}

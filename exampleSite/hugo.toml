@@ -269,6 +269,48 @@ summaryLength = 150
   [params.diary]
     enable = true
 
+  # Click Effects (鼠标点击效果)
+  [params.clickEffect]
+    enable = true                    # 是否启用点击效果
+    type = "fireworks"              # 效果类型: fireworks(烟花) | text(文字) | heart(爱心) | star(星星) | bubble(气泡) | snow(雪花)
+    
+    # 烟花效果配置
+    [params.clickEffect.fireworks]
+      particleCount = 30            # 粒子数量 (10-50)
+      spread = 60                  # 扩散角度 (30-120)
+      colors = ["#ff0000", "#00ff00", "#0000ff", "#ffff00", "#ff00ff", "#00ffff"]  # 颜色数组
+    
+    # 文字效果配置
+    [params.clickEffect.text]
+      messages = ["富强", "民主", "文明", "和谐", "自由", "平等", "公正", "法治", "爱国", "敬业", "诚信", "友善"]  # 显示的文字列表
+      fontSize = "16px"             # 字体大小
+      color = "#ff6b6b"            # 文字颜色
+      duration = 1000              # 显示时长（毫秒）
+    
+    # 爱心效果配置
+    [params.clickEffect.heart]
+      color = "#ff4757"            # 爱心颜色
+      size = 20                   # 大小 (10-40)
+      count = 5                   # 数量 (1-10)
+    
+    # 星星效果配置
+    [params.clickEffect.star]
+      color = "#ffd700"           # 星星颜色
+      size = 15                  # 大小 (10-30)
+      count = 8                  # 数量 (3-15)
+    
+    # 气泡效果配置
+    [params.clickEffect.bubble]
+      colors = ["#74b9ff", "#a29bfe", "#fd79a8", "#ffeaa7"]  # 气泡颜色
+      sizeRange = [8, 25]        # 大小范围 [最小, 最大]
+      count = 12                 # 数量 (5-20)
+    
+    # 雪花效果配置
+    [params.clickEffect.snow]
+      color = "#ffffff"          # 雪花颜色
+      sizeRange = [5, 15]        # 大小范围
+      count = 20                 # 数量 (10-40)
+
 # Output formats
 [outputs]
   home = ["HTML", "RSS", "JSON"]

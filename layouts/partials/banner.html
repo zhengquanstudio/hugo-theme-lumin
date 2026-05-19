@@ -6,13 +6,16 @@
   {{ $typingSpeed := .Site.Params.banner.typingSpeed | default 120 }}
   {{ $deletingSpeed := .Site.Params.banner.deletingSpeed | default 60 }}
   {{ $pauseTime := .Site.Params.banner.pauseTime | default 2500 }}
-  
+  {{ $randomMode := .Site.Params.banner.randomMode | default false }}
+  {{ $themeEffect := .Site.Params.banner.themeEffect | default "ripple" }}
+
   <!-- 背景图轮播 -->
   <div class="banner-slideshow" id="banner-slideshow">
     {{ if $images }}
       {{ range $index, $image := $images }}
       <div class="banner-slide{{ if eq $index 0 }} active{{ end }}" data-index="{{ $index }}">
-        <img src="/images/banners/{{ $image }}" alt="Banner {{ add $index 1 }}" class="banner-slide-image">
+        <img src="/images/banners/{{ $image }}" alt="Banner {{ add $index 1 }}" class="banner-slide-image"
+          {{ if gt $index 0 }}loading="lazy"{{ end }}>
       </div>
       {{ end }}
     {{ else }}
@@ -21,9 +24,9 @@
       </div>
     {{ end }}
   </div>
-  
+
   <div class="banner-overlay"></div>
-  
+
   <div class="banner-content">
     <h1 class="banner-title">{{ .Site.Params.banner.title | default .Site.Title }}</h1>
     <div class="banner-typewriter">
@@ -63,6 +66,9 @@
       typingSpeed: {{ $typingSpeed }},
       deletingSpeed: {{ $deletingSpeed }},
       pauseTime: {{ $pauseTime }},
+      apiEnabled: {{ .Site.Params.banner.apiEnabled | default false }},
+      randomMode: {{ $randomMode }},
+      themeEffect: "{{ $themeEffect }}",
       subtitles: [
         {{ if $subtitles }}
           {{ range $i, $s := $subtitles }}

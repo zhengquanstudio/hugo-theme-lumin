@@ -34,13 +34,13 @@
     {{ end }}
 
     <!-- 版权信息栏 -->
+    <!-- 版权信息栏 -->
     <div class="footer-bottom">
       <span class="footer-item">
-        &copy; {{ .Site.Params.footer.since | default now.Year }}-{{ now.Year }}
-        {{ with .Site.Params.author }}{{ . }}{{ else }}{{ .Site.Title }}{{ end }}
+        &copy; {{ now.Year }} {{ with .Site.Params.author }}{{ . }}{{ else }}{{ .Site.Title }}{{ end }} 版权所有
       </span>
       <span class="footer-sep">|</span>
-      <span class="footer-item">保留所有权利</span>
+      <span class="footer-item">由 <a href="https://github.com/zhengquanstudio/hugo-theme-lumin" target="_blank" rel="noopener" class="footer-link">Lumin</a> 主题搭建</span>
       <span class="footer-sep">|</span>
       <a href="{{ "index.xml" | relURL }}" target="_blank" rel="noopener" class="footer-link">RSS订阅</a>
       <span class="footer-sep">|</span>

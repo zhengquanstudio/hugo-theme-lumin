@@ -2,20 +2,17 @@
 # See https://github.com/gohugoio/hugoThemes#themetoml for an example
 
 name = "Lumin"
-version = "1.4.0"
+version = "1.7.0"
 license = "MIT"
-licenselink = "https://github.com/yourname/hugo-theme-lumin/blob/main/LICENSE"
+licenselink = "https://github.com/zhengquanstudio/hugo-theme-lumin/blob/main/LICENSE"
 description = "A modern, elegant Hugo blog theme with dark/light mode, sidebar widgets, and rich features"
-homepage = "https://github.com/yourname/hugo-theme-lumin"
-demosite = "https://demo.lumin-theme.com"
+homepage = "https://github.com/zhengquanstudio/hugo-theme-lumin"
+demosite = "https://hugo.lumin.zhengquan.xyz"
 tags = ["blog", "responsive", "dark", "light", "sidebar", "multilingual", "search", "gallery", "diary"]
 features = ["dark-mode", "sidebar", "search", "gallery", "diary", "movies", "music", "friends", "comments", "reward"]
 min_version = "0.100.0"
 
 [author]
-  name = "Lumin Team"
-  homepage = "https://github.com/yourname"
+  name = "Lumin"
+  homepage = "https://hugo.lumin.zhengquan.xyz"
 
-[original]
-  name = "onedayxyy.cn"
-  homepage = "https://onedayxyy.cn/"

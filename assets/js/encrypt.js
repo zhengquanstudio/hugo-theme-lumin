@@ -8,6 +8,8 @@
 (function() {
   'use strict';
 
+  console.log('[Lumin Encrypt] 脚本开始执行');
+
   // ===== DOM 元素 =====
   var wrapper,   // #encrypted-content
       article,   // #encrypted-article (hidden)
@@ -21,13 +23,15 @@
   var cryptoSupported = !!(window.crypto && window.crypto.subtle && typeof window.crypto.subtle.digest === 'function');
 
   function init() {
+    console.log('[Lumin Encrypt] init() 被调用');
     wrapper = document.getElementById('encrypted-content');
-    if (!wrapper) return;
+    if (!wrapper) { console.log('[Lumin Encrypt] 未找到 #encrypted-content，退出'); return; }
 
     article = document.getElementById('encrypted-article');
-    if (!article) return;
+    if (!article) { console.log('[Lumin Encrypt] 未找到 #encrypted-article，退出'); return; }
 
     configEl = document.getElementById('encrypt-config');
+    if (!configEl) { console.warn('[Lumin Encrypt] 未找到 #encrypt-config'); }
 
     formEl = wrapper.querySelector('.encrypt-form');
     inputEl = document.getElementById('encrypt-pwd');
@@ -93,7 +97,8 @@
 
   // 解锁成功：隐藏锁屏，显示文章
   function unlockArticle() {
-    if (!wrapper || !article) return;
+    console.log('[Lumin Encrypt] unlockArticle() 被调用 - 正在解锁文章');
+    if (!wrapper || !article) { console.warn('[Lumin Encrypt] unlockArticle: wrapper 或 article 不存在'); return; }
 
     // 隐藏锁屏界面
     var lockScreen = wrapper.querySelector('.encrypt-lock-screen');
@@ -177,8 +182,10 @@
 
   // ===== 自动解锁（sessionStorage 缓存）=====
   function tryAutoUnlock() {
+    console.log('[Lumin Encrypt] tryAutoUnlock() 检查缓存');
     try {
       var cached = sessionStorage.getItem('lumin_enc_' + location.pathname);
+      console.log('[Lumin Encrypt] 缓存值:', cached ? '有缓存' : '无缓存');
       if (cached && configEl) {
         sha256(cached).then(function(cachedHash) {
           var expectedHash = configEl.getAttribute('data-pwd-hash') || '';

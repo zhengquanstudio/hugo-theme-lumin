@@ -178,3 +178,49 @@
   border-color: rgba(239, 68, 68, 0.25);
   color: #f87171;
 }
+
+/* ==========================================
+   Widget + TOC 强制可见（覆盖所有断点）
+   ========================================== */
+
+/* 左侧 Widget：IP访客、日历、倒计时 — 确保始终显示 */
+.widget-visitor,
+.widget-calendar,
+.widget-countdown {
+  display: block !important;
+  visibility: visible !important;
+}
+
+/* 文章目录 TOC — 强制显示 */
+.post-toc-sidebar {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* 文章页三栏布局（侧栏 + 正文 + 目录）*/
+@media (min-width: 992px) {
+  .has-toc .layout-grid {
+    grid-template-columns: var(--sidebar-width, 280px) 1fr var(--sidebar-width, 260px) !important;
+    gap: 30px !important;
+  }
+  .post-toc-sidebar {
+    position: sticky !important;
+    top: calc(var(--header-offset, 64px) + 20px) !important;
+    max-height: calc(100vh - var(--header-offset, 64px) - 40px) !important;
+    height: fit-content !important;
+    overflow-y: auto !important;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  .has-toc .layout-grid {
+    grid-template-columns: 240px 1fr !important;
+    gap: 20px !important;
+  }
+  .post-toc-sidebar {
+    position: relative !important;
+    order: 3 !important;
+    margin-top: 20px !important;
+  }
+}

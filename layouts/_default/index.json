@@ -1,4 +1,4 @@
-[{{- $pages := where .Site.RegularPages "Section" "in" .Site.Params.mainSections }}
+[{{- $pages := .Site.RegularPages }}
 {{- $total := len $pages }}
 {{- range $index, $page := $pages }}
 {
@@ -6,9 +6,10 @@
   "permalink": {{ $page.Permalink | jsonify }},
   "date": {{ $page.Date.Format "2006-01-02" | jsonify }},
   "summary": {{ $page.Summary | plainify | truncate 200 | jsonify }},
-  "content": {{ $page.Content | plainify | truncate 500 | jsonify }},
-  "tags": {{ $page.Params.tags | jsonify }},
-  "categories": {{ $page.Params.categories | jsonify }}
+  "content": {{ $page.Plain | truncate 800 | jsonify }},
+  "tags": {{ with $page.Params.tags }}{{ . | jsonify }}{{ else }}[]{{ end }},
+  "categories": {{ with $page.Params.categories }}{{ . | jsonify }}{{ else }}[]{{ end }},
+  "section": {{ $page.Section | jsonify }}
 }{{ if ne (add $index 1) $total }},{{ end }}
 {{- end }}
 ]

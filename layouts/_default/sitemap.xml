@@ -1,0 +1,40 @@
+{{- printf "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>\n<?xml-stylesheet type=\"text/xsl\" href=\"/sitemap.xsl\"?>" | safeHTML -}}
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  {{- $baseURL := .Site.BaseURL -}}
+  {{- range .Site.RegularPages -}}
+  {{- $priority := "0.4" -}}
+  {{- $freq := "monthly" -}}
+  {{- if .IsHome }}{{ $priority = "1.0" }}{{ $freq = "daily" }}
+  {{- else if .IsPage }}{{ $priority = "0.8" }}{{ $freq = "weekly" }}
+  {{- else if or .IsSection (ne .Kind "page") }}{{ $priority = "0.6" }}{{ end -}}
+  {{- with .Params.priority }}{{ $priority = (printf "%.1f" .) }}{{ end -}}
+  {{- with .Params.changefreq }}{{ $freq = . }}{{ end -}}
+  <url>
+    <loc>{{ .Permalink }}</loc>
+    {{- $lm := .Lastmod -}}
+    {{- if eq $lm "0001-01-01T00:00:00Z" }}{{ $lm = .Date -}}{{ end -}}
+    <lastmod>{{ $lm.Format "2006-01-02T15:04:05Z07:00" | safeHTML }}</lastmod>
+    <changefreq>{{ $freq }}</changefreq>
+    <priority>{{ $priority }}</priority>
+    {{- if .IsTranslated -}}
+    {{- range .Translations -}}
+    <xhtml:link rel="alternate" hreflang="{{ .Lang }}" href="{{ .Permalink }}" />
+    {{- end -}}
+    {{- end -}}
+  </url>
+  {{- end -}}
+  {{- $extraUrls := slice
+    (dict "path" "archives/"     "title" "归档"       "date" "2026-05-19")
+    (dict "path" "datastatistics/"        "title" "数据统计"   "date" "2026-05-19")
+    (dict "path" "equipment/"   "title" "我的装备"   "date" "2026-05-19")
+  -}}
+  {{- range $extraUrls -}}
+  <url>
+    <loc>{{ print $baseURL .path }}</loc>
+    <lastmod>{{ (time .date).Format "2006-01-02T15:04:05Z07:00" | safeHTML }}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  {{- end -}}
+</urlset>
