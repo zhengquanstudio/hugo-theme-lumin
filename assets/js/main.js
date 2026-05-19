@@ -110,16 +110,13 @@
   })();
 
   // ==========================================
-  // Typewriter Effect - 打字机效果（API优先 + 本地降级版）
+  // Typewriter Effect - 打字机效果（参考 Butterfly 主题实现）
+  // 支持: hitokoto(一言) / yiyan(一言) / jinrishici(今日诗词) / 本地
   // ==========================================
   var Typewriter = (function() {
     var el, texts, textIdx, charIdx, isDel, typeSpd, delSpd, pauseTmr, typeTmr;
     var apiEnabled = false;
-    var apiUrls = [
-      'https://v1.hitokoto.cn/?c=d&c=h&c=i&c=k&encode=text',
-      'https://api.shadiao.pro/chp/api',
-      'https://api.oick.cn/yiyan/api.php'
-    ];
+    var apiSource = 1;                   // 1=hitokoto 2=yiyan 3=jinrishici
     var localTexts = [];
 
     function getConfig() {
@@ -133,52 +130,114 @@
       return {};
     }
 
-    function fetchFromApi(callback) {
-      if (!apiEnabled || apiUrls.length === 0) { callback(false); return; }
+    // --- API Source 1: hitokoto.cn（一言）---
+    function fetchHitokoto(callback) {
+      console.log('[Typewriter] 🌐 调用 hitokoto.cn API...');
+      fetch('https://v1.hitokoto.cn', { signal: AbortSignal.timeout(8000) })
+        .then(function(res) {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        })
+        .then(function(data) {
+          if (data && data.hitokoto) {
+            var text = data.hitokoto;
+            var from = data.from ? ' — ' + data.from : '';
+            console.log('%c[Typewriter] ✓ hitokoto 成功: "' + text.substring(0,30) + '"' + from, 'color:#059669');
+            callback(true, text + from);
+          } else {
+            throw new Error('返回数据异常');
+          }
+        })
+        .catch(function(err) {
+          console.warn('[Typewriter] ⚠️ hitokoto 失败: ' + err.message);
+          callback(false);
+        });
+    }
 
-      var url = apiUrls.shift();
-      console.log('[Typewriter] 🌐 尝试 API: ' + (url||'').substring(0,50));
+    // --- API Source 2: yiyan（一言备用）---
+    function fetchYiyan(callback) {
+      console.log('[Typewriter] 🌐 调用 yiyan API...');
+      fetch('https://v.api.aa1.cn/api/yiyan/index.php', { signal: AbortSignal.timeout(8000) })
+        .then(function(res) {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.text();
+        })
+        .then(function(html) {
+          var match = html.match(/<p>(.*?)<\/p>/);
+          if (match && match[1]) {
+            console.log('%c[Typewriter] ✓ yiyan 成功: "' + match[1].substring(0,30) + '"', 'color:#059669');
+            callback(true, match[1]);
+          } else {
+            throw new Error('解析失败');
+          }
+        })
+        .catch(function(err) {
+          console.warn('[Typewriter] ⚠️ yiyan 失败: ' + err.message);
+          callback(false);
+        });
+    }
 
-      try {
-        fetch(url, { mode: 'cors', signal: AbortSignal.timeout(3000) })
-          .then(function(res) {
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            return res.text();
-          })
-          .then(function(text) {
-            text = text.trim();
-            if (text && text.length > 2 && text.length < 200) {
-              console.log('%c[Typewriter] ✓ API 成功: "' + text.substring(0,25) + '"', 'color:#059669');
-              callback(true, text);
-            } else {
-              throw new Error('内容异常');
-            }
-          })
-          .catch(function(err) {
-            console.warn('[Typewriter] ⚠️ API 失败: ' + err.message);
-            if (apiUrls.length > 0) {
-              fetchFromApi(callback);
+    // --- API Source 3: jinrishici.com（今日诗词）---
+    function fetchJinrishici(callback) {
+      console.log('[Typewriter] 🌐 调用 jinrishici API...');
+      var script = document.createElement('script');
+      script.src = 'https://sdk.jinrishici.com/v2/browser/jinrishici.js';
+      script.onload = function() {
+        if (window.jinrishici) {
+          window.jinrishici.load(function(result) {
+            if (result && result.data && result.data.content) {
+              var text = result.data.content;
+              var from = result.data.origin && result.data.origin.dynasty ? ' — ' + result.data.origin.dynasty : '';
+              console.log('%c[Typewriter] ✓ 今日诗词成功: "' + text.substring(0,20) + '"' + from, 'color:#059669');
+              callback(true, text + from);
             } else {
               callback(false);
             }
           });
-      } catch(e) {
+        } else {
+          callback(false);
+        }
+      };
+      script.onerror = function() {
+        console.warn('[Typewriter] ⚠️ jinrishici 脚本加载失败');
         callback(false);
+      };
+      document.head.appendChild(script);
+    }
+
+    // --- 根据配置选择 API ---
+    function fetchFromApi(callback) {
+      switch (apiSource) {
+        case 1:
+          fetchHitokoto(callback);
+          break;
+        case 2:
+          fetchYiyan(callback);
+          break;
+        case 3:
+          fetchJinrishici(callback);
+          break;
+        default:
+          fetchHitokoto(callback);
       }
     }
 
-    function fetchMultiple(count, callback) {
-      var results = [];
-      var self = arguments.callee;
+    // --- 获取多条句子 ---
+    function fetchMultiple(count, callback, existingResults) {
+      var results = existingResults || [];
+      var maxAttempts = count + 3;           // 最大尝试次数（允许部分失败）
 
-      fetchFromApi(function(success, text) {
-        if (success && text) results.push(text);
-        if (results.length >= count || !apiEnabled || apiUrls.length === 0) {
+      function attempt(attemptIdx) {
+        if (attemptIdx >= maxAttempts || results.length >= count) {
           callback(results);
-        } else {
-          self(count, callback, results);
+          return;
         }
-      });
+        fetchFromApi(function(success, text) {
+          if (success && text) results.push(text);
+          attempt(attemptIdx + 1);
+        });
+      }
+      attempt(0);
     }
 
     function start() {
@@ -196,18 +255,18 @@
       }
 
       apiEnabled = (cfg.apiEnabled === true);
+      apiSource = cfg.apiSource || 1;
 
       if (apiEnabled) {
-        console.log('[Typewriter] 🚀 API 模式已启用，正在获取句子...');
-        fetchMultiple(3, function(apiTexts) {
+        var sourceNames = { 1: 'hitokoto(一言)', 2: 'yiyan(一言)', 3: 'jinrishici(今日诗词)' };
+        console.log('[Typewriter] 🚀 API 模式已启用，数据源: ' + (sourceNames[apiSource] || 'hitokoto'));
+        fetchMultiple(5, function(apiTexts) {
+          texts = apiTexts.concat(localTexts);
           if (apiTexts.length > 0) {
-            texts = apiTexts.concat(localTexts);
             console.log('%c[Typewriter] ✓ 获取到 ' + apiTexts.length + ' 条API文本 + ' + localTexts.length + ' 条本地备用', 'color:#059669;font-weight:bold');
           } else {
-            texts = localTexts;
-            console.warn('[Typewriter] ⚠️ 所有API均失败，使用本地配置 (' + texts.length + ' 条)');
+            console.warn('[Typewriter] ⚠️ API 失败，使用本地配置 (' + texts.length + ' 条)');
           }
-          console.log('[Typewriter] 文本列表: ' + JSON.stringify(texts));
           textIdx = 0; charIdx = 0; isDel = false;
           tick();
         });
@@ -263,7 +322,7 @@
   var ThemeToggle = (function() {
     var toggle, html, key, transitioning;
     var DURATION = 1000;
-    var EFFECT = 'ripple';
+    var EFFECT = 'circle';
 
     function frostColor(alpha) { return 'rgba(180,180,195,' + alpha + ')'; }
     function accentC(dark) { return dark ? 'rgba(100,116,139,0.35)' : 'rgba(148,163,184,0.4)'; }
@@ -1392,10 +1451,32 @@
           var text = codeEl.textContent || '';
           navigator.clipboard.writeText(text).then(function() {
             copyBtn.classList.add('copied');
+            showCopyToast();
             setTimeout(function() { copyBtn.classList.remove('copied'); }, 2000);
           }).catch(function() {});
         });
       });
+    }
+
+    function showCopyToast() {
+      var existing = document.querySelector('.copy-toast');
+      if (existing) existing.remove();
+
+      var toast = document.createElement('div');
+      toast.className = 'copy-toast';
+      toast.innerHTML =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
+        '<span>\u590d\u5236\u6210\u529f</span>';
+      document.body.appendChild(toast);
+
+      requestAnimationFrame(function() {
+        toast.classList.add('show');
+      });
+
+      setTimeout(function() {
+        toast.classList.remove('show');
+        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 350);
+      }, 1800);
     }
 
     return { init: init };
@@ -1882,27 +1963,217 @@
     return { init: init };
   })();
 
+  // ==========================================
+  // LazyLoad - 图片懒加载系统（增强版 v2）
+  // 功能: 自定义占位图/骨架屏 + IntersectionObserver + 顺序加载 + 渐进显示
+  // 配置: hugo.toml → [params.lazyLoad]
+  // ==========================================
   var LazyLoad = (function() {
+    var observer;
+    var loadQueue = [];
+    var isLoading = false;
+    var config = {};
+    var customPlaceholder = '';
+
     function init() {
-      if ('loading' in HTMLImageElement.prototype) {
-        document.querySelectorAll('img:not([loading])').forEach(function(img) {
-          if (img.closest('.post-content, .article-content, .main-content')) {
-            img.setAttribute('loading', 'lazy');
+      config = getConfig();
+      if (config.enable === false) {
+        console.log('[LazyLoad] 已禁用');
+        return;
+      }
+      CONCURRENT_LOADS = config.concurrentLoads || 3;
+      ROOT_MARGIN = config.rootMargin || '300px';
+      customPlaceholder = config.placeholder || '';
+      setupObserver();
+      observeImages();
+      console.log('[LazyLoad] ✓ 懒加载系统已初始化' + (customPlaceholder ? ' (自定义占位图)' : ' (骨架屏模式)'));
+    }
+
+    function getConfig() {
+      try {
+        if (window.siteConfig && window.siteConfig.lazyLoad) {
+          return window.siteConfig.lazyLoad;
+        }
+      } catch(e) {}
+      return { enable: true, placeholder: '', concurrentLoads: 3, rootMargin: '300px' };
+    }
+
+    function setupObserver() {
+      if (!('IntersectionObserver' in window)) {
+        fallbackLoadAll();
+        return;
+      }
+
+      observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            enqueueLoad(entry.target);
+            observer.unobserve(entry.target);
           }
         });
-      } else {
-        var io = new IntersectionObserver(function(entries) {
-          entries.forEach(function(entry) {
-            if (entry.isIntersecting) {
-              var img = entry.target;
-              if (img.dataset.src) { img.src = img.dataset.src; img.removeAttribute('data-src'); }
-              io.unobserve(img);
-            }
-          });
-        }, { rootMargin: '200px' });
-        document.querySelectorAll('img[data-src]').forEach(function(img) { io.observe(img); });
+      }, {
+        rootMargin: ROOT_MARGIN,
+        threshold: 0.01
+      });
+    }
+
+    function observeImages() {
+      var selectors = [
+        'img[data-lazy-src]',
+        '.article-card .article-image img:not([data-lazy-processed])',
+        '.list-item .article-image img:not([data-lazy-processed])',
+        '.banner-slide-image:not([data-lazy-processed])',
+        '.related-post-cover img:not([data-lazy-processed])',
+        '.gallery-item img:not([data-lazy-processed])',
+        '.gallery-card img:not([data-lazy-processed])',
+        '.widget img:not([data-lazy-processed]):not(.comment-avatar)',
+        '.post-content img:not([loading="lazy"]):not([data-lazy-processed])',
+        '.article-content img:not([loading="lazy"]):not([data-lazy-processed])'
+      ];
+
+      selectors.forEach(function(selector) {
+        document.querySelectorAll(selector).forEach(function(img) {
+          processImage(img);
+        });
+      });
+
+      if (loadQueue.length > 0) {
+        processQueue();
       }
     }
+
+    function processImage(img) {
+      if (img.dataset.lazyProcessed === 'true') return;
+
+      var src = img.dataset.lazySrc || img.src;
+      if (!src || src === '' || src === 'about:blank') return;
+
+      img.dataset.lazyProcessed = 'true';
+      img.dataset.actualSrc = src;
+
+      if (src && !img.dataset.lazySrc) {
+        img.dataset.lazySrc = src;
+        img.src = 'about:blank';
+      }
+
+      wrapWithSkeleton(img);
+
+      if (observer) {
+        observer.observe(img);
+      }
+    }
+
+    function wrapWithSkeleton(img) {
+      if (img.closest('.lazy-load-wrapper')) return;
+
+      var wrapper = document.createElement('span');
+      wrapper.className = 'lazy-load-wrapper' + (customPlaceholder ? ' has-custom-placeholder' : '');
+      wrapper.style.display = 'inline-block';
+      wrapper.style.position = 'relative';
+      wrapper.style.overflow = 'hidden';
+      wrapper.style.lineHeight = '0';
+
+      var width = img.width || img.offsetWidth || img.naturalWidth || 300;
+      var height = img.height || img.offsetHeight || img.naturalHeight || 200;
+
+      if (width > 0) wrapper.style.width = width + 'px';
+      if (height > 0) wrapper.style.minHeight = height + 'px';
+
+      // 如果配置了自定义占位图，设置为背景
+      if (customPlaceholder) {
+        wrapper.style.backgroundImage = "url('" + customPlaceholder + "')";
+        wrapper.style.backgroundSize = 'cover';
+        wrapper.style.backgroundPosition = 'center';
+        wrapper.style.backgroundRepeat = 'no-repeat';
+        wrapper.classList.add('custom-placeholder-mode');
+      }
+
+      img.parentNode.insertBefore(wrapper, img);
+      wrapper.appendChild(img);
+
+      img.classList.add('lazy-loading');
+
+      // 仅在骨架屏模式下显示图标（自定义占位图模式不显示）
+      if (!customPlaceholder) {
+        var icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        icon.setAttribute('class', 'lazy-placeholder-icon');
+        icon.setAttribute('viewBox', '0 0 24 24');
+        icon.setAttribute('fill', 'none');
+        icon.setAttribute('stroke', 'currentColor');
+        icon.setAttribute('stroke-width', '1.5');
+        icon.innerHTML = '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>';
+        wrapper.appendChild(icon);
+      }
+    }
+
+    function enqueueLoad(img) {
+      loadQueue.push(img);
+      processQueue();
+    }
+
+    function processQueue() {
+      if (isLoading || loadQueue.length === 0) return;
+
+      isLoading = true;
+      var batch = loadQueue.splice(0, CONCURRENT_LOADS);
+
+      batch.forEach(function(img, idx) {
+        setTimeout(function() { loadImage(img); }, idx * 100);
+      });
+
+      setTimeout(function() {
+        isLoading = false;
+        processQueue();
+      }, batch.length * 100 + 500);
+    }
+
+    function loadImage(img) {
+      var src = img.dataset.lazySrc || img.dataset.actualSrc;
+      if (!src || img.classList.contains('lazy-loaded')) return;
+
+      var loadingImg = new Image();
+
+      loadingImg.onload = function() {
+        img.src = src;
+        img.removeAttribute('data-lazy-src');
+        img.classList.remove('lazy-loading');
+        img.classList.add('lazy-loaded');
+
+        var wrapper = img.closest('.lazy-load-wrapper');
+        if (wrapper) {
+          wrapper.classList.add('loaded');
+          setTimeout(function() {
+            if (wrapper.parentNode) {
+              wrapper.parentNode.insertBefore(img, wrapper);
+              wrapper.remove();
+            }
+          }, 350);
+        }
+      };
+
+      loadingImg.onerror = function() {
+        img.src = img.dataset.actualSrc || src;
+        img.classList.remove('lazy-loading');
+        img.classList.add('lazy-loaded');
+
+        var wrapper = img.closest('.lazy-load-wrapper');
+        if (wrapper) wrapper.remove();
+      };
+
+      loadingImg.src = src;
+    }
+
+    function fallbackLoadAll() {
+      document.querySelectorAll('img[data-lazy-src]').forEach(function(img) {
+        var src = img.dataset.lazySrc;
+        if (src) {
+          img.src = src;
+          img.removeAttribute('data-lazy-src');
+          img.classList.add('lazy-loaded');
+        }
+      });
+    }
+
     return { init: init };
   })();
 

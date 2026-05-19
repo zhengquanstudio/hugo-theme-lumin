@@ -144,6 +144,9 @@ summaryLength = 150
     title = "Lumin Blog"
     subtitle = "明心静性，爱自己"
     images = ["banner1.jpg", "banner2.jpg", "banner3.jpg"]
+
+    # 主题切换过渡效果 (可选值: ripple / diagonal / blinds / circle / star)
+    themeEffect = "circle"
   
   # Profile widget
   [params.profile]

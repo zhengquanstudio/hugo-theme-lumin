@@ -9,6 +9,46 @@
     </svg>
     日历
   </h4>
-  <div class="calendar-container" id="calendar-widget"></div>
+  <div class="tk-widget-card tk-calendar-card">
+    <div class="tk-calendar-body">
+      <!-- 左侧：日期详情 -->
+      <div class="tk-calendar-left">
+        <div class="calendar-row-1">
+          <span id="calendar-week">第1周</span>
+          <span id="calendar-weekday">周一</span>
+        </div>
+        <div class="calendar-row-2">
+          <span class="calendar-day" id="calendar-day">1</span>
+        </div>
+        <div class="calendar-row-3">
+          <span id="calendar-date">2025年1月</span>
+          <span id="calendar-year-day">第1天</span>
+        </div>
+        <div class="calendar-row-4">
+          <span id="calendar-lunar-year">甲辰年</span>
+          <span id="calendar-lunar-month">正月</span>
+          <span id="calendar-lunar-day">初一</span>
+        </div>
+      </div>
+
+      <!-- 右侧：迷你日历 -->
+      <div class="tk-calendar-right">
+        <div class="calendar-mini">
+          <div class="calendar-weekdays">
+            <span>日</span>
+            <span>一</span>
+            <span>二</span>
+            <span>三</span>
+            <span>四</span>
+            <span>五</span>
+            <span>六</span>
+          </div>
+          <div class="calendar-days" id="calendar-days">
+            <!-- 动态生成 -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 {{ end }}

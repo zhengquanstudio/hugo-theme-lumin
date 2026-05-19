@@ -224,3 +224,688 @@
     margin-top: 20px !important;
   }
 }
+
+/* ==========================================
+   Header Clock 时钟样式
+   ========================================== */
+
+.header-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+  color: var(--text-primary, #1e293b);
+  opacity: 0.85;
+  transition: opacity 0.25s ease;
+}
+
+.header-clock:hover {
+  opacity: 1;
+}
+
+.header-clock .clock-time {
+  display: inline-flex;
+  align-items: center;
+}
+
+.header-clock .separator {
+  margin: 0 2px;
+  animation: blink 1s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* 暗色模式适配 */
+[data-theme="dark"] .header-clock {
+  color: var(--text-primary, #e2e8f0);
+}
+
+/* ==========================================
+   Calendar Widget 日历组件
+   ========================================== */
+
+.tk-calendar-card {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.tk-calendar-body {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  width: 100%;
+  box-sizing: border-box;
+  align-items: stretch;
+}
+
+.tk-calendar-left {
+  flex: 0 0 auto;
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-right: 0.75rem;
+  padding-left: 0.25rem;
+  border-right: 1px solid var(--border-color, #e5e7eb);
+}
+
+.calendar-row-1 {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  font-size: 0.75rem;
+  color: var(--text-secondary, #6b7280);
+  font-weight: 500;
+}
+
+.calendar-row-2 {
+  text-align: center;
+  margin: 0.15rem 0;
+}
+
+.calendar-day {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #0e7490;
+  line-height: 1;
+}
+
+.calendar-row-3 {
+  display: flex;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #6b7280);
+  font-weight: 500;
+}
+
+.calendar-row-4 {
+  display: flex;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary, #6b7280);
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.tk-calendar-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-mini {
+  width: 100%;
+  max-width: 160px;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.15rem;
+  margin-bottom: 0.3rem;
+}
+
+.calendar-weekdays span {
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+  padding: 0.2rem 0;
+}
+
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.15rem;
+}
+
+.calendar-day-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: var(--text-primary, #1f2937);
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.calendar-day-cell.empty {
+  visibility: hidden;
+}
+
+.calendar-day-cell.today {
+  background: #0e7490;
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(14, 116, 144, 0.3);
+}
+
+/* 暗色模式适配 */
+[data-theme="dark"] .tk-calendar-left {
+  border-color: rgba(56, 189, 248, 0.35);
+}
+
+[data-theme="dark"] .calendar-day {
+  color: #22d3ee;
+}
+
+[data-theme="dark"] .calendar-day-cell {
+  color: var(--text-primary, #e2e8f0);
+}
+
+[data-theme="dark"] .calendar-day-cell.today {
+  background: #0891b2;
+  box-shadow: 0 2px 6px rgba(8, 145, 178, 0.3);
+}
+
+/* ==========================================
+   Reward Module 打赏模块
+   ========================================== */
+
+.post-reward {
+  text-align: center;
+  padding: 1.5rem;
+  background: var(--bg-secondary, #f1f5f9);
+  border-radius: 16px;
+  margin-top: 1rem;
+}
+
+.reward-text {
+  margin: 0 0 1rem;
+  color: var(--text-secondary, #6b7280);
+  font-size: 0.95rem;
+}
+
+.reward-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.35);
+}
+
+.reward-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.45);
+  opacity: 0.95;
+}
+
+.reward-btn:active {
+  transform: translateY(0);
+}
+
+.reward-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999999 !important;
+}
+
+.reward-modal.active {
+  display: block !important;
+}
+
+.reward-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.reward-modal-content {
+  position: relative;
+  background: var(--bg-primary, #ffffff);
+  max-width: 480px;
+  width: 90%;
+  margin: 5vh auto 0;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease-out;
+  z-index: 1000000 !important;
+}
+
+.reward-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  color: var(--text-tertiary, #9ca3af);
+  cursor: pointer;
+  transition: color 0.2s;
+  border-radius: 50%;
+}
+
+.reward-modal-close:hover {
+  color: var(--text-primary, #1e293b);
+}
+
+.reward-modal-title {
+  margin: 0 0 1.5rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary, #1e293b);
+  text-align: center;
+}
+
+.reward-qrcodes {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.reward-qrcode-item {
+  text-align: center;
+  flex: 1;
+  min-width: 160px;
+  max-width: 200px;
+}
+
+.reward-qrcode-item img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.reward-qrcode-label {
+  display: block;
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 暗色模式适配 */
+[data-theme="dark"] .post-reward {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .reward-modal-content {
+  background: var(--bg-primary, #0f172a);
+}
+
+[data-theme="dark"] .reward-modal-close:hover {
+  color: var(--text-primary, #e2e8f0);
+}
+
+[data-theme="dark"] .reward-modal-title {
+  color: var(--text-primary, #e2e8f0);
+}
+
+[data-theme="dark"] .reward-qrcode-item img {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* ==========================================
+   Newest Comments Widget 最新评论
+   ========================================== */
+
+.widget-newest-comments .newest-comments-card {
+  width: 100%;
+}
+
+.widget-newest-comments .comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.widget-newest-comments .comment-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.widget-newest-comments .comment-item:hover {
+  background: var(--bg-secondary, rgba(0, 0, 0, 0.04));
+}
+
+[data-theme="dark"] .widget-newest-comments .comment-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.widget-newest-comments .comment-item:hover .comment-text {
+  color: var(--primary-color, #667eea);
+}
+
+.widget-newest-comments .comment-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.widget-newest-comments .comment-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.widget-newest-comments .comment-text {
+  font-size: 0.875rem;
+  color: var(--text-primary, #1f2937);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
+}
+
+[data-theme="dark"] .widget-newest-comments .comment-text {
+  color: var(--text-primary, #e2e8f0);
+}
+
+.widget-newest-comments .comment-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  color: var(--text-tertiary, #9ca3af);
+}
+
+[data-theme="dark"] .widget-newest-comments .comment-meta {
+  color: var(--text-tertiary, #6a6a71);
+}
+
+.widget-newest-comments .comment-author {
+  font-weight: 500;
+}
+
+.widget-newest-comments .comment-divider {
+  opacity: 0.5;
+}
+
+.widget-newest-comments .comment-time {
+  opacity: 0.8;
+}
+
+.widget-newest-comments .comments-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  gap: 0.75rem;
+  color: var(--text-secondary, #67676c);
+}
+
+.widget-newest-comments .loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--bg-secondary, rgba(0, 0, 0, 0.1));
+  border-top-color: var(--primary-color, #667eea);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.widget-newest-comments .comments-loading span {
+  font-size: 0.875rem;
+}
+
+.widget-newest-comments .comments-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  gap: 0.75rem;
+  color: var(--text-tertiary, #929295);
+}
+
+.widget-newest-comments .comments-empty span {
+  font-size: 0.875rem;
+}
+
+.widget-newest-comments .comments-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  color: #b8272c;
+  font-size: 0.875rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 768px) {
+  .widget-newest-comments .comment-avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .widget-newest-comments .comment-text {
+    font-size: 0.8125rem;
+  }
+
+  .widget-newest-comments .comment-meta {
+    font-size: 0.7rem;
+  }
+}
+
+/* ==========================================
+   图片懒加载系统 - 骨架屏 & 渐进加载 & 自定义占位图
+   ========================================== */
+
+/* 懒加载容器 */
+.lazy-load-wrapper {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  background: var(--bg-secondary, #f0f0f0);
+  min-height: 1px;
+}
+
+/* ========== 模式1：骨架屏动画（默认，无自定义占位图时）========== */
+
+/* 骨架屏动画（shimmer 效果）*/
+.lazy-load-wrapper:not(.has-custom-placeholder)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 20%,
+    rgba(255, 255, 255, 0.5) 40%,
+    rgba(255, 255, 255, 0.3) 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: lazyShimmer 1.5s ease-in-out infinite;
+  z-index: 1;
+  pointer-events: none;
+}
+
+[data-theme="dark"] .lazy-load-wrapper:not(.has-custom-placeholder)::before {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 20%,
+    rgba(255, 255, 255, 0.1) 40%,
+    rgba(255, 255, 255, 0.05) 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+}
+
+@keyframes lazyShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* 懒加载中的图片（隐藏，显示骨架屏）*/
+.lazy-load-wrapper img[data-lazy-src] {
+  opacity: 0 !important;
+  visibility: hidden;
+}
+
+/* 图片加载完成后的过渡效果 */
+.lazy-load-wrapper img.lazy-loaded {
+  opacity: 1 !important;
+  visibility: visible !important;
+  animation: lazyFadeIn 0.4s ease-out forwards;
+}
+
+@keyframes lazyFadeIn {
+  from { opacity: 0; transform: scale(1.02); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* 加载完成后隐藏骨架屏 */
+.lazy-load-wrapper.loaded::before {
+  animation: lazyFadeOut 0.3s ease-out forwards;
+}
+
+@keyframes lazyFadeOut {
+  to { opacity: 0; }
+}
+
+/* Loading 占位图标（可选：显示在骨架屏中央）*/
+.lazy-placeholder-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  color: var(--text-muted, #999);
+  opacity: 0.5;
+  animation: lazyPulse 1.5s ease-in-out infinite;
+}
+
+.lazy-loaded ~ .lazy-placeholder-icon,
+.loaded .lazy-placeholder-icon {
+  display: none;
+}
+
+@keyframes lazyPulse {
+  0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+/* 文章卡片封面懒加载 */
+.article-card .article-image,
+.list-item .article-image {
+  position: relative;
+}
+
+.article-card .article-image img,
+.list-item .article-image img {
+  transition: opacity 0.3s ease;
+}
+
+/* Banner 背景图懒加载 */
+.banner-slide-image {
+  transition: opacity 0.5s ease !important;
+}
+
+.banner-slide-image.lazy-loading {
+  opacity: 0 !important;
+}
+
+.banner-slide-image.lazy-loaded {
+  opacity: 1 !important;
+}
+
+/* 侧边栏头像/二维码懒加载 */
+.sidebar .profile-avatar,
+.widget img {
+  transition: opacity 0.3s ease;
+}
+
+/* Gallery 相册懒加载 */
+.gallery-item img,
+.gallery-card img {
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+/* 相关文章封面 */
+.related-post-cover {
+  position: relative;
+  overflow: hidden;
+}
+
+.related-post-cover img {
+  transition: opacity 0.3s ease;
+}
+
+/* ========== 模式2：自定义占位图（配置了 placeholder 时）========== */
+
+/* 自定义占位图模式：隐藏骨架屏动画 */
+.lazy-load-wrapper.has-custom-placeholder::before {
+  display: none !important;
+}
+
+/* 自定义占位图：加载中的样式 */
+.lazy-load-wrapper.custom-placeholder-mode {
+  background-color: var(--bg-secondary, #f5f5f5);
+}
+
+/* 自定义占位图：图片模糊效果（可选，让用户知道这是占位图）*/
+.lazy-load-wrapper.custom-placeholder-mode img.lazy-loading {
+  opacity: 0 !important;
+}
+
+/* 自定义占位图模式：加载完成后平滑过渡 */
+.lazy-load-wrapper.custom-placeholder-mode.loaded {
+  background-image: none !important;
+}

@@ -1,13 +1,32 @@
 {{ define "main" }}
 <div class="home-content">
-  {{/* 自动从 rowsPerPage 计算首页文章数（每行3篇）*/}}
-  {{ $rowsPer := .Site.Params.homePageSort.rowsPerPage | default 6 }}
-  {{ $pageSize := mul $rowsPer 3 }}
+  {{/* 
+    首页文章数量配置（优先级从高到低）：
+    1. homePageSize（params 根级别）
+    2. paginatePCSize（homepage 子配置）
+    3. paginate（全局配置）
+    4. 默认值 18
+  */}}
+  {{ $pageSize := .Site.Params.homePageSize | default (.Site.Params.homepage.paginatePCSize | default (.Site.Params.paginate | default 18)) }}
+
   {{/* 排除标记为 excludeFromList 的特殊页面（关于/友链/留言板/归档等）及说说等非文章类型 */}}
-  {{ $articles := where (where .Site.RegularPages "Params.excludeFromList" "!=" true) "Type" "not in" (slice "moments") }}
+  {{ $allArticles := where (where .Site.RegularPages "Params.excludeFromList" "!=" true) "Type" "not in" (slice "moments") }}
+  
+  {{/* 按优先级排序：置顶 > 精选 > 推荐 > 普通文章，每组内按日期降序 */}}
+  {{ $sticky := sort (where $allArticles "Params.sticky" true) "Date" "desc" }}
+  {{ $notSticky := where $allArticles "Params.sticky" "!=" true }}
+  {{ $featured := sort (where $notSticky "Params.featured" true) "Date" "desc" }}
+  {{ $notFeatured := where $notSticky "Params.featured" "!=" true }}
+  {{ $recommend := sort (where $notFeatured "Params.recommend" true) "Date" "desc" }}
+  {{ $normal := sort (where $notFeatured "Params.recommend" "!=" true) "Date" "desc" }}
+  
+  {{/* 拼接排序后的文章 */}}
+  {{ $articles := $sticky | append $featured | append $recommend | append $normal }}
   {{ $paginator := .Paginate $articles $pageSize }}
 
-  <div class="article-grid">
+  <div class="article-grid"
+       data-mobile-initial-show="{{ .Site.Params.homepage.mobileInitialShow | default 8 }}"
+       data-mobile-load-more-step="{{ .Site.Params.homepage.mobileLoadMoreStep | default 8 }}">
     {{ range $paginator.Pages }}
     <article class="article-card{{ if .Params.sticky }} is-sticky{{ end }}{{ if .Params.recommend }} is-recommend{{ end }}">
       <a href="{{ .Permalink }}" class="article-link">

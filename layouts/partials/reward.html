@@ -1,21 +1,131 @@
 {{ if .Site.Params.reward.enable }}
+<style>
+.post-reward {
+  position: relative;
+  margin-top: 2rem;
+  width: 100%;
+  text-align: center;
+}
+
+.post-reward .reward-text {
+  margin-bottom: 1rem;
+  color: var(--text-secondary, #6b7280);
+  font-size: 0.95rem;
+}
+
+.post-reward .reward-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.35);
+}
+
+.post-reward .reward-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.45);
+}
+
+.post-reward:hover .reward-main {
+  display: block;
+}
+
+.post-reward .reward-main {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: none;
+  padding: 0;
+  width: auto;
+}
+
+.post-reward .reward-all {
+  display: inline-flex;
+  gap: 1.5rem;
+  margin: 0;
+  padding: 1.5rem;
+  background: var(--bg-secondary, #f1f5f9);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  list-style: none;
+}
+
+[data-theme="dark"] .post-reward .reward-all {
+  background: var(--bg-tertiary, #1e1e2e);
+}
+
+.post-reward .reward-all::after {
+  position: absolute;
+  right: 0;
+  bottom: -10px;
+  left: 0;
+  margin: 0 auto;
+  width: 0;
+  height: 0;
+  border-top: 12px solid var(--bg-secondary, #f1f5f9);
+  border-right: 12px solid transparent;
+  border-left: 12px solid transparent;
+  content: '';
+}
+
+[data-theme="dark"] .post-reward .reward-all::after {
+  border-top-color: var(--bg-tertiary, #1e1e2e);
+}
+
+.post-reward .reward-item {
+  display: inline-block;
+  list-style-type: none;
+}
+
+.post-reward .reward-item img {
+  width: 150px;
+  height: 150px;
+  border-radius: 8px;
+}
+
+.post-reward .post-qr-code-desc {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+}
+</style>
+
 <div class="post-reward">
   <p class="reward-text">{{ .Site.Params.reward.title | default "请作者喝杯咖啡" }}</p>
-  <div class="reward-tabs">
-    <button class="reward-tab active" data-tab="wechat">微信</button>
-    <button class="reward-tab" data-tab="alipay">支付宝</button>
+  <div class="reward-button">
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+      <circle cx="8.5" cy="8.5" r="1.5"/>
+      <polyline points="21 15 16 10 5 21"/>
+    </svg>
+    <span>{{ .Site.Params.reward.btnText | default "打赏支持" }}</span>
   </div>
-  <div class="reward-content">
-    {{ with .Site.Params.reward.wechat }}
-    <div class="reward-panel active" data-panel="wechat">
-      <img src="{{ . }}" alt="微信打赏">
-    </div>
-    {{ end }}
-    {{ with .Site.Params.reward.alipay }}
-    <div class="reward-panel" data-panel="alipay">
-      <img src="{{ . }}" alt="支付宝打赏">
-    </div>
-    {{ end }}
+  <div class="reward-main">
+    <ul class="reward-all">
+      {{ with .Site.Params.reward.wechat }}
+      <li class="reward-item">
+        <img src="{{ . }}" alt="微信打赏" class="post-qr-code-img">
+        <div class="post-qr-code-desc">微信</div>
+      </li>
+      {{ end }}
+      {{ with .Site.Params.reward.alipay }}
+      <li class="reward-item">
+        <img src="{{ . }}" alt="支付宝打赏" class="post-qr-code-img">
+        <div class="post-qr-code-desc">支付宝</div>
+      </li>
+      {{ end }}
+    </ul>
   </div>
 </div>
 {{ end }}

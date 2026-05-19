@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ .Site.Language.Lang }}" data-theme="{{ .Site.Params.defaultTheme | default "light" }}">
 <head>
+  <script>(function(){var t=localStorage.getItem('lumin-theme');if(t)document.documentElement.setAttribute('data-theme',t);if(t==='dark')document.documentElement.style.backgroundColor='#1a1a2e';})()</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
@@ -203,7 +204,7 @@
   {{ end }}
   {{ $forceAside := .Params.aside }}
   {{/* 特殊自定义页面（datastatistics/equipment/friends/guestbook 等）强制保留侧边栏 */}}
-  {{ $isCustomListPage := or (eq .Layout "datastatistics") (eq .Layout "equipment") (eq .Layout "friends") (eq .Layout "guestbook") (eq .Layout "website") (eq .Layout "about") }}
+  {{ $isCustomListPage := or (eq .Layout "datastatistics") (eq .Layout "equipment") (eq .Layout "friends") (eq .Layout "guestbook") (eq .Layout "website") (eq .Layout "about") (eq .Layout "sponsor") }}
   {{/* 这些自定义页面不需要右侧 TOC 目录 */}}
   {{ $noToc := $isCustomListPage }}
   {{ $isFullWidth := or (and (eq .Kind "section") (not $isCategorySection) (not $forceAside) (not $isCustomListPage)) (eq .Type "taxonomy") (eq .Type "term") }}
@@ -251,8 +252,21 @@
   <!-- JavaScript -->
   <script>
     window.siteConfig = {
-      tocExpandAll: {{ .Site.Params.article.tocExpandAll | default false }}
+      tocExpandAll: {{ .Site.Params.article.tocExpandAll | default false }},
+      themeEffect: "{{ .Site.Params.banner.themeEffect | default "circle" }}",
+      lazyLoad: {
+        enable: {{ .Site.Params.lazyLoad.enable | default true }},
+        placeholder: "{{ .Site.Params.lazyLoad.placeholder | default "" }}",
+        concurrentLoads: {{ .Site.Params.lazyLoad.concurrentLoads | default 3 }},
+        rootMargin: "{{ .Site.Params.lazyLoad.rootMargin | default "300px" }}"
+      }
     };
+    // 合并配置（保留 banner.html 中已设置的完整配置，只补充缺失字段）
+    if (typeof window.LUMIN_BANNER === 'undefined' || !window.LUMIN_BANNER.apiEnabled) {
+      window.LUMIN_BANNER = { themeEffect: window.siteConfig.themeEffect };
+    } else {
+      window.LUMIN_BANNER.themeEffect = window.LUMIN_BANNER.themeEffect || window.siteConfig.themeEffect;
+    }
   </script>
   {{ $mainJS := resources.Get "js/main.js" | resources.Fingerprint }}
   <script src="{{ $mainJS.RelPermalink }}" defer></script>
@@ -260,6 +274,43 @@
   <!-- 加密文章解密脚本（自动检测，无加密页面时无副作用） -->
   {{ $encryptJS := resources.Get "js/encrypt.js" | resources.Fingerprint }}
   <script src="{{ $encryptJS.RelPermalink }}" defer></script>
+  
+  <!-- 标题锚点高亮脚本 -->
+  {{ $headingHighlightJS := resources.Get "js/article-heading-highlight.js" | resources.Fingerprint }}
+  <script src="{{ $headingHighlightJS.RelPermalink }}" defer></script>
+  
+  <!-- Confetti 礼花效果 -->
+  {{ if .HasShortcode "confetti" }}
+  {{ $confettiJS := resources.Get "js/confetti.js" | resources.Fingerprint }}
+  <script src="{{ $confettiJS.RelPermalink }}" defer></script>
+  {{ end }}
+  
+  <!-- Appreciation 打赏效果 -->
+  {{ if or (eq .Type "about") (and .Params.url (in .Params.url "appreciation")) }}
+  {{ $appreciationJS := resources.Get "js/appreciation.js" | resources.Fingerprint }}
+  <script src="{{ $appreciationJS.RelPermalink }}" defer></script>
+  {{ end }}
+  
+  <!-- Share 分享功能 -->
+  {{ if and .IsPage (not .IsHome) }}
+  {{ $shareJS := resources.Get "js/share-card.js" | resources.Fingerprint }}
+  <script src="{{ $shareJS.RelPermalink }}" defer></script>
+  {{ end }}
+  
+  <!-- Lunar Library 农历库 -->
+  <script src="/libs/lunar.min.js" defer></script>
+  
+  <!-- Header Clock 时钟 -->
+  {{ $clockJS := resources.Get "js/clock.js" | resources.Fingerprint }}
+  <script src="{{ $clockJS.RelPermalink }}" defer></script>
+  
+  <!-- Calendar Widget 日历组件 -->
+  {{ $calendarJS := resources.Get "js/calendar.js" | resources.Fingerprint }}
+  <script src="{{ $calendarJS.RelPermalink }}" defer></script>
+  
+  <!-- Recent Comments Widget 最新评论 -->
+  {{ $recentCommentsJS := resources.Get "js/recent-comments.js" | resources.Fingerprint }}
+  <script src="{{ $recentCommentsJS.RelPermalink }}" defer></script>
   
   <!-- Busuanzi (不蒜子访客统计，带错误降级) -->
   {{ if .Site.Params.statistics.busuanzi }}
@@ -500,6 +551,31 @@
   {{ if $clickEffectJs }}
     {{ $clickEffectJs = $clickEffectJs | resources.Minify | resources.Fingerprint }}
     <script src="{{ $clickEffectJs.RelPermalink }}" defer></script>
+  {{ end }}
+  {{ end }}
+
+  {{/* 内容淡入动画 */}}
+  {{ $fadeJs := resources.Get "js/content-fade-in.js" }}
+  {{ if $fadeJs }}
+    {{ $fadeJs = $fadeJs | resources.Minify | resources.Fingerprint }}
+    <script src="{{ $fadeJs.RelPermalink }}" defer></script>
+  {{ end }}
+
+  {{/* 返回顶部按钮 */}}
+  {{ if ne (.Site.Params.backToTop | default true) false }}
+  <button id="back-to-top" class="back-to-top" aria-label="返回顶部" title="返回顶部">
+    <svg class="btt-ring" width="44" height="44" viewBox="0 0 44 44">
+      <circle class="btt-bg" cx="22" cy="22" r="18" fill="none" stroke-width="2.5"></circle>
+      <circle class="btt-progress" cx="22" cy="22" r="18" fill="none" stroke-width="2.5" stroke-linecap="round"></circle>
+    </svg>
+    <svg class="btt-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+  </button>
+  {{ $bttJs := resources.Get "js/back-to-top.js" }}
+  {{ if $bttJs }}
+    {{ $bttJs = $bttJs | resources.Minify | resources.Fingerprint }}
+    <script src="{{ $bttJs.RelPermalink }}" defer></script>
   {{ end }}
   {{ end }}
 </body>

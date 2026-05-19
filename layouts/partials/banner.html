@@ -67,6 +67,7 @@
       deletingSpeed: {{ $deletingSpeed }},
       pauseTime: {{ $pauseTime }},
       apiEnabled: {{ .Site.Params.banner.apiEnabled | default false }},
+      apiSource: {{ .Site.Params.banner.apiSource | default 1 }},     // 1=hitokoto 2=yiyan 3=jinrishici
       randomMode: {{ $randomMode }},
       themeEffect: "{{ $themeEffect }}",
       subtitles: [

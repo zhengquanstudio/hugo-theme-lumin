@@ -9,6 +9,7 @@
       {{ if eq $name "calendar" }}{{ partial "widgets/calendar.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
       {{ if eq $name "countdown" }}{{ partial "widgets/countdown.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
       {{ if eq $name "recentPosts" }}{{ partial "widgets/recent-posts.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
+      {{ if eq $name "newestComments" }}{{ partial "widgets/newest-comments.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
       {{ if eq $name "categories" }}{{ partial "widgets/categories.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
       {{ if eq $name "tags" }}{{ partial "widgets/tags.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
       {{ if eq $name "reward" }}{{ partial "widgets/reward.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
@@ -21,6 +22,7 @@
     {{ partial "widgets/calendar.html" . }}
     {{ partial "widgets/countdown.html" . }}
     {{ partial "widgets/recent-posts.html" . }}
+    {{ partial "widgets/newest-comments.html" . }}
     {{ partial "widgets/categories.html" . }}
     {{ partial "widgets/tags.html" . }}
     {{ partial "widgets/reward.html" . }}
