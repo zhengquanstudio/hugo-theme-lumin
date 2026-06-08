@@ -1,0 +1,585 @@
+/* ============================================================
+   Mobile Styles (≤768px) - 移动端专用样式
+   基于主流博客主题的移动端最佳实践
+   
+   核心原则：
+   1. 使用 !important 覆盖所有PC端样式
+   2. 使用 grid-template-columns: none 禁用Grid布局
+   3. 使用 display: flex + flex-direction: column 强制单列
+   4. 最后加载，确保最高优先级
+   ============================================================ */
+
+/* ===== 断点定义 ===== */
+@media screen and (max-width: 768px) {
+  
+  /* ========================================
+     全局基础样式
+     ======================================== */
+  
+  :root {
+    --safe-area-top: env(safe-area-inset-top, 0px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-left: env(safe-area-inset-left, 0px);
+    --safe-area-right: env(safe-area-inset-right, 0px);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100% !important;
+    -webkit-tap-highlight-color: rgba(59, 130, 246, 0.15) !important;
+  }
+
+  body {
+    font-size: 15px !important;
+    line-height: 1.6 !important;
+    overflow-x: hidden !important;
+    padding-bottom: var(--safe-area-bottom) !important;
+  }
+
+  .container {
+    padding-left: max(16px, var(--safe-area-left)) !important;
+    padding-right: max(16px, var(--safe-area-right)) !important;
+  }
+
+  /* ========================================
+     导航栏：汉堡菜单移到左侧
+     ======================================== */
+  
+  .site-header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 100 !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    padding-top: var(--safe-area-top) !important;
+  }
+
+  [data-theme="dark"] .site-header,
+  [data-theme="auto"] .home-page .site-header {
+    background: rgba(15, 15, 26, 0.95) !important;
+  }
+
+  /* 导航栏容器 */
+  .header-wrapper {
+    height: auto !important;
+    min-height: calc(var(--header-height) + var(--safe-area-top)) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    padding-top: var(--safe-area-top) !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  /* 汉堡菜单位置：最左侧 */
+  .mobile-menu-toggle {
+    display: flex !important;
+    visibility: visible !important;
+    order: 0 !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    margin-left: -4px !important;
+    margin-right: 4px !important;
+    border-radius: 10px !important;
+    opacity: 1 !important;
+  }
+
+  /* Logo区域：中间偏左 */
+  .header-brand {
+    order: 2 !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+    margin-right: auto !important;
+  }
+
+  .header-logo {
+    height: 30px !important;
+    width: auto !important;
+  }
+
+  .header-title {
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+  }
+
+  /* 右侧操作按钮组 */
+  .header-actions {
+    order: 3 !important;
+    gap: 2px !important;
+    margin-left: auto !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .action-btn {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    border-radius: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* 隐藏桌面端导航和时钟 */
+  .header-nav {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  .header-clock {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* ========================================
+     移动端侧滑菜单（从左侧滑出）
+     ======================================== */
+  
+  .mobile-menu {
+    display: none !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: -280px !important;
+    bottom: 0 !important;
+    width: min(280px, 80vw) !important;
+    max-width: 280px !important;
+    background: var(--bg-primary, #fff) !important;
+    padding-top: calc(var(--header-height) + var(--safe-area-top) + 20px) !important;
+    padding-left: max(20px, var(--safe-area-left)) !important;
+    padding-right: 20px !important;
+    padding-bottom: calc(32px + var(--safe-area-bottom)) !important;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25) !important;
+    z-index: 9999 !important;
+    transition: left 0.3s cubic-bezier(.22,1,.36,1) !important;
+    border-radius: 0 !important;
+    border: none !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .mobile-menu.active,
+  .mobile-menu[style*="display: block"] {
+    display: block !important;
+    left: 0 !important;
+    transition: left 0.3s cubic-bezier(.22,1,.36,1) !important;
+  }
+
+  /* 移动端菜单遮罩层 */
+  .mobile-menu-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: rgba(0, 0, 0, 0.4) !important;
+    z-index: 9998 !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transition: opacity 0.3s ease, visibility 0.3s ease !important;
+    backdrop-filter: blur(2px) !important;
+    -webkit-backdrop-filter: blur(2px) !important;
+  }
+
+  .mobile-menu-overlay.active {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
+
+  /* 菜单项 */
+  .mobile-nav-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+  }
+
+  .mobile-nav-link {
+    padding: 13px 14px !important;
+    min-height: 46px !important;
+    font-size: 0.92rem !important;
+    font-weight: 500 !important;
+    color: var(--text-secondary) !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .mobile-nav-link.sub-item {
+    padding: 10px 14px 10px 26px !important;
+    font-size: 0.86rem !important;
+  }
+
+  /* ========================================
+     主布局：强制单列（关键！参考FlowWing）
+     ======================================== */
+  
+  .main-wrapper {
+    padding-top: calc(var(--header-offset) + var(--safe-area-top) + 12px) !important;
+    padding-bottom: calc(24px + var(--safe-area-bottom)) !important;
+  }
+
+  /* 核心：禁用Grid，改用Flexbox单列 */
+  .layout-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: none !important;
+    grid-template-rows: none !important;
+    gap: 28px !important;
+    padding-top: var(--header-offset) !important;
+    width: 100% !important;
+  }
+
+  /* 三栏布局也强制单列 */
+  .has-toc .layout-grid,
+  .sidebar-right .layout-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: none !important;
+    grid-template-rows: none !important;
+  }
+
+  /* 侧边栏：在文章下方显示 */
+  .sidebar {
+    width: 100% !important;
+    order: 2 !important;
+    display: block !important;
+    visibility: visible !important;
+    height: auto !important;
+  }
+
+  /* 主内容区：优先显示 */
+  .main-content {
+    width: 100% !important;
+    order: 1 !important;
+    min-width: 0 !important;
+  }
+
+  #main-content {
+    width: 100% !important;
+  }
+
+  /* ========================================
+     首页文章列表：强制单列紧凑模式
+     （核心！参考FlowWing的 #post-list-container 实现）
+     ======================================== */
+  
+  /* 关键：禁用Grid布局，改用Flexbox */
+  .article-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: none !important;
+    grid-template-rows: none !important;
+    gap: 0 !important;
+    border-radius: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    overflow: visible !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* 单个文章卡片：紧凑两行布局 */
+  .article-card {
+    height: auto !important;
+    min-height: 60px !important;
+    max-height: none !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+    border-radius: 0 !important;
+    border: none !important;
+    border-bottom: 1px solid var(--border-light, #f0f0f5) !important;
+    padding: 10px 16px !important;
+    gap: 3px !important;
+    transition: background-color 0.12s ease !important;
+    overflow: hidden !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    display: flex !important;
+    width: 100% !important;
+  }
+
+  .article-card:last-child {
+    border-bottom: none !important;
+  }
+
+  .article-card:hover,
+  .article-card:active {
+    transform: none !important;
+    background-color: var(--bg-secondary, #f5f7fa) !important;
+    box-shadow: none !important;
+  }
+
+  /* 隐藏图片 */
+  .article-image,
+  .article-image-placeholder,
+  .default-cover {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* 内容区：两行紧凑布局 */
+  .article-content {
+    padding: 0 !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    gap: 3px !important;
+    min-height: 36px !important;
+    flex: 1 !important;
+  }
+
+  /* 第一行：标题（单行省略） */
+  .title-box {
+    margin: 0 !important;
+    min-height: 22px !important;
+    line-height: 22px !important;
+    overflow: hidden !important;
+    width: 100% !important;
+  }
+
+  .article-title {
+    font-size: 0.88rem !important;
+    line-height: 22px !important;
+    display: block !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    font-weight: 600 !important;
+    color: var(--text-primary) !important;
+  }
+
+  .article-card:hover .article-title,
+  .article-card:active .article-title {
+    color: var(--accent-color) !important;
+  }
+
+  /* 隐藏描述文本 */
+  .article-desc {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* 第二行：元信息（日期+分类+标签） */
+  .article-meta {
+    font-size: 0.7rem !important;
+    margin: 0 !important;
+    height: 18px !important;
+    line-height: 18px !important;
+    opacity: 0.55 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    padding-top: 0 !important;
+    border-top: none !important;
+    width: 100% !important;
+  }
+
+  .meta-item {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 2px !important;
+    white-space: nowrap !important;
+    max-width: 110px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    min-height: 18px !important;
+  }
+
+  .meta-icon {
+    width: 11px !important;
+    height: 11px !important;
+    flex-shrink: 0 !important;
+    display: inline-block !important;
+  }
+
+  .meta-category-link,
+  .meta-tag {
+    white-space: nowrap !important;
+    max-width: 75px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: inline-block !important;
+  }
+
+  /* Badge标签 */
+  .featured-badge,
+  .sticky-badge,
+  .recommend-badge,
+  .updated-badge {
+    position: static !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    font-size: 0.58rem !important;
+    padding: 1px 5px !important;
+    margin: 0 4px 0 0 !important;
+    vertical-align: middle !important;
+    order: -1 !important;
+    border-radius: 3px !important;
+  }
+
+  /* 隐藏加载更多按钮 */
+  .mobile-load-more-container,
+  .load-more-wrapper {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* ========================================
+     侧边栏Widget：单列顺序排列
+     ======================================== */
+  
+  .sidebar-widgets {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+    grid-template-columns: unset !important;
+    grid-template-rows: unset !important;
+    width: 100% !important;
+  }
+
+  .widget {
+    border-radius: 12px !important;
+    padding: 16px 14px !important;
+    width: 100% !important;
+  }
+
+  .widget-title {
+    font-size: 0.8rem !important;
+    margin-bottom: 12px !important;
+    padding-bottom: 8px !important;
+  }
+
+  /* ========================================
+     Banner：优化高度
+     ======================================== */
+  
+  .site-banner {
+    min-height: 380px !important;
+    margin-top: calc(-1 * var(--header-offset) - var(--safe-area-top)) !important;
+  }
+
+  .banner-content {
+    padding: 0 max(18px, var(--safe-area-left)) 0 max(18px, var(--safe-area-right)) !important;
+  }
+
+  .banner-title {
+    font-size: 2rem !important;
+  }
+
+  .scroll-down-hint {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* ========================================
+     分页导航
+     ======================================== */
+  
+  .pagination {
+    margin-top: 24px !important;
+    padding: 14px max(12px, var(--safe-area-left)) 10px max(12px, var(--safe-area-right)) !important;
+  }
+
+  .pagination-wrapper {
+    gap: 6px !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+  }
+
+  .pagination-btn {
+    min-height: 40px !important;
+    padding: 9px 16px !important;
+    font-size: 0.84rem !important;
+    border-radius: 8px !important;
+  }
+
+  .pagination-number {
+    min-width: 36px !important;
+    height: 36px !important;
+    font-size: 0.84rem !important;
+    border-radius: 8px !important;
+  }
+
+  .pagination-info {
+    font-size: 0.76rem !important;
+    margin-top: 10px !important;
+    text-align: center !important;
+  }
+
+  /* ========================================
+     Footer
+     ======================================== */
+  
+  .site-footer {
+    margin-top: 40px !important;
+    padding: 24px max(18px, var(--safe-area-left)) calc(20px + var(--safe-area-bottom)) max(18px, var(--safe-area-right)) !important;
+  }
+
+  .footer-content {
+    flex-direction: column !important;
+    text-align: center !important;
+    gap: 10px !important;
+    display: flex !important;
+  }
+
+  /* ========================================
+     Back to Top 按钮
+     ======================================== */
+  
+  #back-to-top {
+    width: 42px !important;
+    height: 42px !important;
+  }
+}
+
+/* ========================================
+   小屏手机优化 (≤480px)
+   ======================================== */
+@media screen and (max-width: 480px) {
+  .article-card {
+    padding: 9px 14px !important;
+    min-height: 56px !important;
+  }
+
+  .article-title {
+    font-size: 0.85rem !important;
+  }
+
+  .article-meta {
+    font-size: 0.68rem !important;
+    gap: 6px !important;
+  }
+
+  .banner-title {
+    font-size: 1.75rem !important;
+  }
+
+  .pagination-btn {
+    min-height: 38px !important;
+    padding: 8px 14px !important;
+    font-size: 0.82rem !important;
+  }
+}

@@ -1,0 +1,78 @@
+<div class="tool-tabs" id="htmlEncodeTabs">
+  <button class="tool-tab active" data-tab="encode">转义</button>
+  <button class="tool-tab" data-tab="decode">反转义</button>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">输入文本</label>
+  <textarea class="tool-textarea" id="htmlEncodeInput" rows="8" placeholder="输入需要转义或反转义的文本..."><div class="container"><h1>Hello & World</h1><p style="color:red">欢迎 "使用" HTML转义工具</p></div></textarea>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="htmlEncodeBtn">转义</button>
+  <button class="tool-btn" id="htmlEncodeClearBtn">清空</button>
+</div>
+
+<div class="tool-output" id="htmlEncodeOutput" style="display:none;">
+  <label class="tool-label">结果</label>
+  <div class="tool-result" id="htmlEncodeResult"></div>
+  <button class="tool-copy-btn" id="htmlEncodeCopyBtn">复制</button>
+</div>
+
+<script>
+(function(){
+  const tabs = document.getElementById('htmlEncodeTabs');
+  const input = document.getElementById('htmlEncodeInput');
+  const btn = document.getElementById('htmlEncodeBtn');
+  const clearBtn = document.getElementById('htmlEncodeClearBtn');
+  const output = document.getElementById('htmlEncodeOutput');
+  const result = document.getElementById('htmlEncodeResult');
+  const copyBtn = document.getElementById('htmlEncodeCopyBtn');
+  let currentTab = 'encode';
+
+  tabs.addEventListener('click', function(e){
+    if(!e.target.classList.contains('tool-tab')) return;
+    tabs.querySelectorAll('.tool-tab').forEach(function(t){ t.classList.remove('active'); });
+    e.target.classList.add('active');
+    currentTab = e.target.dataset.tab;
+    btn.textContent = currentTab === 'encode' ? '转义' : '反转义';
+  });
+
+  function encodeHTML(str){
+    return str.replace(/[&<>"']/g, function(c){
+      var map = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+      return map[c];
+    });
+  }
+
+  function decodeHTML(str){
+    var el = document.createElement('div');
+    el.innerHTML = str;
+    return el.textContent;
+  }
+
+  btn.addEventListener('click', function(){
+    var val = input.value;
+    if(!val.trim()){
+      output.style.display = 'none';
+      return;
+    }
+    var res = currentTab === 'encode' ? encodeHTML(val) : decodeHTML(val);
+    result.textContent = res;
+    output.style.display = '';
+  });
+
+  clearBtn.addEventListener('click', function(){
+    input.value = '';
+    output.style.display = 'none';
+  });
+
+  copyBtn.addEventListener('click', function(){
+    var text = result.textContent;
+    navigator.clipboard.writeText(text).then(function(){
+      copyBtn.textContent = '已复制';
+      setTimeout(function(){ copyBtn.textContent = '复制'; }, 1500);
+    });
+  });
+})();
+</script>

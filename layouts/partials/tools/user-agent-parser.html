@@ -1,0 +1,44 @@
+<div class="tool-section">
+  <div class="tool-title"><i class="fa-solid fa-globe"></i> UA 解析器</div>
+  <div class="tool-input-group">
+    <label class="tool-label">你的浏览器 UA</label>
+    <textarea id="ua-input" class="tool-textarea" rows="3" style="font-family:monospace;font-size:.8rem"></textarea>
+  </div>
+  <div class="tool-btn-group">
+    <button class="tool-btn tool-btn-primary" onclick="parseUA()"><i class="fa-solid fa-magnifying-glass"></i> 解析</button>
+    <button class="tool-btn" onclick="detectMyUA()"><i class="fa-solid fa-display"></i> 获取我的 UA</button>
+  </div>
+  <div class="ua-result-grid" id="ua-result">
+    <div class="ua-card"><span>浏览器</span><span id="ua-browser">—</span></div>
+    <div class="ua-card"><span>浏览器版本</span><span id="ua-browser-ver">—</span></div>
+    <div class="ua-card"><span>操作系统</span><span id="ua-os">—</span></div>
+    <div class="ua-card"><span>设备类型</span><span id="ua-device">—</span></div>
+    <div class="ua-card"><span>内核引擎</span><span id="ua-engine">—</span></div>
+    <div class="ua-card"><span>屏幕分辨率</span><span id="ua-screen">—</span></div>
+    <div class="ua-card"><span>语言</span><span id="ua-lang">—</span></div>
+    <div class="ua-card"><span>Cookie</span><span id="ua-cookie">—</span></div>
+  </div>
+</div>
+
+<style>
+.ua-result-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:16px;}
+.ua-card{padding:12px;background:var(--bg-card);border-radius:10px;border:1px solid var(--border-color);}
+.ua-card span{display:block}.ua-card span:first-child{font-size:.75rem;color:var(--text-secondary);margin-bottom:4px}
+.ua-card span:last-child{font-size:1rem;font-weight:600;word-break:break-all;}
+</style>
+
+<script>
+function parseUAStr(ua){
+  var result={browser:'未知',browserVer:'',os:'未知',device:'桌面端',engine:'未知'};
+  if(/edg\//i.test(ua)){result.browser='Edge';result.browserVer=(ua.match(/edg\/([\d.]+)/i)||[])[1]||'';}
+  else if(/chrome\//i.test(ua)&&!/edg/i.test(ua)){result.browser='Chrome';result.browserVer=(ua.match(/chrome\/([\d.]+)/i)||[])[1]||'';}
+  else if(/firefox\//i.test(ua)){result.browser='Firefox';result.browserVer=(ua.match(/firefox\/([\d.]+)/i)||[])[1]||'';}
+  else if(/safari\//i.test(ua)&&!/chrome/i.test(ua)){result.browser='Safari';result.browserVer=(ua.match(/version\/([\d.]+)/i)||[])[1]||'';}
+  if(/windows/i.test(ua)){result.os='Windows';}else if(/mac os/i.test(ua)){result.os='macOS';}else if(/linux/i.test(ua)&&!/android/i.test(ua)){result.os='Linux';}else if(/android/i.test(ua)){result.os='Android';result.device='移动端';}else if(/iphone|ipad|ipod/i.test(ua)){result.os='iOS';result.device='移动端';}
+  if(/webkit/i.test(ua))result.engine='WebKit';if(/gecko\//i.test(ua))result.engine='Gecko';
+  return result;
+}
+window.parseUA=function(){var ua=document.getElementById('ua-input').value;if(!ua.trim())return;var r=parseUAStr(ua);document.getElementById('ua-browser').textContent=r.browser;document.getElementById('ua-browser-ver').textContent=r.browserVer;document.getElementById('ua-os').textContent=r.os;document.getElementById('ua-device').textContent=r.device;document.getElementById('ua-engine').textContent=r.engine;};
+window.detectMyUA=function(){var ua=navigator.userAgent;document.getElementById('ua-input').value=ua;document.getElementById('ua-screen').textContent=screen.width+'×'+screen.height;document.getElementById('ua-lang').textContent=navigator.language;document.getElementById('ua-cookie').textContent=navigator.cookieEnabled?'已启用':'已禁用';parseUA();};
+detectMyUA();
+</script>

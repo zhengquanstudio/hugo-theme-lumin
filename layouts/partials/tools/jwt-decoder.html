@@ -1,0 +1,188 @@
+<div class="tool-input-group">
+  <label class="tool-label">JWT Token</label>
+  <textarea class="tool-textarea" id="jwtInput" rows="4" placeholder="粘贴 JWT Token...">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IuW8gOS4iSIsImlhdCI6MTUxNjIzOTAyMiwiZXhwIjoxOTk5OTk5OTk5fQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c</textarea>
+</div>
+
+<div id="jwtError" style="display:none;color:var(--color-red,#e53e3e);margin:8px 0;font-size:14px;"></div>
+
+<div id="jwtOutput" style="display:none;">
+  <div class="tool-input-group" style="margin-top:12px;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#e53e3e;"></span>
+      <label class="tool-label" style="margin:0;">Header</label>
+      <button class="tool-copy-btn" id="jwtCopyHeader" style="font-size:12px;padding:2px 8px;">复制</button>
+    </div>
+    <pre id="jwtHeader" style="background:var(--color-surface,#f7f7f7);padding:12px;border-radius:6px;overflow-x:auto;font-size:13px;margin-top:4px;"></pre>
+  </div>
+
+  <div class="tool-input-group">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#805ad5;"></span>
+      <label class="tool-label" style="margin:0;">Payload</label>
+      <button class="tool-copy-btn" id="jwtCopyPayload" style="font-size:12px;padding:2px 8px;">复制</button>
+    </div>
+    <pre id="jwtPayload" style="background:var(--color-surface,#f7f7f7);padding:12px;border-radius:6px;overflow-x:auto;font-size:13px;margin-top:4px;"></pre>
+  </div>
+
+  <div id="jwtTimeInfo" style="display:none;margin-top:8px;">
+    <div class="tool-stats">
+      <div class="tool-stat" id="jwtExpStat" style="display:none;">
+        <span class="tool-stat-value" id="jwtExpValue">-</span>
+        <span class="tool-stat-label">过期时间</span>
+      </div>
+      <div class="tool-stat" id="jwtIatStat" style="display:none;">
+        <span class="tool-stat-value" id="jwtIatValue">-</span>
+        <span class="tool-stat-label">签发时间</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tool-input-group">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#3182ce;"></span>
+      <label class="tool-label" style="margin:0;">Signature</label>
+    </div>
+    <pre id="jwtSignature" style="background:var(--color-surface,#f7f7f7);padding:12px;border-radius:6px;overflow-x:auto;font-size:13px;word-break:break-all;margin-top:4px;"></pre>
+  </div>
+</div>
+
+<script>
+(function(){
+  var input = document.getElementById('jwtInput');
+  var errorEl = document.getElementById('jwtError');
+  var outputEl = document.getElementById('jwtOutput');
+  var headerEl = document.getElementById('jwtHeader');
+  var payloadEl = document.getElementById('jwtPayload');
+  var sigEl = document.getElementById('jwtSignature');
+  var copyH = document.getElementById('jwtCopyHeader');
+  var copyP = document.getElementById('jwtCopyPayload');
+  var timeInfo = document.getElementById('jwtTimeInfo');
+  var expStat = document.getElementById('jwtExpStat');
+  var iatStat = document.getElementById('jwtIatStat');
+  var expValue = document.getElementById('jwtExpValue');
+  var iatValue = document.getElementById('jwtIatValue');
+
+  function b64UrlDecode(str){
+    str = str.replace(/-/g,'+').replace(/_/g,'/');
+    var pad = str.length % 4;
+    if(pad) str += '='.repeat(4 - pad);
+    try{
+      return decodeURIComponent(atob(str).split('').map(function(c){
+        return '%'+('00'+c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+    }catch(e){
+      return atob(str);
+    }
+  }
+
+  function syntaxHighlight(json){
+    json = json.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return json.replace(/("(\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function(match){
+      var cls = 'color:#805ad5;';
+      if(/^"/.test(match)){
+        cls = /:$/.test(match) ? 'color:#e53e3e;' : 'color:#38a169;';
+      }else if(/true|false/.test(match)){
+        cls = 'color:#3182ce;';
+      }else if(/null/.test(match)){
+        cls = 'color:#a0aec0;';
+      }
+      return '<span style="'+cls+'">'+match+'</span>';
+    });
+  }
+
+  function formatTime(ts){
+    var d = new Date(ts * 1000);
+    var now = Date.now();
+    var diff = (ts * 1000) - now;
+    var rel = '';
+    if(diff > 0){
+      var days = Math.floor(diff / 86400000);
+      var hrs = Math.floor((diff % 86400000) / 3600000);
+      rel = days > 0 ? days+'天'+hrs+'小时后过期' : hrs+'小时后过期';
+    }else{
+      var days2 = Math.floor(-diff / 86400000);
+      var hrs2 = Math.floor((-diff % 86400000) / 3600000);
+      rel = days2 > 0 ? '已过期'+days2+'天'+hrs2+'小时' : '已过期'+hrs2+'小时';
+    }
+    var y = d.getFullYear();
+    var m = String(d.getMonth()+1).padStart(2,'0');
+    var dd = String(d.getDate()).padStart(2,'0');
+    var hh = String(d.getHours()).padStart(2,'0');
+    var mm = String(d.getMinutes()).padStart(2,'0');
+    var ss = String(d.getSeconds()).padStart(2,'0');
+    return y+'-'+m+'-'+dd+' '+hh+':'+mm+':'+ss+' ('+rel+')';
+  }
+
+  function decode(){
+    var val = input.value.trim();
+    errorEl.style.display = 'none';
+    outputEl.style.display = 'none';
+    if(!val) return;
+
+    var parts = val.split('.');
+    if(parts.length !== 3){
+      errorEl.textContent = '无效的 JWT Token：必须包含 3 个部分（以 . 分隔）';
+      errorEl.style.display = '';
+      return;
+    }
+
+    try{
+      var headerJSON = JSON.parse(b64UrlDecode(parts[0]));
+      headerEl.innerHTML = syntaxHighlight(JSON.stringify(headerJSON, null, 2));
+    }catch(e){
+      errorEl.textContent = 'Header 解码失败：' + e.message;
+      errorEl.style.display = '';
+      return;
+    }
+
+    var payloadJSON;
+    try{
+      payloadJSON = JSON.parse(b64UrlDecode(parts[1]));
+      payloadEl.innerHTML = syntaxHighlight(JSON.stringify(payloadJSON, null, 2));
+    }catch(e){
+      errorEl.textContent = 'Payload 解码失败：' + e.message;
+      errorEl.style.display = '';
+      return;
+    }
+
+    sigEl.textContent = parts[2];
+
+    timeInfo.style.display = 'none';
+    expStat.style.display = 'none';
+    iatStat.style.display = 'none';
+
+    if(payloadJSON.exp){
+      expValue.textContent = formatTime(payloadJSON.exp);
+      expStat.style.display = '';
+      timeInfo.style.display = '';
+    }
+    if(payloadJSON.iat){
+      iatValue.textContent = formatTime(payloadJSON.iat);
+      iatStat.style.display = '';
+      timeInfo.style.display = '';
+    }
+
+    outputEl.style.display = '';
+  }
+
+  var debounceTimer;
+  input.addEventListener('input', function(){
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(decode, 300);
+  });
+
+  function copyText(text, btn){
+    navigator.clipboard.writeText(text).then(function(){
+      btn.textContent = '已复制';
+      setTimeout(function(){ btn.textContent = '复制'; }, 1500);
+    });
+  }
+
+  copyH.addEventListener('click', function(){
+    copyText(headerEl.textContent, copyH);
+  });
+  copyP.addEventListener('click', function(){
+    copyText(payloadEl.textContent, copyP);
+  });
+})();
+</script>

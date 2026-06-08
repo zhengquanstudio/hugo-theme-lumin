@@ -1,0 +1,82 @@
+<div class="tool-section">
+  <div class="tool-title"><i class="fa-solid fa-circle-half-stroke"></i> 约分计算器</div>
+  <div class="tool-tabs">
+    <button class="tool-tab-btn active" onclick="switchFracTab('simplify',this)">分数约分</button>
+    <button class="tool-tab-btn" onclick="switchFracTab('mixed',this)">带分数转换</button>
+    <button class="tool-tab-btn" onclick="switchFracTab('decimal',this)">分数↔小数</button>
+  </div>
+  <div id="frac-tab-simplify" class="frac-tab-content active">
+    <div class="tool-row">
+      <div class="tool-input-group"><label class="tool-label">分子</label><input type="number" class="tool-input" id="frac-num" value="48"></div>
+      <div style="font-size:2rem;align-self:flex-end;padding:0 8px">/</div>
+      <div class="tool-input-group"><label class="tool-label">分母</label><input type="number" class="tool-input" id="frac-den" value="180"></div>
+    </div>
+    <button class="tool-btn tool-btn-primary" onclick="simplifyFraction()"><i class="fa-solid fa-compress"></i> 约分</button>
+    <div id="frac-simp-result" style="margin-top:12px"></div>
+  </div>
+  <div id="frac-tab-mixed" class="frac-tab-content" style="display:none">
+    <div class="tool-row">
+      <div class="tool-input-group"><label class="tool-label">整数</label><input type="number" class="tool-input" id="mix-int" value="0"></div>
+      <div class="tool-input-group"><label class="tool-label">分子</label><input type="number" class="tool-input" id="mix-num" value="5"></div>
+      <div style="font-size:1.4rem;align-self:flex-end;padding:0 4px">/</div>
+      <div class="tool-input-group"><label class="tool-label">分母</label><input type="number" class="tool-input" id="mix-den" value="3"></div>
+    </div>
+    <button class="tool-btn tool-btn-primary" onclick="mixedToImproper()"><i class="fa-solid fa-right-left"></i> 转假分数</button>
+    <div id="frac-mixed-result" style="margin-top:12px"></div>
+  </div>
+  <div id="frac-tab-decimal" class="frac-tab-content" style="display:none">
+    <div class="tool-row">
+      <div class="tool-input-group" style="flex:1">
+        <label class="tool-label">分数 → 小数</label>
+        <div class="tool-row" style="align-items:center">
+          <input type="number" class="tool-input" id="dec-num" value="1" style="width:70px"><span style="padding:0 4px">/</span><input type="number" class="tool-input" id="dec-den" value="8" style="width:70px">
+          <button class="tool-btn" onclick="fracToDecimal()" style="margin-left:8px">=</button>
+          <span id="dec-result" style="font-weight:700;font-size:1.1rem;margin-left:8px"></span>
+        </div>
+      </div>
+    </div>
+    <div class="tool-input-group" style="margin-top:12px">
+      <label class="tool-label">小数 → 分数</label>
+      <div class="tool-row" style="align-items:center">
+        <input type="number" class="tool-input" id="decimal-input" value="0.625" step="any" style="width:150px">
+        <button class="tool-btn" onclick="decimalToFrac()" style="margin-left:8px">=</button>
+        <span id="frac-result" style="font-weight:700;font-size:1.1rem;margin-left:8px"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>.frac-tab-content{padding:8px 0}</style>
+
+<script>
+var fracTab='simplify';
+window.switchFracTab=function(tab,btn){fracTab=tab;document.querySelectorAll('.tool-tab-btn').forEach(function(b){b.classList.remove('active')});btn.classList.add('active');document.querySelectorAll('.frac-tab-content').forEach(function(c){c.style.display='none'});document.getElementById('frac-tab-'+tab).style.display='block';};
+function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){var t=b;b=a%b;a=t;}return a;}
+window.simplifyFraction=function(){
+  var num=parseInt(document.getElementById('frac-num').value)||0,den=parseInt(document.getElementById('frac-den').value)||1;
+  if(den===0){document.getElementById('frac-simp-result').innerHTML='分母不能为0';return;}
+  var g=gcd(num,den);var sn=num/g,sd=den/g;
+  var html='<div style="font-size:1.5rem;font-weight:700;margin:8px 0">'+num+'/'+den+' = '+sn+'/'+sd+'</div>';
+  html+='<div style="font-size:.85rem;color:var(--text-secondary)">最大公约数: '+g+' | 小数: '+(num/den).toFixed(6)+' | 百分比: '+(num/den*100).toFixed(2)+'%</div>';
+  document.getElementById('frac-simp-result').innerHTML=html;
+};
+window.mixedToImproper=function(){
+  var wh=parseInt(document.getElementById('mix-int').value)||0,num=parseInt(document.getElementById('mix-num').value)||0,den=parseInt(document.getElementById('mix-den').value)||1;
+  if(den===0){document.getElementById('frac-mixed-result').innerHTML='分母不能为0';return;}
+  var impNum=(Math.abs(wh)*den+num)*(wh<0||(wh===0&&num<0)?-1:1);
+  var g=gcd(impNum,den);
+  document.getElementById('frac-mixed-result').innerHTML='<div style="font-size:1.5rem;font-weight:700">'+wh+' '+(num<0?Math.abs(num):num)+'/'+den+' = '+impNum+'/'+den+' '+(g>1?'= '+impNum/g+'/'+den/g:'')+'</div><div style="font-size:.85rem;color:var(--text-secondary)">小数: '+(impNum/den).toFixed(6)+'</div>';
+};
+window.fracToDecimal=function(){
+  var num=parseFloat(document.getElementById('dec-num').value)||0,den=parseFloat(document.getElementById('dec-den').value)||1;
+  document.getElementById('dec-result').textContent=den===0?'分母不能为0':(num/den).toFixed(8).replace(/0+$/,'').replace(/\.$/,'');
+};
+window.decimalToFrac=function(){
+  var d=parseFloat(document.getElementById('decimal-input').value);
+  if(isNaN(d))return;
+  var sign=d<0?-1:1;d=Math.abs(d);var eps=1e-10,den=1;
+  while(Math.abs(d-Math.round(d))>eps&&den<1e6){d*=10;den*=10;}
+  var num=Math.round(d);var g=gcd(num,den);num=num/g*sign;den/=g;
+  document.getElementById('frac-result').textContent=num+'/'+den;
+};
+</script>

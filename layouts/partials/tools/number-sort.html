@@ -1,0 +1,119 @@
+<div class="tool-input-group">
+  <label class="tool-label">输入数字（每行一个，或用分隔符分隔）</label>
+  <textarea class="tool-textarea" id="ns-input" placeholder="示例：5, 2, 8, 1, 3&#10;或每行一个数字" style="min-height:140px;">42, 7, 18, 3, 99, 56, 12, 88, 1, 34, 77, 25, 63, 9, 51</textarea>
+</div>
+
+<div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;margin-bottom:14px;">
+  <div class="tool-input-group" style="margin:0;flex:1;min-width:150px;">
+    <label class="tool-label">分隔符</label>
+    <select class="tool-select" id="ns-sep">
+      <option value="auto">自动检测</option>
+      <option value=",">, 逗号</option>
+      <option value=" ">空格</option>
+      <option value="\n">换行</option>
+      <option value=";">; 分号</option>
+      <option value="|">| 竖线</option>
+    </select>
+  </div>
+  <div class="tool-input-group" style="margin:0;flex:1;min-width:150px;">
+    <label class="tool-label">输出分隔符</label>
+    <select class="tool-select" id="ns-out-sep">
+      <option value="\n">换行</option>
+      <option value=", ">逗号+空格</option>
+      <option value=" ">空格</option>
+      <option value=";">;分号</option>
+    </select>
+  </div>
+</div>
+
+<div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:14px;">
+  <label class="tool-switch"><input type="checkbox" id="ns-unique"><span class="tool-switch-track"></span>去重</label>
+  <label class="tool-switch"><input type="checkbox" id="ns-desc"><span class="tool-switch-track"></span>倒序排列</label>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="ns-sort-btn"><i class="fas fa-sort-numeric-down"></i> 排序</button>
+  <button class="tool-btn tool-btn-danger" id="ns-clear-btn"><i class="fas fa-trash"></i> 清空</button>
+</div>
+
+<div class="tool-output" id="ns-output" style="display:none;">
+  <div class="tool-output-label">
+    <span class="tool-output-title">排序结果 <span id="ns-count" style="font-weight:400;color:var(--text-muted,#9ca3af);font-size:.8rem;"></span></span>
+    <button class="tool-copy-btn" id="ns-copy-btn"><i class="far fa-copy"></i> 复制</button>
+  </div>
+  <textarea class="tool-result" id="ns-result" readonly></textarea>
+</div>
+
+<div class="tool-stats" id="ns-stats" style="display:none;">
+  <div class="tool-stat"><div class="tool-stat-value" id="ns-min">—</div><div class="tool-stat-label">最小值</div></div>
+  <div class="tool-stat"><div class="tool-stat-value" id="ns-max">—</div><div class="tool-stat-label">最大值</div></div>
+  <div class="tool-stat"><div class="tool-stat-value" id="ns-sum">—</div><div class="tool-stat-label">总和</div></div>
+  <div class="tool-stat"><div class="tool-stat-value" id="ns-avg">—</div><div class="tool-stat-label">平均值</div></div>
+</div>
+
+<script>
+(function(){
+  const input = document.getElementById('ns-input');
+  const output = document.getElementById('ns-output');
+  const resultArea = document.getElementById('ns-result');
+  const countEl = document.getElementById('ns-count');
+  const copyBtn = document.getElementById('ns-copy-btn');
+  const stats = document.getElementById('ns-stats');
+
+  function parseNumbers(text, sep) {
+    let parts;
+    if(sep==='auto') {
+      parts = text.split(/[\n,;\|\s]+/);
+    } else if(sep==='\n') {
+      parts = text.split('\n');
+    } else {
+      parts = text.split(sep);
+    }
+    return parts.map(s=>s.trim()).filter(s=>s!=='').map(s=>parseFloat(s)).filter(n=>!isNaN(n));
+  }
+
+  function copyText(text, btn) {
+    navigator.clipboard.writeText(text).then(()=>{
+      const orig=btn.innerHTML; btn.innerHTML='✅ 已复制'; btn.classList.add('copied');
+      setTimeout(()=>{btn.innerHTML=orig;btn.classList.remove('copied');},1500);
+    }).catch(()=>{
+      const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.left='-9999px';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+      const orig=btn.innerHTML; btn.innerHTML='✅ 已复制'; btn.classList.add('copied');
+      setTimeout(()=>{btn.innerHTML=orig;btn.classList.remove('copied');},1500);
+    });
+  }
+
+  document.getElementById('ns-sort-btn').addEventListener('click', () => {
+    const text = input.value.trim();
+    if(!text) return;
+    const sep = document.getElementById('ns-sep').value;
+    let nums = parseNumbers(text, sep);
+    if(nums.length===0){alert('未能识别到有效数字，请检查输入');return;}
+
+    if(document.getElementById('ns-unique').checked) {
+      nums = [...new Set(nums)];
+    }
+    nums.sort((a,b)=>a-b);
+    if(document.getElementById('ns-desc').checked) nums.reverse();
+
+    const outSep = document.getElementById('ns-out-sep').value;
+    const outSepReal = outSep === '\\n' ? '\n' : outSep;
+    resultArea.value = nums.join(outSepReal === '\n' ? '\n' : outSep);
+    countEl.textContent = `共 ${nums.length} 个数字`;
+    output.style.display = '';
+
+    const sum = nums.reduce((a,b)=>a+b,0);
+    document.getElementById('ns-min').textContent = nums[0];
+    document.getElementById('ns-max').textContent = nums[nums.length-1];
+    document.getElementById('ns-sum').textContent = sum.toLocaleString();
+    document.getElementById('ns-avg').textContent = (sum/nums.length).toFixed(4).replace(/\.?0+$/,'');
+    stats.style.display = '';
+  });
+
+  copyBtn.addEventListener('click', ()=>copyText(resultArea.value, copyBtn));
+  document.getElementById('ns-clear-btn').addEventListener('click', ()=>{
+    input.value=''; resultArea.value=''; output.style.display='none'; stats.style.display='none';
+  });
+})();
+</script>

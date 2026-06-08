@@ -1,0 +1,95 @@
+{{ define "main" }}
+{{ $toolId := .Params.toolId }}
+{{ $tools := hugo.Data.tools.tools | default slice }}
+{{ $currentTool := false }}
+{{ range $tools }}
+  {{ if eq .id $toolId }}{{ $currentTool = . }}{{ end }}
+{{ end }}
+
+{{ partial "tools/styles.html" . }}
+
+<div class="tools-layout">
+  {{/* 左侧菜单栏 */}}
+  {{ partial "tools/sidebar.html" . }}
+
+  {{/* 右侧工具区 */}}
+  <div class="tools-content">
+    {{ if $currentTool }}
+    <div class="tool-detail">
+      <div class="tool-detail-header">
+        <span class="tool-detail-icon" style="background:linear-gradient(135deg,{{ $currentTool.color }},{{ $currentTool.color }}cc)"><i class="{{ $currentTool.icon }}"></i></span>
+        <div>
+          <h1 class="tool-detail-title">{{ $currentTool.name }}</h1>
+          <p class="tool-detail-desc">{{ $currentTool.desc }}</p>
+        </div>
+      </div>
+      <div class="tool-detail-body">
+        {{ partial (printf "tools/%s.html" $toolId) . }}
+      </div>
+    </div>
+    {{ else }}
+    <div style="text-align:center;padding:56px 20px;color:var(--text-muted,#9ca3af)">
+      <p style="font-size:.95rem">工具未找到</p>
+      <a href="/tools/" style="color:#667eea;font-size:.85rem">返回工具首页</a>
+    </div>
+    {{ end }}
+
+    {{ partial "comments.html" . }}
+  </div>
+</div>
+
+<script>
+(function(){
+  // 侧边栏折叠
+  var sidebar = document.getElementById('tools-sidebar');
+  var collapseBtn = document.getElementById('tools-sidebar-collapse');
+  if(collapseBtn && sidebar){
+    collapseBtn.addEventListener('click',function(){
+      sidebar.classList.toggle('collapsed');
+      localStorage.setItem('tools-sidebar-collapsed',sidebar.classList.contains('collapsed'));
+    });
+    if(localStorage.getItem('tools-sidebar-collapsed')==='true'){
+      sidebar.classList.add('collapsed');
+    }
+  }
+
+  // 分类折叠
+  document.querySelectorAll('.tools-sidebar-group-header').forEach(function(h){
+    h.addEventListener('click',function(){
+      this.classList.toggle('collapsed');
+      var items = this.nextElementSibling;
+      if(this.classList.contains('collapsed')){
+        items.style.maxHeight = items.scrollHeight+'px';
+        requestAnimationFrame(function(){ items.classList.add('collapsed'); });
+      } else {
+        items.classList.remove('collapsed');
+        items.style.maxHeight = items.scrollHeight+'px';
+        requestAnimationFrame(function(){ items.style.maxHeight = 'none'; });
+      }
+    });
+    var group = h.nextElementSibling;
+    var hasActive = group && group.querySelector('.tools-sidebar-item.active');
+    if(!hasActive){
+      h.classList.add('collapsed');
+      if(group) group.classList.add('collapsed');
+    }
+  });
+
+  // 移动端选择器
+  var mobileSelector = document.getElementById('tools-mobile-selector');
+  var mobileBtn = document.getElementById('tools-mobile-selector-btn');
+  var mobileDropdown = document.getElementById('tools-mobile-dropdown');
+  if(mobileBtn && mobileDropdown){
+    mobileBtn.addEventListener('click',function(e){
+      e.stopPropagation();
+      mobileSelector.classList.toggle('open');
+      mobileDropdown.classList.toggle('open');
+    });
+    document.addEventListener('click',function(){
+      mobileSelector.classList.remove('open');
+      mobileDropdown.classList.remove('open');
+    });
+  }
+})();
+</script>
+{{ end }}

@@ -1,0 +1,196 @@
+<div class="tool-tabs">
+  <button class="tool-tab active" data-pc-tab="basic">基础百分比</button>
+  <button class="tool-tab" data-pc-tab="discount">折扣计算</button>
+  <button class="tool-tab" data-pc-tab="change">涨跌幅</button>
+  <button class="tool-tab" data-pc-tab="ratio">比例计算</button>
+</div>
+
+<!-- 基础百分比 -->
+<div id="pc-panel-basic">
+  <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;margin-bottom:14px;">
+    <div class="tool-input-group" style="margin:0;flex:1;min-width:120px;">
+      <label class="tool-label">数值 A</label>
+      <input type="number" class="tool-input" id="pc-a" placeholder="如 25">
+    </div>
+    <div style="padding-bottom:12px;font-weight:700;font-size:1.1rem;color:var(--text-muted,#9ca3af);">是</div>
+    <div class="tool-input-group" style="margin:0;flex:1;min-width:120px;">
+      <label class="tool-label">数值 B</label>
+      <input type="number" class="tool-input" id="pc-b" placeholder="如 200">
+    </div>
+    <div style="padding-bottom:12px;font-weight:700;font-size:1.1rem;color:var(--text-muted,#9ca3af);">的多少百分比？</div>
+  </div>
+  <div class="tool-btn-row">
+    <button class="tool-btn tool-btn-primary" id="pc-basic-btn"><i class="fas fa-percent"></i> 计算</button>
+  </div>
+  <div id="pc-basic-result" style="display:none;margin-top:14px;padding:18px;text-align:center;background:var(--bg-secondary,#f9fafb);border-radius:12px;border:1.5px solid var(--border-color,#e5e7eb);">
+    <div style="font-size:.85rem;color:var(--text-muted,#9ca3af);margin-bottom:6px;"></div>
+    <div id="pc-basic-ans" style="font-size:2rem;font-weight:900;color:#667eea;"></div>
+    <div id="pc-basic-formula" style="font-size:.82rem;color:var(--text-muted,#9ca3af);margin-top:6px;"></div>
+  </div>
+
+  <div style="margin-top:22px;padding:16px;background:var(--bg-secondary,#f9fafb);border-radius:12px;border:1px solid var(--border-color,#e5e7eb);">
+    <div style="font-size:.88rem;font-weight:600;margin-bottom:10px;">百分比的 N% 是多少？</div>
+    <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;">
+      <div class="tool-input-group" style="margin:0;flex:1;min-width:120px;">
+        <label class="tool-label">数值</label>
+        <input type="number" class="tool-input" id="pc-of-total" placeholder="如 200">
+      </div>
+      <div class="tool-input-group" style="margin:0;flex:1;min-width:100px;">
+        <label class="tool-label">百分比 (%)</label>
+        <input type="number" class="tool-input" id="pc-of-pct" placeholder="如 25">
+      </div>
+      <button class="tool-btn tool-btn-primary" id="pc-of-btn" style="margin-bottom:1px;"><i class="fas fa-equals"></i></button>
+    </div>
+    <div id="pc-of-result" style="display:none;font-size:1.4rem;font-weight:800;color:#667eea;text-align:center;margin-top:10px;"></div>
+  </div>
+</div>
+
+<!-- 折扣计算 -->
+<div id="pc-panel-discount" style="display:none;">
+  <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;margin-bottom:14px;">
+    <div class="tool-input-group" style="margin:0;flex:1;min-width:140px;">
+      <label class="tool-label">原价（元）</label>
+      <input type="number" class="tool-input" id="pc-disc-price" placeholder="如 299">
+    </div>
+    <div class="tool-input-group" style="margin:0;flex:1;min-width:140px;">
+      <label class="tool-label">折扣（%）</label>
+      <input type="number" class="tool-input" id="pc-disc-pct" placeholder="如 80（八折）" min="0" max="100">
+    </div>
+  </div>
+  <div class="tool-btn-row">
+    <button class="tool-btn tool-btn-primary" id="pc-disc-btn"><i class="fas fa-tag"></i> 计算折后价</button>
+  </div>
+  <div id="pc-disc-result" style="display:none;margin-top:14px;">
+    <div class="tool-stats">
+      <div class="tool-stat"><div class="tool-stat-value" id="pc-disc-final" style="color:#22c55e;"></div><div class="tool-stat-label">折后价（元）</div></div>
+      <div class="tool-stat"><div class="tool-stat-value" id="pc-disc-saved"></div><div class="tool-stat-label">节省（元）</div></div>
+      <div class="tool-stat"><div class="tool-stat-value" id="pc-disc-save-pct" style="color:#ef4444;"></div><div class="tool-stat-label">节省比例</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 涨跌幅 -->
+<div id="pc-panel-change" style="display:none;">
+  <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;margin-bottom:14px;">
+    <div class="tool-input-group" style="margin:0;flex:1;min-width:140px;">
+      <label class="tool-label">原值（旧）</label>
+      <input type="number" class="tool-input" id="pc-chg-old" placeholder="如 100">
+    </div>
+    <div class="tool-input-group" style="margin:0;flex:1;min-width:140px;">
+      <label class="tool-label">新值</label>
+      <input type="number" class="tool-input" id="pc-chg-new" placeholder="如 125">
+    </div>
+  </div>
+  <div class="tool-btn-row">
+    <button class="tool-btn tool-btn-primary" id="pc-chg-btn"><i class="fas fa-arrow-trend-up"></i> 计算涨跌幅</button>
+  </div>
+  <div id="pc-chg-result" style="display:none;margin-top:14px;text-align:center;padding:20px;border-radius:12px;border:1.5px solid var(--border-color,#e5e7eb);">
+    <div id="pc-chg-icon" style="font-size:2rem;"></div>
+    <div id="pc-chg-pct" style="font-size:2.5rem;font-weight:900;"></div>
+    <div id="pc-chg-desc" style="font-size:.85rem;color:var(--text-muted,#9ca3af);margin-top:6px;"></div>
+  </div>
+</div>
+
+<!-- 比例计算 -->
+<div id="pc-panel-ratio" style="display:none;">
+  <div style="font-size:.88rem;color:var(--text-muted,#6b7280);margin-bottom:14px;">已知 A/B = C/D，求未知量（其中一个留空）</div>
+  <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;margin-bottom:14px;">
+    <div class="tool-input-group" style="margin:0;flex:1;min-width:100px;"><label class="tool-label">A</label><input type="number" class="tool-input" id="pc-r-a" placeholder="?"></div>
+    <div style="padding-bottom:12px;font-weight:700;font-size:1.2rem;color:var(--text-muted,#9ca3af);">/</div>
+    <div class="tool-input-group" style="margin:0;flex:1;min-width:100px;"><label class="tool-label">B</label><input type="number" class="tool-input" id="pc-r-b" placeholder="?"></div>
+    <div style="padding-bottom:12px;font-weight:700;font-size:1.2rem;color:var(--text-muted,#9ca3af);">=</div>
+    <div class="tool-input-group" style="margin:0;flex:1;min-width:100px;"><label class="tool-label">C</label><input type="number" class="tool-input" id="pc-r-c" placeholder="?"></div>
+    <div style="padding-bottom:12px;font-weight:700;font-size:1.2rem;color:var(--text-muted,#9ca3af);">/</div>
+    <div class="tool-input-group" style="margin:0;flex:1;min-width:100px;"><label class="tool-label">D</label><input type="number" class="tool-input" id="pc-r-d" placeholder="?"></div>
+  </div>
+  <div class="tool-btn-row">
+    <button class="tool-btn tool-btn-primary" id="pc-ratio-btn"><i class="fas fa-calculator"></i> 求解未知量</button>
+  </div>
+  <div id="pc-ratio-result" style="display:none;margin-top:14px;text-align:center;padding:18px;background:var(--bg-secondary,#f9fafb);border-radius:12px;">
+    <div id="pc-ratio-ans" style="font-size:1.8rem;font-weight:900;color:#667eea;"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const tabs=document.querySelectorAll('[data-pc-tab]');
+  const panels={basic:'pc-panel-basic',discount:'pc-panel-discount',change:'pc-panel-change',ratio:'pc-panel-ratio'};
+  tabs.forEach(tab=>{
+    tab.addEventListener('click',()=>{
+      tabs.forEach(t=>t.classList.remove('active'));tab.classList.add('active');
+      Object.values(panels).forEach(id=>document.getElementById(id).style.display='none');
+      document.getElementById(panels[tab.getAttribute('data-pc-tab')]).style.display='';
+    });
+  });
+
+  function fmt(n){return parseFloat(n.toFixed(6)).toLocaleString('zh-CN',{maximumFractionDigits:4});}
+
+  // Basic
+  document.getElementById('pc-basic-btn').addEventListener('click',()=>{
+    const a=parseFloat(document.getElementById('pc-a').value);
+    const b=parseFloat(document.getElementById('pc-b').value);
+    if(isNaN(a)||isNaN(b)||b===0){alert('请输入有效数值');return;}
+    const pct=(a/b*100);
+    document.getElementById('pc-basic-ans').textContent=fmt(pct)+'%';
+    document.getElementById('pc-basic-formula').textContent=`${a} ÷ ${b} × 100 = ${fmt(pct)}%`;
+    document.getElementById('pc-basic-result').style.display='';
+  });
+  document.getElementById('pc-of-btn').addEventListener('click',()=>{
+    const total=parseFloat(document.getElementById('pc-of-total').value);
+    const pct=parseFloat(document.getElementById('pc-of-pct').value);
+    if(isNaN(total)||isNaN(pct)){alert('请输入有效数值');return;}
+    document.getElementById('pc-of-result').textContent=`${total} 的 ${pct}% = ${fmt(total*pct/100)}`;
+    document.getElementById('pc-of-result').style.display='';
+  });
+
+  // Discount
+  document.getElementById('pc-disc-btn').addEventListener('click',()=>{
+    const price=parseFloat(document.getElementById('pc-disc-price').value);
+    const pct=parseFloat(document.getElementById('pc-disc-pct').value);
+    if(isNaN(price)||isNaN(pct)){alert('请输入有效数值');return;}
+    const final=price*pct/100;
+    const saved=price-final;
+    document.getElementById('pc-disc-final').textContent='¥'+fmt(final);
+    document.getElementById('pc-disc-saved').textContent='¥'+fmt(saved);
+    document.getElementById('pc-disc-save-pct').textContent=fmt(100-pct)+'%';
+    document.getElementById('pc-disc-result').style.display='';
+  });
+
+  // Change
+  document.getElementById('pc-chg-btn').addEventListener('click',()=>{
+    const oldV=parseFloat(document.getElementById('pc-chg-old').value);
+    const newV=parseFloat(document.getElementById('pc-chg-new').value);
+    if(isNaN(oldV)||isNaN(newV)||oldV===0){alert('请输入有效数值');return;}
+    const change=(newV-oldV)/Math.abs(oldV)*100;
+    const el=document.getElementById('pc-chg-result');
+    const isRise=change>=0;
+    el.style.background=isRise?'rgba(34,197,94,.06)':'rgba(239,68,68,.06)';
+    el.style.borderColor=isRise?'rgba(34,197,94,.3)':'rgba(239,68,68,.25)';
+    document.getElementById('pc-chg-icon').textContent=isRise?'📈':'📉';
+    const pctEl=document.getElementById('pc-chg-pct');
+    pctEl.textContent=(isRise?'+':'')+fmt(change)+'%';
+    pctEl.style.color=isRise?'#22c55e':'#ef4444';
+    document.getElementById('pc-chg-desc').textContent=`从 ${oldV} 变化到 ${newV}，${isRise?'上涨':'下跌'} ${fmt(Math.abs(change))}%，变化量为 ${isRise?'+':''}${fmt(newV-oldV)}`;
+    el.style.display='';
+  });
+
+  // Ratio
+  document.getElementById('pc-ratio-btn').addEventListener('click',()=>{
+    const a=document.getElementById('pc-r-a').value;
+    const b=document.getElementById('pc-r-b').value;
+    const c=document.getElementById('pc-r-c').value;
+    const d=document.getElementById('pc-r-d').value;
+    const vals=[a,b,c,d].map(v=>v===''?null:parseFloat(v));
+    const nullCount=vals.filter(v=>v===null).length;
+    if(nullCount!==1){alert('请恰好留空一个未知量');return;}
+    let ans, label;
+    if(vals[0]===null){ans=vals[2]*vals[1]/vals[3];label='A';}
+    else if(vals[1]===null){ans=vals[0]*vals[3]/vals[2];label='B';}
+    else if(vals[2]===null){ans=vals[0]*vals[3]/vals[1];label='C';}
+    else{ans=vals[1]*vals[2]/vals[0];label='D';}
+    if(isNaN(ans)||!isFinite(ans)){alert('无法计算，请检查输入是否有除以零的情况');return;}
+    document.getElementById('pc-ratio-ans').textContent=`${label} = ${fmt(ans)}`;
+    document.getElementById('pc-ratio-result').style.display='';
+  });
+})();
+</script>

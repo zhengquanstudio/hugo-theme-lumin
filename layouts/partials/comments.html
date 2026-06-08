@@ -1,0 +1,202 @@
+{{ if and site.Params.comments.enable (ne .Params.comments false) }}
+<div class="post-comments" id="post-comments">
+  <!-- 评论区标题 -->
+  <div class="comments-header">
+    <span class="cmt-icon"><i class="far fa-comment-dots"></i></span>
+    <h3 class="comments-title-text">留言评论</h3>
+    <span class="comments-subtitle">期待你的想法</span>
+  </div>
+
+  <!-- 评论加载状态 -->
+  <div id="comments-loading" class="comments-loading">
+    <div class="comments-loading-spinner">
+      <div class="spinner-ring"></div>
+      <div class="spinner-dot"></div>
+    </div>
+    <p class="comments-loading-text">评论加载中</p>
+  </div>
+
+  {{ if eq site.Params.comments.type "disqus" }}
+    <div id="disqus_thread" style="display:none;"></div>
+    <script>
+      var disqus_config = function () {
+        this.page.url = "{{ .Permalink }}";
+        this.page.identifier = "{{ .RelPermalink }}";
+      };
+      (function() {
+        var d = document, s = d.createElement('script');
+        s.src = 'https://{{ site.Params.comments.disqus.shortname }}.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        s.onload = function() {
+          var loading = document.getElementById('comments-loading');
+          var thread = document.getElementById('disqus_thread');
+          if (loading) loading.style.display = 'none';
+          if (thread) thread.style.display = '';
+        };
+        s.onerror = function() {
+          var loading = document.getElementById('comments-loading');
+          if (loading) loading.innerHTML = '<div class="comments-error"><i class="fas fa-exclamation-circle"></i><p>评论加载失败，请刷新重试</p></div>';
+        };
+        (d.head || d.body).appendChild(s);
+      })();
+    </script>
+
+  {{ else if eq site.Params.comments.type "gitalk" }}
+    <div id="gitalk-container" style="display:none;"></div>
+    <link rel="stylesheet" href="/libs/gitalk/gitalk.css">
+    <script src="/libs/gitalk/gitalk.min.js"></script>
+    <script>
+      function initGitalk() {
+        var gitalk = new Gitalk({
+          clientID: '{{ site.Params.comments.gitalk.clientID }}',
+          clientSecret: '{{ site.Params.comments.gitalk.clientSecret }}',
+          repo: '{{ site.Params.comments.gitalk.repo }}',
+          owner: '{{ site.Params.comments.gitalk.owner }}',
+          admin: {{ site.Params.comments.gitalk.admin | jsonify }},
+          id: location.pathname,
+          distractionFreeMode: false
+        });
+        gitalk.render('gitalk-container');
+        var loading = document.getElementById('comments-loading');
+        var container = document.getElementById('gitalk-container');
+        if (loading) loading.style.display = 'none';
+        if (container) container.style.display = '';
+      }
+
+      if (typeof Gitalk !== 'undefined') {
+        initGitalk();
+      } else {
+        window.addEventListener('load', function() {
+          setTimeout(initGitalk, 500);
+        });
+      }
+    </script>
+
+  {{ else if eq site.Params.comments.type "twikoo" }}
+    <div id="tcomment" style="display:none;"></div>
+    <script src="/libs/twikoo/twikoo.all.min.js"></script>
+    <script>
+      function initTwikoo() {
+        twikoo.init({
+          envId: '{{ site.Params.comments.twikoo.envId }}',
+          el: '#tcomment',
+          avatarCdn: '{{ "https://cravatar.cn/avatar" }}',
+          avatar: 'mp'
+        }).then(function() {
+          var loading = document.getElementById('comments-loading');
+          var container = document.getElementById('tcomment');
+          if (loading) loading.style.display = 'none';
+          if (container) container.style.display = '';
+        }).catch(function(err) {
+          console.error('[Twikoo] 初始化失败:', err);
+          var loading = document.getElementById('comments-loading');
+          if (loading) loading.innerHTML = '<div class="comments-error"><i class="fas fa-exclamation-circle"></i><p>评论加载失败，请刷新重试</p></div>';
+        });
+      }
+
+      if (typeof twikoo !== 'undefined') {
+        initTwikoo();
+      } else {
+        window.addEventListener('load', function() {
+          setTimeout(initTwikoo, 500);
+        });
+      }
+    </script>
+
+  {{ else if eq site.Params.comments.type "waline" }}
+    <div id="waline" style="display:none;"></div>
+    <link rel="stylesheet" href="/libs/waline/waline.css">
+    <noscript><link rel="stylesheet" href="/libs/waline/waline.css"></noscript>
+    <script type="module">
+      import { init } from '/libs/waline/waline.mjs';
+      init({
+        el: '#waline',
+        serverURL: '{{ site.Params.comments.waline.serverURL }}',
+      }).then(function() {
+        var loading = document.getElementById('comments-loading');
+        var container = document.getElementById('waline');
+        if (loading) loading.style.display = 'none';
+        if (container) container.style.display = '';
+      }).catch(function(err) {
+        console.error('[Waline] 初始化失败:', err);
+        var loading = document.getElementById('comments-loading');
+        if (loading) loading.innerHTML = '<div class="comments-error"><i class="fas fa-exclamation-circle"></i><p>评论加载失败，请刷新重试</p></div>';
+      });
+    </script>
+
+  {{ else if eq site.Params.comments.type "artalk" }}
+    <div id="artalk-comments" style="display:none;"></div>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/artalk@2/dist/Artalk.css">
+    <script src="https://cdn.jsdelivr.net/npm/artalk@2/dist/Artalk.js"></script>
+    <script>
+      function initArtalk() {
+        Artalk.init({
+          el: '#artalk-comments',
+          server: '{{ site.Params.comments.artalk.server }}',
+          pageKey: '{{ .Permalink }}',
+          pageTitle: '{{ .Title }}',
+        });
+        var loading = document.getElementById('comments-loading');
+        var container = document.getElementById('artalk-comments');
+        if (loading) loading.style.display = 'none';
+        if (container) container.style.display = '';
+      }
+
+      if (typeof Artalk !== 'undefined') {
+        initArtalk();
+      } else {
+        window.addEventListener('load', function() {
+          setTimeout(initArtalk, 500);
+        });
+      }
+    </script>
+
+  {{ else if eq site.Params.comments.type "giscus" }}
+    <div id="giscus-container" style="display:none;">
+      <div class="giscus"></div>
+    </div>
+    <script>
+      function initGiscus() {
+        var s = document.createElement('script');
+        s.src = 'https://giscus.app/client.js';
+        s.setAttribute('data-repo', '{{ site.Params.comments.giscus.repo }}');
+        s.setAttribute('data-repo-id', '{{ site.Params.comments.giscus.repoId }}');
+        s.setAttribute('data-category-id', '{{ site.Params.comments.giscus.categoryId }}');
+        s.setAttribute('data-mapping', 'pathname');
+        s.setAttribute('data-strict', '0');
+        s.setAttribute('data-reactions-enabled', '1');
+        s.setAttribute('data-emit-metadata', '0');
+        s.setAttribute('data-input-position', 'top');
+        s.setAttribute('data-theme', document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
+        s.setAttribute('data-lang', 'zh-CN');
+        s.setAttribute('data-loading', 'lazy');
+        s.crossOrigin = 'anonymous';
+        s.async = true;
+        s.onload = function() {
+          var loading = document.getElementById('comments-loading');
+          var container = document.getElementById('giscus-container');
+          if (loading) loading.style.display = 'none';
+          if (container) container.style.display = '';
+        };
+        s.onerror = function() {
+          var loading = document.getElementById('comments-loading');
+          if (loading) loading.innerHTML = '<div class="comments-error"><i class="fas fa-exclamation-circle"></i><p>评论加载失败，请刷新重试</p></div>';
+        };
+        document.getElementById('giscus-container').appendChild(s);
+      }
+
+      initGiscus();
+    </script>
+
+  {{ else }}
+    <script>
+      (function() {
+        var loading = document.getElementById('comments-loading');
+        if (loading) {
+          loading.innerHTML = '<div class="comments-error comments-error--warn"><i class="fas fa-exclamation-triangle"></i><p>评论系统类型 "{{ site.Params.comments.type }}" 未被支持</p><p class="comments-error-hint">请在 hugo.toml 中配置正确的评论系统类型<br>支持：twikoo | waline | artalk | disqus | gitalk | giscus</p></div>';
+        }
+      })();
+    </script>
+  {{ end }}
+</div>
+{{ end }}

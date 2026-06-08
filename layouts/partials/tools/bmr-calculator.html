@@ -1,0 +1,118 @@
+<div class="tool-input-group">
+  <label class="tool-label">性别</label>
+  <select class="tool-select" id="bmr-gender">
+    <option value="male">男</option>
+    <option value="female">女</option>
+  </select>
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">年龄（岁）</label>
+  <input class="tool-input" type="number" id="bmr-age" value="25" min="1" max="120" placeholder="年龄">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">身高（cm）</label>
+  <input class="tool-input" type="number" id="bmr-height" value="170" step="0.1" min="30" max="300" placeholder="身高">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">体重（kg）</label>
+  <input class="tool-input" type="number" id="bmr-weight" value="65" step="0.1" min="1" max="500" placeholder="体重">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">活动水平</label>
+  <select class="tool-select" id="bmr-activity">
+    <option value="1.2">久坐不动（几乎不运动）</option>
+    <option value="1.375">轻度活动（每周1-3天）</option>
+    <option value="1.55" selected>中度活动（每周3-5天）</option>
+    <option value="1.725">高度活动（每周6-7天）</option>
+    <option value="1.9">极高强度（每天高强度+体力劳动）</option>
+  </select>
+</div>
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="bmr-calc">计算代谢率</button>
+</div>
+<div class="tool-result" id="bmr-result"></div>
+
+<script>
+(function() {
+  document.getElementById("bmr-calc").addEventListener("click", function() {
+    var gender = document.getElementById("bmr-gender").value;
+    var age = parseFloat(document.getElementById("bmr-age").value);
+    var height = parseFloat(document.getElementById("bmr-height").value);
+    var weight = parseFloat(document.getElementById("bmr-weight").value);
+    var activity = parseFloat(document.getElementById("bmr-activity").value);
+    var result = document.getElementById("bmr-result");
+
+    if (isNaN(age) || isNaN(height) || isNaN(weight) || age <= 0 || height <= 0 || weight <= 0) {
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">输入错误</div><p>请填写所有数据（年龄、身高、体重）。</p></div>';
+      return;
+    }
+
+    // Mifflin-St Jeor formula
+    var bmr;
+    if (gender === "male") {
+      bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+    } else {
+      bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+    }
+
+    var tdee = bmr * activity;
+
+    var levels = [
+      { name: "久坐不动", factor: 1.2, desc: "几乎不运动" },
+      { name: "轻度活动", factor: 1.375, desc: "每周1-3天" },
+      { name: "中度活动", factor: 1.55, desc: "每周3-5天" },
+      { name: "高度活动", factor: 1.725, desc: "每周6-7天" },
+      { name: "极高强度", factor: 1.9, desc: "每天高强度+体力劳动" }
+    ];
+
+    var html = '<div class="tool-output"><div class="tool-output-title">基础代谢率分析</div>';
+
+    // Gradient cards for BMR and TDEE
+    html += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">';
+    html += '<div style="flex:1;min-width:140px;border-radius:12px;padding:20px 16px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;text-align:center;">';
+    html += '<div style="font-size:13px;opacity:0.85;margin-bottom:4px;">BMR 基础代谢</div>';
+    html += '<div style="font-size:32px;font-weight:700;line-height:1.1;">' + Math.round(bmr) + '</div>';
+    html += '<div style="font-size:12px;opacity:0.7;margin-top:4px;">kcal / 天</div>';
+    html += '</div>';
+
+    html += '<div style="flex:1;min-width:140px;border-radius:12px;padding:20px 16px;background:linear-gradient(135deg,#f093fb,#f5576c);color:#fff;text-align:center;">';
+    html += '<div style="font-size:13px;opacity:0.85;margin-bottom:4px;">TDEE 每日总消耗</div>';
+    html += '<div style="font-size:32px;font-weight:700;line-height:1.1;">' + Math.round(tdee) + '</div>';
+    html += '<div style="font-size:12px;opacity:0.7;margin-top:4px;">kcal / 天</div>';
+    html += '</div>';
+    html += '</div>';
+
+    // Stats in tool-stats format
+    html += '<div class="tool-stats" style="margin-bottom:16px;">';
+    html += '<div class="tool-stat"><div class="tool-stat-value">' + Math.round(bmr) + '</div><div class="tool-stat-label">BMR 基础代谢</div></div>';
+    html += '<div class="tool-stat"><div class="tool-stat-value">' + Math.round(tdee) + '</div><div class="tool-stat-label">TDEE 总消耗</div></div>';
+    html += '<div class="tool-stat"><div class="tool-stat-value">' + Math.round(tdee) + '</div><div class="tool-stat-label">维持体重热量</div></div>';
+    html += '</div>';
+
+    // Activity level detail table
+    html += '<h4 style="margin:0 0 8px 0;font-size:14px;color:var(--text-primary,#1f2937);">各活动水平每日热量消耗</h4>';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+    html += '<thead><tr style="background:var(--bg-secondary,#f5f5f5);"><th style="padding:8px;text-align:left;font-weight:600;">活动水平</th><th style="padding:8px;text-align:right;font-weight:600;">系数</th><th style="padding:8px;text-align:right;font-weight:600;">每日消耗 (kcal)</th></tr></thead>';
+    html += '<tbody>';
+    for (var i = 0; i < levels.length; i++) {
+      var cal = Math.round(bmr * levels[i].factor);
+      var isActive = levels[i].factor === activity;
+      var rowBg = isActive ? 'var(--bg-highlight, rgba(102,126,234,.08))' : 'transparent';
+      var rowWeight = isActive ? 'font-weight:600;' : '';
+      html += '<tr style="border-bottom:1px solid var(--border-color,#e5e7eb);background:' + rowBg + ';">';
+      html += '<td style="padding:8px;' + rowWeight + '">' + levels[i].name + ' <span style="font-size:11px;color:var(--text-secondary,#6b7280);">(' + levels[i].desc + ')</span></td>';
+      html += '<td style="padding:8px;text-align:right;font-family:monospace;' + rowWeight + '">×' + levels[i].factor + '</td>';
+      html += '<td style="padding:8px;text-align:right;font-family:monospace;' + rowWeight + '">' + cal + '</td>';
+      html += '</tr>';
+    }
+    html += '</tbody></table>';
+
+    html += '<p style="margin-top:10px;font-size:12px;color:var(--text-secondary,#6b7280);">BMR 使用 Mifflin-St Jeor 公式计算：男 = 10×体重 + 6.25×身高 - 5×年龄 + 5；女 = 10×体重 + 6.25×身高 - 5×年龄 - 161。TDEE = BMR × 活动系数。</p>';
+    html += '</div>';
+
+    result.innerHTML = html;
+  });
+
+  document.getElementById("bmr-calc").click();
+})();
+</script>

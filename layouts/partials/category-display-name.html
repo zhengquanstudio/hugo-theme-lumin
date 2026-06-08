@@ -1,0 +1,9 @@
+{{- $site := .Site -}}
+{{- $slug := strings.TrimSpace (printf "%s" .Slug) -}}
+{{- $key := $slug | urlize -}}
+{{- $result := "" -}}
+{{- $sectionPage := $site.GetPage (printf "/%s" $key) -}}
+{{- if $sectionPage -}}
+  {{- $result = $sectionPage.Title -}}
+{{- end -}}
+{{- $result | default $slug -}}

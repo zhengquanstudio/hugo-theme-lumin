@@ -1,0 +1,93 @@
+{{/*
+  Mermaid 图表渲染引擎
+  - 本地文件加载，零网络延迟
+  - 支持暗色/亮色主题自动切换
+  - MutationObserver 监听主题变化实时重绘
+  
+  使用方式: 在 baseof.html 中调用
+  {{ partial "scripts/mermaid.html" . }}
+*/}}
+
+<script src="/js/mermaid.min.js" defer></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  'use strict';
+  
+  if (typeof mermaid === 'undefined') {
+    // 库未加载
+    return;
+  }
+
+  function initMermaid(theme) {
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: theme || (document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'),
+      securityLevel: 'loose',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      flowchart: { useMaxWidth: true, htmlLabels: { style: 'font-size:13px' } },
+      sequence: { useMaxWidth: true, wrap: true, width: 200 },
+      gantt: { useMaxWidth: true }
+    });
+  }
+
+  initMermaid();
+
+  var mermaidBlocks = document.querySelectorAll('code.language-mermaid');
+  if (mermaidBlocks.length > 0) {
+    mermaidBlocks.forEach(function(block) {
+      var parentPre = block.parentElement;
+      if (!parentPre || !parentPre.classList.contains('mermaid-wrapper')) {
+        var container = document.createElement('div');
+        container.className = 'mermaid-container';
+        var src = block.textContent.trim();
+        container.dataset.source = src;
+        container.textContent = src;
+        parentPre.replaceWith(container);
+        try {
+          mermaid.run({ nodes: [container] });
+        } catch(e) {
+          // 渲染失败
+          container.outerHTML = '<pre class="mermaid-error"><code>' + escapeHtml(block.textContent) + '</code></pre>';
+        }
+      }
+    });
+    // 图表渲染完成
+  }
+
+  function escapeHtml(text) {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  var observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(m) {
+      if (m.attributeName === 'data-theme') {
+        var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        initMermaid(isDark ? 'dark' : 'default');
+        
+        var containers = document.querySelectorAll('.mermaid-container');
+        containers.forEach(function(c) { 
+          c.removeAttribute('data-processed'); 
+          c.innerHTML = c.textContent || c.dataset.source || ''; 
+        });
+        
+        if (containers.length > 0) {
+          setTimeout(function() { 
+            mermaid.run({ nodes: Array.from(containers) }); 
+          }, 100);
+          // 主题切换重绘
+        }
+      }
+    });
+  });
+
+  observer.observe(document.documentElement, { 
+    attributes: true, 
+    attributeFilter: ['data-theme'] 
+  });
+});
+</script>

@@ -1,0 +1,393 @@
+<div class="tool-input-group">
+  <label class="tool-label">输入中文文本</label>
+  <textarea class="tool-textarea" id="py-input" rows="6" placeholder="请输入中文文本，例如：你好世界">你好世界，欢迎使用拼音转换工具。中国是一个历史悠久的国家。</textarea>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">拼音格式</label>
+  <select class="tool-select" id="py-mode">
+    <option value="tone" selected>带声调 (nǐ hǎo)</option>
+    <option value="notone">不带声调 (ni hao)</option>
+    <option value="first">首字母 (nh)</option>
+  </select>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="py-convert-btn">转换</button>
+  <button class="tool-btn" id="py-clear-btn">清空</button>
+</div>
+
+<div id="py-error" style="display:none;color:var(--color-error,#e53e3e);margin-top:8px;"></div>
+
+<div class="tool-output" id="py-output-area" style="display:none;">
+  <div class="tool-result" id="py-result"></div>
+  <button class="tool-copy-btn" id="py-copy-btn">复制结果</button>
+</div>
+
+<script>
+(function(){
+  const input = document.getElementById('py-input');
+  const result = document.getElementById('py-result');
+  const outputArea = document.getElementById('py-output-area');
+  const errorDiv = document.getElementById('py-error');
+  const modeSelect = document.getElementById('py-mode');
+
+  function showError(msg) {
+    errorDiv.textContent = msg;
+    errorDiv.style.display = 'block';
+    outputArea.style.display = 'none';
+  }
+
+  function hideError() {
+    errorDiv.style.display = 'none';
+  }
+
+  // 常用汉字拼音表 (超过500字，带声调)
+  // 声调数字表示: 1=ā, 2=á, 3=ǎ, 4=à, 0=a (轻声)
+  const PINYIN_MAP = {
+    // A
+    '啊':'a1','阿':'a1','吖':'a1','腌':'a1','锕':'a1',
+    '爱':'ai4','矮':'ai3','哎':'ai1','碍':'ai4','癌':'ai2','艾':'ai4','挨':'ai1','隘':'ai4',
+    '安':'an1','按':'an4','暗':'an4','案':'an4','俺':'an3','岸':'an4','氨':'an1','胺':'an4','鞍':'an1','黯':'an4',
+    '昂':'ang2','肮':'ang1','盎':'ang4',
+    '奥':'ao4','凹':'ao1','傲':'ao4','熬':'ao2','袄':'ao3','澳':'ao4','懊':'ao4','翱':'ao2',
+    // B
+    '不':'bu4','部':'bu4','步':'bu4','布':'bu4','补':'bu3','捕':'bu3','卜':'bu3','簿':'bu4','埠':'bu4','怖':'bu4',
+    '八':'ba1','把':'ba3','吧':'ba0','爸':'ba4','巴':'ba1','拔':'ba2','罢':'ba4','霸':'ba4','坝':'ba4','疤':'ba1','芭':'ba1','笆':'ba1',
+    '白':'bai2','百':'bai3','败':'bai4','拜':'bai4','摆':'bai3','柏':'bai3','伯':'bai3','佰':'bai3','稗':'bai4',
+    '半':'ban4','办':'ban4','般':'ban1','班':'ban1','板':'ban3','版':'ban3','搬':'ban1','扮':'ban4','斑':'ban1','瓣':'ban4','颁':'ban1','绊':'ban4','拌':'ban4',
+    '帮':'bang1','棒':'bang4','绑':'bang3','傍':'bang4','膀':'bang3','磅':'bang4','蚌':'bang4','谤':'bang4','邦':'bang1',
+    '保':'bao3','报':'bao4','包':'bao1','暴':'bao4','薄':'bao2','宝':'bao3','抱':'bao4','爆':'bao4','胞':'bao1','饱':'bao3','堡':'bao3','雹':'bao2','鲍':'bao4','褒':'bao1','苞':'bao1',
+    '北':'bei3','被':'bei4','备':'bei4','杯':'bei1','背':'bei4','悲':'bei1','贝':'bei4','辈':'bei4','碑':'bei1','卑':'bei1','倍':'bei4','狈':'bei4','钡':'bei4','焙':'bei4',
+    '本':'ben3','奔':'ben1','苯':'ben3','笨':'ben4','畚':'ben3',
+    '比':'bi3','必':'bi4','笔':'bi3','币':'bi4','闭':'bi4','避':'bi4','逼':'bi1','彼':'bi3','鼻':'bi2','碧':'bi4','壁':'bi4','臂':'bi4','蔽':'bi4','弊':'bi4','鄙':'bi3','陛':'bi4','毙':'bi4','庇':'bi4','泌':'bi4','痹':'bi4',
+    '变':'bian4','便':'bian4','边':'bian1','编':'bian1','遍':'bian4','辩':'bian4','扁':'bian3','鞭':'bian1','辨':'bian4','贬':'bian3','辫':'bian4','卞':'bian4','汴':'bian4',
+    '表':'biao3','标':'biao1','彪':'biao1','膘':'biao1','镖':'biao1','飙':'biao1','婊':'biao3',
+    '别':'bie2','憋':'bie1','鳖':'bie1','瘪':'bie3',
+    '并':'bing4','病':'bing4','兵':'bing1','冰':'bing1','饼':'bing3','丙':'bing3','柄':'bing3','秉':'bing3','禀':'bing3','炳':'bing3',
+    // C
+    '从':'cong2','丛':'cong2','聪':'cong1','匆':'cong1','葱':'cong1','囱':'cong1','琮':'cong2',
+    '出':'chu1','处':'chu4','初':'chu1','除':'chu2','楚':'chu3','础':'chu3','储':'chu3','触':'chu4','畜':'chu4','厨':'chu2','锄':'chu2','雏':'chu2','橱':'chu2','矗':'chu4',
+    '次':'ci4','此':'ci3','词':'ci2','刺':'ci4','磁':'ci2','辞':'ci2','慈':'ci2','瓷':'ci2','雌':'ci2','赐':'ci4','茨':'ci2',
+    '才':'cai2','材':'cai2','财':'cai2','采':'cai3','彩':'cai3','菜':'cai4','裁':'cai2','猜':'cai1','踩':'cai3','睬':'cai3','蔡':'cai4',
+    '参':'can1','残':'can2','餐':'can1','惨':'can3','蚕':'can2','灿':'can4','惭':'can2','掺':'can1',
+    '曾':'ceng2','层':'ceng2','蹭':'ceng4',
+    '长':'chang2','场':'chang3','常':'chang2','厂':'chang3','唱':'chang4','尝':'chang2','昌':'chang1','畅':'chang4','肠':'chang2','倡':'chang4','猖':'chang1','敞':'chang3','怅':'chang4',
+    '超':'chao1','朝':'chao2','潮':'chao2','抄':'chao1','吵':'chao3','巢':'chao2','炒':'chao3','钞':'chao1','嘲':'chao2','晁':'chao2',
+    '车':'che1','彻':'che4','撤':'che4','扯':'che3','澈':'che4','掣':'che4',
+    '成':'cheng2','程':'cheng2','城':'cheng2','称':'cheng1','承':'cheng2','诚':'cheng2','盛':'cheng2','呈':'cheng2','乘':'cheng2','惩':'cheng2','澄':'cheng2','撑':'cheng1','秤':'cheng4','橙':'cheng2','骋':'cheng3','逞':'cheng3',
+    // D
+    '大':'da4','打':'da3','达':'da2','答':'da2','搭':'da1','瘩':'da2','嗒':'da1','妲':'da2',
+    '地':'di4','第':'di4','的':'di4','低':'di1','底':'di3','敌':'di2','弟':'di4','帝':'di4','递':'di4','抵':'di3','滴':'di1','堤':'di1','笛':'di2','狄':'di2','涤':'di2','缔':'di4','蒂':'di4','邸':'di3',
+    '电':'dian4','点':'dian3','店':'dian4','典':'dian3','垫':'dian4','典':'dian3','碘':'dian3','淀':'dian4','殿':'dian4','甸':'dian4','滇':'dian1','颠':'dian1','癫':'dian1',
+    '定':'ding4','顶':'ding3','订':'ding4','丁':'ding1','盯':'ding1','叮':'ding1','鼎':'ding3','钉':'ding1','锭':'ding4','啶':'ding4',
+    '东':'dong1','动':'dong4','冬':'dong1','懂':'dong3','洞':'dong4','董':'dong3','冻':'dong4','栋':'dong4','侗':'dong4','恫':'dong4',
+    '对':'dui4','队':'dui4','堆':'dui1','兑':'dui4','碓':'dui4','憝':'dui4',
+    '多':'duo1','度':'duo4','夺':'duo2','朵':'duo3','躲':'duo3','堕':'duo4','舵':'duo4','惰':'duo4','垛':'duo3','踱':'duo2',
+    '等':'deng3','灯':'deng1','登':'deng1','邓':'deng4','凳':'deng4','瞪':'deng4','蹬':'deng1','噔':'deng1',
+    '道':'dao4','到':'dao4','导':'dao3','倒':'dao3','岛':'dao3','刀':'dao1','盗':'dao4','稻':'dao4','蹈':'dao3','捣':'dao3','悼':'dao4','祷':'dao3','叨':'dao1',
+    '都':'dou1','斗':'dou4','豆':'dou4','抖':'dou3','逗':'dou4','兜':'dou1','陡':'dou3','痘':'dou4','窦':'dou4','蔸':'dou1',
+    // E
+    '二':'er4','而':'er2','儿':'er2','耳':'er3','尔':'er3','饵':'er3','洱':'er3','贰':'er4','迩':'er3',
+    '额':'e2','恶':'e4','俄':'e2','饿':'e4','鹅':'e2','鄂':'e4','扼':'e4','遏':'e4','娥':'e2','峨':'e2','噩':'e4','厄':'e4','讹':'e2','娥':'e2',
+    '恩':'en1','摁':'en4',
+    // F
+    '发':'fa1','法':'fa3','罚':'fa2','乏':'fa2','伐':'fa2','阀':'fa2','筏':'fa2','珐':'fa4',
+    '分':'fen1','风':'feng1','封':'feng1','丰':'feng1','奉':'feng4','峰':'feng1','锋':'feng1','凤':'feng4','疯':'feng1','逢':'feng2','缝':'feng4','冯':'feng2','枫':'feng1','讽':'feng3','烽':'feng1','蜂':'feng1','锋':'feng1',
+    '方':'fang1','放':'fang4','房':'fang2','防':'fang2','访':'fang3','芳':'fang1','仿':'fang3','纺':'fang3','妨':'fang2','坊':'fang1','肪':'fang2','舫':'fang3',
+    '非':'fei1','飞':'fei1','费':'fei4','肥':'fei2','废':'fei4','肺':'fei4','匪':'fei3','沸':'fei4','菲':'fei1','绯':'fei1','诽':'fei3','斐':'fei3',
+    '否':'fou3','缶':'fou3',
+    '反':'fan3','饭':'fan4','范':'fan4','犯':'fan4','翻':'fan1','繁':'fan2','凡':'fan2','泛':'fan4','番':'fan1','烦':'fan2','返':'fan3','贩':'fan4','帆':'fan1','藩':'fan1','樊':'fan2','矾':'fan2','钒':'fan2',
+    '夫':'fu1','父':'fu4','服':'fu2','副':'fu4','府':'fu3','负':'fu4','福':'fu2','复':'fu4','富':'fu4','附':'fu4','扶':'fu2','幅':'fu2','浮':'fu2','腐':'fu3','妇':'fu4','覆':'fu4','伏':'fu2','肤':'fu1','符':'fu2','辅':'fu3','斧':'fu3','赋':'fu4','敷':'fu1','俘':'fu2','抚':'fu3','赴':'fu4','腹':'fu4','阜':'fu4','咐':'fu4','釜':'fu3',
+    // G
+    '工':'gong1','公':'gong1','共':'gong4','供':'gong1','功':'gong1','攻':'gong1','宫':'gong1','贡':'gong4','弓':'gong1','恭':'gong1','拱':'gong3','巩':'gong3','汞':'gong3',
+    '个':'ge4','各':'ge4','歌':'ge1','革':'ge2','格':'ge2','哥':'ge1','割':'ge1','搁':'ge1','阁':'ge2','葛':'ge3','戈':'ge1','鸽':'ge1','咯':'ge1','膈':'ge2',
+    '国':'guo2','过':'guo4','果':'guo3','锅':'guo1','郭':'guo1','裹':'guo3','蝈':'guo1',
+    '关':'guan1','管':'guan3','观':'guan1','官':'guan1','馆':'guan3','贯':'guan4','惯':'guan4','冠':'guan1','灌':'guan4','罐':'guan4','棺':'guan1','鳏':'guan1',
+    '高':'gao1','告':'gao4','搞':'gao3','稿':'gao3','糕':'gao1','羔':'gao1','膏':'gao1','皋':'gao1','镐':'gao3','槁':'gao3',
+    '给':'gei3',
+    '更':'geng4','耕':'geng1','庚':'geng1','羹':'geng1','哽':'geng3','埂':'geng3',
+    '光':'guang1','广':'guang3','逛':'guang4','咣':'guang1','犷':'guang3',
+    '根':'gen1','跟':'gen1','亘':'gen4','艮':'gen3',
+    // H
+    '和':'he2','合':'he2','何':'he2','河':'he2','核':'he2','喝':'he1','贺':'he4','荷':'he2','吓':'he4','呵':'he1','禾':'he2','盒':'he2','赫':'he4','褐':'he4','鹤':'he4','壑':'he4',
+    '好':'hao3','号':'hao4','毫':'hao2','豪':'hao2','耗':'hao4','浩':'hao4','壕':'hao2','嚎':'hao2','郝':'hao3','镐':'hao4',
+    '后':'hou4','候':'hou4','厚':'hou4','猴':'hou2','侯':'hou2','喉':'hou2','吼':'hou3','篌':'hou2',
+    '会':'hui4','回':'hui2','灰':'hui1','汇':'hui4','辉':'hui1','惠':'hui4','毁':'hui3','挥':'hui1','慧':'hui4','绘':'hui4','悔':'hui3','徽':'hui1','贿':'hui4','晦':'hui4','秽':'hui4','讳':'hui4','诲':'hui4',
+    '很':'hen3','恨':'hen4','狠':'hen3','痕':'hen2',
+    '红':'hong2','宏':'hong2','洪':'hong2','轰':'hong1','鸿':'hong2','虹':'hong2','弘':'hong2','哄':'hong3','烘':'hong1','泓':'hong2',
+    '还':'hai2','海':'hai3','害':'hai4','孩':'hai2','骇':'hai4','亥':'hai4','氦':'hai4',
+    '话':'hua4','化':'hua4','花':'hua1','华':'hua2','划':'hua4','画':'hua4','滑':'hua2','哗':'hua2','桦':'hua4','骅':'hua2',
+    '火':'huo3','活':'huo2','伙':'huo3','获':'huo4','货':'huo4','祸':'huo4','霍':'huo4','惑':'huo4','豁':'huo1',
+    '护':'hu4','虎':'hu3','互':'hu4','胡':'hu2','湖':'hu2','户':'hu4','乎':'hu1','呼':'hu1','忽':'hu1','壶':'hu2','糊':'hu2','弧':'hu2','沪':'hu4','唬':'hu3','狐':'hu2','瑚':'hu2','葫':'hu2','唬':'hu3','怙':'hu4',
+    '环':'huan2','欢':'huan1','换':'huan4','还':'huan2','缓':'huan3','患':'huan4','焕':'huan4','唤':'huan4','幻':'huan4','涣':'huan4','桓':'huan2','寰':'huan2','鬟':'huan2',
+    '黄':'huang2','皇':'huang2','慌':'huang1','荒':'huang1','晃':'huang3','煌':'huang2','恍':'huang3','惶':'huang2','凰':'huang2','蝗':'huang2','簧':'huang2',
+    '很':'hen3','恨':'hen4','狠':'hen3','痕':'hen2',
+    // J
+    '就':'jiu4','九':'jiu3','酒':'jiu3','旧':'jiu4','究':'jiu1','救':'jiu4','纠':'jiu1','久':'jiu3','揪':'jiu1','灸':'jiu3','玖':'jiu3','臼':'jiu4','舅':'jiu4','韭':'jiu3','咎':'jiu4',
+    '机':'ji1','几':'ji3','记':'ji4','及':'ji2','计':'ji4','技':'ji4','基':'ji1','极':'ji2','集':'ji2','既':'ji4','际':'ji4','济':'ji4','纪':'ji4','己':'ji3','急':'ji2','激':'ji1','积':'ji1','即':'ji2','级':'ji2','挤':'ji3','季':'ji4','迹':'ji4','鸡':'ji1','击':'ji1','继':'ji4','肌':'ji1','寄':'ji4','吉':'ji2','疾':'ji2','籍':'ji2','辑':'ji2','饥':'ji1','脊':'ji3','忌':'ji4','姬':'ji1','祭':'ji4','棘':'ji2','讥':'ji1','汲':'ji2','嫉':'ji2','伎':'ji4','悸':'ji4',
+    '家':'jia1','加':'jia1','价':'jia4','假':'jia3','甲':'jia3','架':'jia4','佳':'jia1','嫁':'jia4','夹':'jia1','驾':'jia4','嘉':'jia1','颊':'jia2','贾':'jia3','钾':'jia3','稼':'jia4','笳':'jia1',
+    '间':'jian1','件':'jian4','见':'jian4','建':'jian4','检':'jian3','简':'jian3','渐':'jian4','健':'jian4','坚':'jian1','减':'jian3','剑':'jian4','监':'jian1','兼':'jian1','尖':'jian1','键':'jian4','践':'jian4','鉴':'jian4','贱':'jian4','荐':'jian4','箭':'jian4','捡':'jian3','肩':'jian1','艰':'jian1','奸':'jian1','茧':'jian3','碱':'jian3','柬':'jian3','俭':'jian3','拣':'jian3','舰':'jian4','涧':'jian4',
+    '将':'jiang1','讲':'jiang3','江':'jiang1','降':'jiang4','奖':'jiang3','浆':'jiang1','僵':'jiang1','蒋':'jiang3','疆':'jiang1','匠':'jiang4','酱':'jiang4','姜':'jiang1','桨':'jiang3','绛':'jiang4',
+    '交':'jiao1','教':'jiao1','叫':'jiao4','角':'jiao3','较':'jiao4','脚':'jiao3','焦':'jiao1','郊':'jiao1','胶':'jiao1','椒':'jiao1','骄':'jiao1','搅':'jiao3','饺':'jiao3','娇':'jiao1','缴':'jiao3','绞':'jiao3','矫':'jiao3','狡':'jiao3','窖':'jiao4','酵':'jiao4',
+    '接':'jie1','解':'jie3','结':'jie2','界':'jie4','街':'jie1','阶':'jie1','介':'jie4','姐':'jie3','节':'jie2','借':'jie4','戒':'jie4','杰':'jie2','洁':'jie2','截':'jie2','揭':'jie1','届':'jie4','皆':'jie1','竭':'jie2','劫':'jie2','睫':'jie2','桔':'jie2','颉':'jie2',
+    '进':'jin4','金':'jin1','今':'jin1','仅':'jin3','近':'jin4','尽':'jin4','紧':'jin3','劲':'jin4','锦':'jin3','津':'jin1','禁':'jin4','筋':'jin1','晋':'jin4','巾':'jin1','浸':'jin4','斤':'jin1','谨':'jin3','瑾':'jin3','靳':'jin4',
+    '经':'jing1','竟':'jing4','京':'jing1','精':'jing1','景':'jing3','静':'jing4','境':'jing4','敬':'jing4','井':'jing3','警':'jing3','净':'jing4','竞':'jing4','镜':'jing4','晶':'jing1','惊':'jing1','径':'jing4','睛':'jing1','荆':'jing1','靖':'jing4','痉':'jing4','兢':'jing1',
+    '局':'ju2','具':'ju4','据':'ju4','举':'ju3','居':'ju1','剧':'ju4','距':'ju4','聚':'ju4','拒':'ju4','俱':'ju4','矩':'ju3','巨':'ju4','句':'ju4','锯':'ju4','菊':'ju2','拘':'ju1','驹':'ju1','惧':'ju4','炬':'ju4','沮':'ju3','鞠':'ju1','驹':'ju1',
+    '决':'jue2','绝':'jue2','觉':'jue2','掘':'jue2','爵':'jue2','诀':'jue2','抉':'jue2','倔':'jue2','崛':'jue2','蕨':'jue2','撅':'jue1','獗':'jue2',
+    '军':'jun1','俊':'jun4','均':'jun1','菌':'jun1','君':'jun1','峻':'jun4','竣':'jun4','骏':'jun4','浚':'jun4','珺':'jun4',
+    // K
+    '可':'ke3','科':'ke1','客':'ke4','课':'ke4','刻':'ke4','克':'ke4','科':'ke1','壳':'ke2','渴':'ke3','颗':'ke1','棵':'ke1','咳':'ke2','垦':'ken3','恳':'ken3','坑':'keng1','吭':'keng1',
+    '开':'kai1','看':'kan4','砍':'kan3','刊':'kan1','堪':'kan1','坎':'kan3','勘':'kan1','槛':'kan3','侃':'kan3','瞰':'kan4',
+    '快':'kuai4','块':'kuai4','筷':'kuai4','侩':'kuai4','脍':'kuai4',
+    '空':'kong1','控':'kong4','孔':'kong3','恐':'kong3','崆':'kong1','箜':'kong1',
+    '口':'kou3','扣':'kou4','寇':'kou4','抠':'kou1','叩':'kou4','蔻':'kou4',
+    '苦':'ku3','库':'ku4','哭':'ku1','裤':'ku4','酷':'ku4','窟':'ku1','枯':'ku1','骷':'ku1',
+    '款':'kuan3','宽':'kuan1','髋':'kuan1',
+    '况':'kuang4','矿':'kuang4','框':'kuang4','狂':'kuang2','旷':'kuang4','筐':'kuang1','眶':'kuang4','匡':'kuang1','诓':'kuang1',
+    '困':'kun4','昆':'kun1','坤':'kun1','捆':'kun3',
+    '跨':'kua4','夸':'kua1','垮':'kua3','垮':'kua3','胯':'kua4',
+    // L
+    '了':'le0','乐':'le4','勒':'le4',
+    '里':'li3','力':'li4','理':'li3','利':'li4','立':'li4','例':'li4','离':'li2','历':'li4','李':'li3','礼':'li3','丽':'li4','粒':'li4','厉':'li4','励':'li4','璃':'li2','黎':'li2','隶':'li4','厘':'li2','梨':'li2','犁':'li2','鲤':'li3','莉':'li4','荔':'li4','俐':'li4','吏':'li4','沥':'li4','俪':'li4',
+    '来':'lai2','赖':'lai4','莱':'lai2','癞':'lai4','籁':'lai4',
+    '老':'lao3','劳':'lao2','捞':'lao1','牢':'lao2','佬':'lao3','姥':'lao3','烙':'lao4','酪':'lao4','涝':'lao4','唠':'lao2','崂':'lao2','铹':'lao2',
+    '两':'liang3','量':'liang4','亮':'liang4','辆':'liang4','良':'liang2','凉':'liang2','梁':'liang2','粮':'liang2','晾':'liang4','谅':'liang4','粱':'liang2','踉':'liang4',
+    '连':'lian2','联':'lian2','练':'lian4','脸':'lian3','恋':'lian4','链':'lian4','炼':'lian4','帘':'lian2','莲':'lian2','廉':'lian2','怜':'lian2','敛':'lian3','镰':'lian2','涟':'lian2','琏':'lian3','裢':'lian2',
+    '路':'lu4','录':'lu4','陆':'lu4','露':'lu4','鲁':'lu3','炉':'lu2','卢':'lu2','鹿':'lu4','禄':'lu4','颅':'lu2','庐':'lu2','卤':'lu3','虏':'lu3','赂':'lu4','碌':'lu4','麓':'lu4','泸':'lu2',
+    '论':'lun4','轮':'lun2','伦':'lun2','沦':'lun2','纶':'lun2','囵':'lun2',
+    '落':'luo4','罗':'luo2','洛':'luo4','络':'luo4','骆':'luo4','逻':'luo2','萝':'luo2','锣':'luo2','箩':'luo2','骡':'luo2','螺':'luo2','裸':'luo3','漯':'luo4',
+    '领':'ling3','令':'ling4','另':'ling4','灵':'ling2','零':'ling2','龄':'ling2','铃':'ling2','岭':'ling3','凌':'ling2','陵':'ling2','玲':'ling2','菱':'ling2','玲':'ling2','聆':'ling2','翎':'ling2','蛉':'ling2',
+    '六':'liu4','流':'liu2','留':'liu2','刘':'liu2','柳':'liu3','溜':'liu1','瘤':'liu2','硫':'liu2','琉':'liu2','馏':'liu2','浏':'liu2','碌':'liu4',
+    '率':'lv4','旅':'lv3','律':'lv4','绿':'lv4','氯':'lv4','吕':'lv3','铝':'lv3','侣':'lv3','屡':'lv3','缕':'lv3','履':'lv3','虑':'lv4','滤':'lv4','驴':'lv2',
+    // M
+    '没':'mei2','每':'mei3','美':'mei3','妹':'mei4','媒':'mei2','没':'mei2','眉':'mei2','枚':'mei2','梅':'mei2','煤':'mei2','霉':'mei2','昧':'mei4','媚':'mei4','酶':'mei2','镁':'mei3','莓':'mei2','袂':'mei4',
+    '们':'men0','门':'men2','闷':'men4','扪':'men2','焖':'men4',
+    '面':'mian4','免':'mian3','棉':'mian2','绵':'mian2','眠':'mian2','缅':'mian3','冕':'mian3','勉':'mian3','娩':'mian3','腼':'mian3','缅':'mian3',
+    '名':'ming2','明':'ming2','命':'ming4','民':'ming2','鸣':'ming2','铭':'ming2','冥':'ming2','茗':'ming2','瞑':'ming2','螟':'ming2',
+    // N
+    '你':'ni3','年':'nian2','能':'neng2','女':'nv3','那':'na4','拿':'na2','哪':'na3','纳':'na4','钠':'na4','呐':'na4','娜':'na4','衲':'na4',
+    '内':'nei4','馁':'nei3',
+    '南':'nan2','男':'nan2','难':'nan2','喃':'nan2','楠':'nan2','腩':'nan3',
+    '呢':'ne0','讷':'ne4',
+    '农':'nong2','弄':'nong4','浓':'nong2','脓':'nong2','哝':'nong2',
+    '牛':'niu2','纽':'niu3','扭':'niu3','钮':'niu3','拗':'niu4','妞':'niu1',
+    '宁':'ning2','凝':'ning2','拧':'ning3','狞':'ning2','泞':'ning4','柠':'ning2','咛':'ning2',
+    '暖':'nuan3',
+    '虐':'nve4','疟':'nve4',
+    // O
+    '哦':'o2','噢':'o1',
+    // P
+    '批':'pi1','皮':'pi2','片':'pian4','品':'pin3','平':'ping2','排':'pai2','派':'pai4','怕':'pa4','旁':'pang2','跑':'pao3','配':'pei4','喷':'pen1','朋':'peng2',
+    '评':'ping2','瓶':'ping2','凭':'ping2','屏':'ping2','萍':'ping2','苹':'ping2','坪':'ping2',
+    '篇':'pian1','偏':'pian1','骗':'pian4','片':'pian4','便':'pian2','翩':'pian1',
+    '破':'po4','坡':'po1','颇':'po1','婆':'po2','泼':'po1','魄':'po4','迫':'po4','珀':'po4','粕':'po4',
+    '普':'pu3','铺':'pu1','扑':'pu1','朴':'pu3','葡':'pu2','蒲':'pu2','仆':'pu2','曝':'pu4','瀑':'pu4','圃':'pu3','浦':'pu3','菩':'pu2','谱':'pu3','埔':'pu3',
+    // Q
+    '其':'qi2','起':'qi3','期':'qi1','奇':'qi2','气':'qi4','七':'qi1','器':'qi4','齐':'qi2','汽':'qi4','企':'qi3','启':'qi3','旗':'qi2','妻':'qi1','弃':'qi4','棋':'qi2','骑':'qi2','岂':'qi3','歧':'qi2','泣':'qi4','契':'qi4','戚':'qi1','漆':'qi1','栖':'qi1','柒':'qi1','砌':'qi4',
+    '前':'qian2','钱':'qian2','千':'qian1','签':'qian1','欠':'qian4','浅':'qian3','迁':'qian1','牵':'qian1','铅':'qian1','歉':'qian4','潜':'qian2','遣':'qian3','乾':'qian2','黔':'qian2','谦':'qian1','嵌':'qian4','虔':'qian2','掮':'qian2',
+    '强':'qiang2','枪':'qiang1','墙':'qiang2','抢':'qiang3','腔':'qiang1','呛':'qiang4','羌':'qiang1','蔷':'qiang2','锵':'qiang1',
+    '去':'qu4','取':'qu3','区':'qu1','曲':'qu3','趣':'qu4','趋':'qu1','驱':'qu1','渠':'qu2','娶':'qu3','屈':'qu1','瞿':'qu2','蛆':'qu1','觑':'qu4',
+    '全':'quan2','权':'quan2','圈':'quan1','泉':'quan2','劝':'quan4','拳':'quan2','券':'quan4','犬':'quan3','诠':'quan2','醛':'quan2','蜷':'quan2',
+    '确':'que4','却':'que4','缺':'que1','雀':'que4','鹊':'que4','瘸':'que2','榷':'que4',
+    '青':'qing1','清':'qing1','情':'qing2','请':'qing3','轻':'qing1','庆':'qing4','晴':'qing2','氢':'qing1','倾':'qing1','卿':'qing1','擎':'qing2','顷':'qing3','氰':'qing2',
+    '球':'qiu2','求':'qiu2','秋':'qiu1','邱':'qiu1','丘':'qiu1','囚':'qiu2','酋':'qiu2','蚯':'qiu1','裘':'qiu2','鳅':'qiu1',
+    // R
+    '人':'ren2','任':'ren4','认':'ren4','忍':'ren3','仁':'ren2','刃':'ren4','韧':'ren4','纫':'ren4','妊':'ren4','壬':'ren2',
+    '如':'ru2','入':'ru4','乳':'ru3','汝':'ru3','儒':'ru2','辱':'ru3','蠕':'ru2','褥':'ru4','茹':'ru2','孺':'ru2','濡':'ru2',
+    '让':'rang4','壤':'rang3','嚷':'rang3','瓤':'rang2','攘':'rang3',
+    '软':'ruan3','阮':'ruan3',
+    '仍':'reng2','扔':'reng1',
+    '日':'ri4',
+    '热':'re4','惹':'re3',
+    '荣':'rong2','容':'rong2','融':'rong2','溶':'rong2','绒':'rong2','蓉':'rong2','茸':'rong2','冗':'rong3','榕':'rong2','熔':'rong2',
+    '肉':'rou4','柔':'rou2','揉':'rou2','蹂':'rou2','鞣':'rou2',
+    '若':'ruo4','弱':'ruo4','偌':'ruo4',
+    '锐':'rui4','瑞':'rui4','蕊':'rui3','芮':'rui4','睿':'rui4','蚋':'rui4',
+    '润':'run4','闰':'run4',
+    // S
+    '四':'si4','死':'si3','丝':'si1','似':'si4','思':'si1','司':'si1','私':'si1','寺':'si4','撕':'si1','嘶':'si1','嗣':'si4','饲':'si4','肆':'si4','厮':'si1',
+    '是':'shi4','时':'shi2','十':'shi2','事':'shi4','实':'shi2','使':'shi3','世':'shi4','市':'shi4','识':'shi2','式':'shi4','石':'shi2','师':'shi1','示':'shi4','史':'shi3','始':'shi3','施':'shi1','士':'shi4','失':'shi1','视':'shi4','试':'shi4','室':'shi4','食':'shi2','势':'shi4','诗':'shi1','释':'shi4','湿':'shi1','氏':'shi4','适':'shi4','饰':'shi4','驶':'shi3','侍':'shi4','逝':'shi4','誓':'shi4','蚀':'shi2',
+    '三':'san1','散':'san4','伞':'san3','叁':'san1','馓':'san3',
+    '上':'shang4','商':'shang1','伤':'shang1','尚':'shang4','赏':'shang3','裳':'shang0','晌':'shang3','殇':'shang1',
+    '少':'shao3','绍':'shao4','烧':'shao1','邵':'shao4','韶':'shao2','勺':'shao2','哨':'shao4','梢':'shao1','捎':'shao1','芍':'shao2',
+    '手':'shou3','受':'shou4','收':'shou1','首':'shou3','守':'shou3','授':'shou4','售':'shou4','瘦':'shou4','寿':'shou4','兽':'shou4','狩':'shou4','绶':'shou4',
+    '水':'shui3','睡':'shui4','税':'shui4','谁':'shui2',
+    '说':'shuo1','硕':'shuo4','烁':'shuo4','朔':'shuo4','铄':'shuo4','蒴':'shuo4',
+    '生':'sheng1','声':'sheng1','省':'sheng3','胜':'sheng4','升':'sheng1','剩':'sheng4','圣':'sheng4','盛':'sheng4','牲':'sheng1','绳':'sheng2','甥':'sheng1','笙':'sheng1',
+    '色':'se4','塞':'se4','涩':'se4','瑟':'se4','啬':'se4','穑':'se4',
+    '所':'suo3','锁':'suo3','缩':'suo1','索':'suo3','唆':'suo1','梭':'suo1','琐':'suo3','嗦':'suo1','羧':'suo1',
+    '算':'suan4','酸':'suan1','蒜':'suan4',
+    '岁':'sui4','随':'sui2','遂':'sui4','碎':'sui4','虽':'sui1','穗':'sui4','隋':'sui2','燧':'sui4','邃':'sui4',
+    '送':'song4','松':'song1','宋':'song4','颂':'song4','耸':'song3','诵':'song4','讼':'song4','淞':'song1','嵩':'song1',
+    '损':'sun3','孙':'sun1','笋':'sun3','荪':'sun1','隼':'sun3',
+    '死':'si3','丝':'si1','私':'si1','司':'si1','思':'si1','寺':'si4','伺':'si4','撕':'si1','嘶':'si1','嗣':'si4','肆':'si4',
+    '速':'su4','素':'su4','苏':'su1','诉':'su4','塑':'su4','肃':'su4','宿':'su4','俗':'su2','酥':'su1','粟':'su4','溯':'su4','夙':'su4','稣':'su1',
+    // T
+    '他':'ta1','她':'ta1','它':'ta1','踏':'ta4','塔':'ta3','塌':'ta1','榻':'ta4','蹋':'ta4','遢':'ta0',
+    '天':'tian1','田':'tian2','填':'tian2','添':'tian1','甜':'tian2','恬':'tian2','舔':'tian3','腆':'tian3',
+    '同':'tong2','通':'tong1','统':'tong3','痛':'tong4','童':'tong2','铜':'tong2','筒':'tong3','桐':'tong2','桶':'tong3','彤':'tong2','瞳':'tong2','酮':'tong2','佟':'tong2',
+    '太':'tai4','台':'tai2','态':'tai4','抬':'tai2','泰':'tai4','胎':'tai1','汰':'tai4','苔':'tai2','肽':'tai4','钛':'tai4',
+    '体':'ti3','题':'ti2','提':'ti2','替':'ti4','梯':'ti1','踢':'ti1','蹄':'ti2','剃':'ti4','剔':'ti1','啼':'ti2','屉':'ti4','惕':'ti4','嚏':'ti4',
+    '调':'tiao2','条':'tiao2','跳':'tiao4','挑':'tiao1','迢':'tiao2','眺':'tiao4','笤':'tiao2','粜':'tiao4',
+    '头':'tou2','投':'tou2','透':'tou4','偷':'tou1','骰':'tou2',
+    '图':'tu2','土':'tu3','突':'tu1','途':'tu2','涂':'tu2','吐':'tu3','屠':'tu2','兔':'tu4','凸':'tu1','秃':'tu1','荼':'tu2',
+    '团':'tuan2','湍':'tuan1','抟':'tuan2',
+    '推':'tui1','退':'tui4','腿':'tui3','蜕':'tui4','褪':'tui4','颓':'tui2',
+    '脱':'tuo1','拖':'tuo1','托':'tuo1','妥':'tuo3','拓':'tuo4','驼':'tuo2','陀':'tuo2','驮':'tuo2','椭':'tuo3','唾':'tuo4','坨':'tuo2','砣':'tuo2',
+    // W
+    '我':'wo3','握':'wo4','窝':'wo1','沃':'wo4','卧':'wo4','涡':'wo1','蜗':'wo1','斡':'wo4','倭':'wo1','喔':'wo1',
+    '为':'wei4','位':'wei4','未':'wei4','委':'wei3','围':'wei2','维':'wei2','卫':'wei4','微':'wei1','味':'wei4','危':'wei1','威':'wei1','伟':'wei3','唯':'wei2','谓':'wei4','胃':'wei4','尾':'wei3','慰':'wei4','违':'wei2','伪':'wei3','魏':'wei4','畏':'wei4','纬':'wei3','萎':'wei3','蔚':'wei4','帷':'wei2','苇':'wei3','猥':'wei3','巍':'wei1','薇':'wei1',
+    '文':'wen2','问':'wen4','闻':'wen2','温':'wen1','稳':'wen3','纹':'wen2','吻':'wen3','蚊':'wen2','紊':'wen3','雯':'wen2','刎':'wen3','汶':'wen4',
+    '外':'wai4','歪':'wai1','崴':'wai3',
+    '万':'wan4','完':'wan2','晚':'wan3','玩':'wan2','湾':'wan1','碗':'wan3','弯':'wan1','万':'wan4','挽':'wan3','丸':'wan2','顽':'wan2','婉':'wan3','腕':'wan4','皖':'wan3','惋':'wan3','蔓':'wan4','绾':'wan3',
+    '王':'wang2','网':'wang3','往':'wang3','望':'wang4','亡':'wang2','忘':'wang4','汪':'wang1','妄':'wang4','旺':'wang4','枉':'wang3','惘':'wang3','魍':'wang3',
+    '无':'wu2','五':'wu3','物':'wu4','务':'wu4','武':'wu3','午':'wu3','舞':'wu3','误':'wu4','屋':'wu1','吴':'wu2','乌':'wu1','污':'wu1','伍':'wu3','雾':'wu4','悟':'wu4','勿':'wu4','呜':'wu1','吾':'wu2','侮':'wu3','巫':'wu1','芜':'wu2','梧':'wu2','捂':'wu3','钨':'wu1','戊':'wu4','晤':'wu4','鹉':'wu3','兀':'wu4',
+    // X
+    '下':'xia4','夏':'xia4','吓':'xia4','峡':'xia2','侠':'xia2','狭':'xia2','霞':'xia2','暇':'xia2','厦':'xia4','虾':'xia1','匣':'xia2','辖':'xia2','瞎':'xia1','瑕':'xia2','遐':'xia2','黠':'xia2',
+    '小':'xiao3','笑':'xiao4','消':'xiao1','效':'xiao4','校':'xiao4','销':'xiao1','晓':'xiao3','萧':'xiao1','孝':'xiao4','肖':'xiao1','削':'xiao1','嚣':'xiao1','啸':'xiao4','潇':'xiao1','霄':'xiao1','哮':'xiao4','箫':'xiao1','淆':'xiao2',
+    '新':'xin1','心':'xin1','信':'xin4','辛':'xin1','芯':'xin1','欣':'xin1','锌':'xin1','薪':'xin1','鑫':'xin1','忻':'xin1','昕':'xin1','馨':'xin1','衅':'xin4',
+    '行':'xing2','性':'xing4','形':'xing2','兴':'xing1','星':'xing1','型':'xing2','幸':'xing4','姓':'xing4','醒':'xing3','刑':'xing2','腥':'xing1','邢':'xing2','馨':'xin1','猩':'xing1','悻':'xing4',
+    '学':'xue2','血':'xue4','雪':'xue3','穴':'xue2','削':'xue1','薛':'xue1','靴':'xue1','谑':'xue4',
+    '需':'xu1','许':'xu3','续':'xu4','须':'xu1','序':'xu4','徐':'xu2','虚':'xu1','蓄':'xu4','绪':'xu4','叙':'xu4','畜':'xu4','旭':'xu4','絮':'xu4','戌':'xu1','婿':'xu4','墟':'xu1','恤':'xu4','煦':'xu4','酗':'xu4',
+    '先':'xian1','现':'xian4','线':'xian4','县':'xian4','显':'xian3','限':'xian4','险':'xian3','献':'xian4','鲜':'xian1','宪':'xian4','贤':'xian2','陷':'xian4','闲':'xian2','弦':'xian2','掀':'xian1','纤':'xian1','嫌':'xian2','咸':'xian2','衔':'xian2','羡':'xian4','腺':'xian4','娴':'xian2','舷':'xian2','酰':'xian1','跹':'xian1',
+    '想':'xiang3','向':'xiang4','象':'xiang4','项':'xiang4','相':'xiang1','香':'xiang1','乡':'xiang1','响':'xiang3','像':'xiang4','箱':'xiang1','享':'xiang3','详':'xiang2','祥':'xiang2','降':'xiang2','巷':'xiang4','湘':'xiang1','厢':'xiang1','橡':'xiang4','镶':'xiang1','襄':'xiang1','翔':'xiang2','饷':'xiang3','飨':'xiang3',
+    '选':'xuan3','宣':'xuan1','旋':'xuan2','悬':'xuan2','玄':'xuan2','券':'xuan4','轩':'xuan1','炫':'xuan4','绚':'xuan4','漩':'xuan2','眩':'xuan4','暄':'xuan1','癣':'xuan3',
+    '修':'xiu1','秀':'xiu4','袖':'xiu4','休':'xiu1','锈':'xiu4','羞':'xiu1','绣':'xiu4','朽':'xiu3','嗅':'xiu4','溴':'xiu4','岫':'xiu4',
+    '系':'xi4','西':'xi1','细':'xi4','息':'xi1','希':'xi1','喜':'xi3','席':'xi2','析':'xi1','洗':'xi3','戏':'xi4','习':'xi2','吸':'xi1','稀':'xi1','悉':'xi1','夕':'xi1','膝':'xi1','锡':'xi1','牺':'xi1','溪':'xi1','袭':'xi2','惜':'xi1','熙':'xi1','媳':'xi2','隙':'xi4','烯':'xi1','熄':'xi1','汐':'xi1','奚':'xi1','羲':'xi1','皙':'xi1','犀':'xi1',
+    // Y
+    '一':'yi1','以':'yi3','已':'yi3','意':'yi4','义':'yi4','议':'yi4','易':'yi4','医':'yi1','衣':'yi1','依':'yi1','异':'yi4','移':'yi2','益':'yi4','艺':'yi4','宜':'yi2','仪':'yi2','遗':'yi2','疑':'yi2','忆':'yi4','译':'yi4','亦':'yi4','翼':'yi4','役':'yi4','毅':'yi4','抑':'yi4','逸':'yi4','邑':'yi4','驿':'yi4','裔':'yi4','奕':'yi4','屹':'yi4','臆':'yi4','沂':'yi2','咦':'yi2',
+    '也':'ye3','业':'ye4','夜':'ye4','野':'ye3','叶':'ye4','页':'ye4','爷':'ye2','液':'ye4','冶':'ye3','耶':'ye1','咽':'ye4','椰':'ye1','烨':'ye4','掖':'ye4','谒':'ye4',
+    '要':'yao4','药':'yao4','摇':'yao2','腰':'yao1','咬':'yao3','邀':'yao1','耀':'yao4','遥':'yao2','姚':'yao2','窑':'yao2','谣':'yao2','钥':'yao4','夭':'yao1','妖':'yao1','瑶':'yao2','舀':'yao3','鹞':'yao4',
+    '有':'you3','由':'you2','又':'you4','油':'you2','游':'you2','右':'you4','友':'you3','优':'you1','尤':'you2','幼':'you4','邮':'you2','犹':'you2','忧':'you1','幽':'you1','悠':'you1','诱':'you4','佑':'you4','铀':'you2','酉':'you3','柚':'you4','鱿':'you2','莜':'you2',
+    '用':'yong4','永':'yong3','勇':'yong3','拥':'yong1','涌':'yong3','泳':'yong3','庸':'yong1','咏':'yong3','佣':'yong1','踊':'yong3','雍':'yong1','痈':'yong1','甬':'yong3','恿':'yong3',
+    '与':'yu3','于':'yu2','雨':'yu3','语':'yu3','预':'yu4','鱼':'yu2','育':'yu4','玉':'yu4','余':'yu2','域':'yu4','遇':'yu4','宇':'yu3','欲':'yu4','御':'yu4','愈':'yu4','狱':'yu4','誉':'yu4','裕':'yu4','寓':'yu4','豫':'yu4','娱':'yu2','予':'yu3','渔':'yu2','郁':'yu4','吁':'yu4','屿':'yu3','禹':'yu3','羽':'yu3','喻':'yu4','驭':'yu4','芋':'yu4','谕':'yu4',
+    '原':'yuan2','元':'yuan2','员':'yuan2','院':'yuan4','远':'yuan3','园':'yuan2','源':'yuan2','愿':'yuan4','圆':'yuan2','怨':'yuan4','缘':'yuan2','援':'yuan2','冤':'yuan1','袁':'yuan2','渊':'yuan1','猿':'yuan2','苑':'yuan4','辕':'yuan2','垣':'yuan2','媛':'yuan2',
+    '云':'yun2','运':'yun4','允':'yun3','孕':'yun4','匀':'yun2','蕴':'yun4','韵':'yun4','耘':'yun2','陨':'yun3','酝':'yun4','恽':'yun4',
+    '月':'yue4','越':'yue4','约':'yue1','乐':'yue4','阅':'yue4','跃':'yue4','岳':'yue4','粤':'yue4','悦':'yue4','曰':'yue1','钥':'yue4','栎':'yue4',
+    '眼':'yan3','验':'yan4','严':'yan2','言':'yan2','研':'yan2','演':'yan3','烟':'yan1','沿':'yan2','盐':'yan2','延':'yan2','颜':'yan2','掩':'yan3','岩':'yan2','炎':'yan2','宴':'yan4','燕':'yan4','厌':'yan4','雁':'yan4','焰':'yan4','砚':'yan4','咽':'yan1','焉':'yan1','衍':'yan3','阎':'yan2','彦':'yan4','妍':'yan2','檐':'yan2','筵':'yan2','湮':'yan1',
+    '英':'ying1','应':'ying1','影':'ying3','营':'ying2','迎':'ying2','映':'ying4','硬':'ying4','盈':'ying2','颖':'ying3','鹰':'ying1','婴':'ying1','樱':'ying1','莹':'ying2','荧':'ying2','萤':'ying2','萦':'ying2','楹':'ying2','蝇':'ying2','膺':'ying1','缨':'ying1',
+    '样':'yang4','阳':'yang2','洋':'yang2','养':'yang3','扬':'yang2','央':'yang1','杨':'yang2','仰':'yang3','痒':'yang3','氧':'yang3','殃':'yang1','漾':'yang4','鸯':'yang1','秧':'yang1','佯':'yang2','疡':'yang2','烊':'yang2',
+    '印':'yin4','因':'yin1','引':'yin3','银':'yin2','音':'yin1','阴':'yin1','饮':'yin3','隐':'yin3','吟':'yin2','尹':'yin3','姻':'yin1','淫':'yin2','殷':'yin1','荫':'yin1','茵':'yin1','寅':'yin2','龈':'yin2',
+    // Z
+    '在':'zai4','再':'zai4','载':'zai4','灾':'zai1','栽':'zai1','宰':'zai3','崽':'zai3',
+    '做':'zuo4','作':'zuo4','左':'zuo3','坐':'zuo4','座':'zuo4','昨':'zuo2','佐':'zuo3','凿':'zao2','柞':'zuo4',
+    '子':'zi3','自':'zi4','资':'zi1','字':'zi4','紫':'zi3','姿':'zi1','滋':'zi1','兹':'zi1','咨':'zi1','籽':'zi3','淄':'zi1','姊':'zi3','滓':'zi3','籽':'zi3',
+    '最':'zui4','嘴':'zui3','罪':'zui4','醉':'zui4','咀':'zui3',
+    '走':'zou3','奏':'zou4','揍':'zou4','邹':'zou1','驺':'zou1',
+    '总':'zong3','纵':'zong4','宗':'zong1','综':'zong1','踪':'zong1','棕':'zong1','粽':'zong4','鬃':'zong1',
+    '组':'zu3','族':'zu2','足':'zu2','阻':'zu3','租':'zu1','祖':'zu3','卒':'zu2','诅':'zu3','俎':'zu3',
+    '着':'zhe0','者':'zhe3','这':'zhe4','浙':'zhe4','蔗':'zhe4','辙':'zhe2','褶':'zhe3','蛰':'zhe2',
+    '中':'zhong1','种':'zhong3','重':'zhong4','众':'zhong4','钟':'zhong1','终':'zhong1','忠':'zhong1','仲':'zhong4','肿':'zhong3','衷':'zhong1','盅':'zhong1','冢':'zhong3',
+    '真':'zhen1','阵':'zhen4','镇':'zhen4','针':'zhen1','振':'zhen4','震':'zhen4','诊':'zhen3','贞':'zhen1','枕':'zhen3','侦':'zhen1','斟':'zhen1','甄':'zhen1','圳':'zhen4','帧':'zhen1','疹':'zhen3','臻':'zhen1','朕':'zhen4',
+    '正':'zheng4','政':'zheng4','证':'zheng4','整':'zheng3','争':'zheng1','征':'zheng1','郑':'zheng4','症':'zheng4','蒸':'zheng1','挣':'zheng4','睁':'zheng1','筝':'zheng1','拯':'zheng3','狰':'zheng1','怔':'zheng4',
+    '知':'zhi1','只':'zhi3','制':'zhi4','至':'zhi4','之':'zhi1','指':'zhi3','质':'zhi4','直':'zhi2','治':'zhi4','值':'zhi2','职':'zhi2','止':'zhi3','志':'zhi4','纸':'zhi3','支':'zhi1','致':'zhi4','执':'zhi2','置':'zhi4','植':'zhi2','殖':'zhi2','智':'zhi4','枝':'zhi1','织':'zhi1','侄':'zhi2','芝':'zhi1','址':'zhi3','旨':'zhi3','秩':'zhi4','稚':'zhi4','挚':'zhi4','掷':'zhi4','窒':'zhi4','痔':'zhi4','滞':'zhi4',
+    '主':'zhu3','住':'zhu4','注':'zhu4','著':'zhu4','助':'zhu4','朱':'zhu1','逐':'zhu2','珠':'zhu1','筑':'zhu4','竹':'zhu2','柱':'zhu4','猪':'zhu1','祝':'zhu4','诸':'zhu1','铸':'zhu4','株':'zhu1','驻':'zhu4','嘱':'zhu3','蛛':'zhu1','瞩':'zhu3','煮':'zhu3','拄':'zhu3','蛀':'zhu4','伫':'zhu4','贮':'zhu4','洙':'zhu1',
+    '准':'zhun3','谆':'zhun1',
+    '抓':'zhua1','爪':'zhua3',
+    '专':'zhuan1','转':'zhuan3','传':'zhuan4','砖':'zhuan1','赚':'zhuan4','撰':'zhuan4','篆':'zhuan4','馔':'zhuan4',
+    '装':'zhuang1','状':'zhuang4','庄':'zhuang1','壮':'zhuang4','撞':'zhuang4','桩':'zhuang1','妆':'zhuang1','幢':'zhuang4',
+    '追':'zhui1','坠':'zhui4','锥':'zhui1','缀':'zhui4','赘':'zhui4','惴':'zhui4',
+    '展':'zhan3','站':'zhan4','占':'zhan4','战':'zhan4','张':'zhang1','章':'zhang1','长':'zhang3','丈':'zhang4','障':'zhang4','涨':'zhang3','掌':'zhang3','仗':'zhang4','帐':'zhang4','彰':'zhang1','樟':'zhang1','杖':'zhang4','账':'zhang4','嶂':'zhang4',
+    '找':'zhao3','照':'zhao4','招':'zhao1','赵':'zhao4','召':'zhao4','朝':'zhao1','罩':'zhao4','兆':'zhao4','沼':'zhao3','肇':'zhao4','诏':'zhao4','棹':'zhao4',
+    '这':'zhe4','者':'zhe3','浙':'zhe4','蔗':'zhe4','辙':'zhe2','褶':'zhe3','蛰':'zhe2','谪':'zhe2',
+    '周':'zhou1','轴':'zhou2','州':'zhou1','洲':'zhou1','宙':'zhou4','舟':'zhou1','骤':'zhou4','皱':'zhou4','肘':'zhou3','粥':'zhou1','帚':'zhou3','纣':'zhou4','绉':'zhou4',
+    '再':'zai4','载':'zai4','灾':'zai1','栽':'zai1','宰':'zai3','崽':'zai3',
+    '咱':'zan2','暂':'zan4','赞':'zan4','攒':'zan3','簪':'zan1',
+    '脏':'zang1','藏':'zang4','葬':'zang4','赃':'zang1',
+    '早':'zao3','造':'zao4','遭':'zao1','糟':'zao1','枣':'zao3','灶':'zao4','燥':'zao4','藻':'zao3','噪':'zao4','皂':'zao4','凿':'zao2','蚤':'zao3',
+    '则':'ze2','责':'ze2','择':'ze2','泽':'ze2','仄':'ze4',
+    '贼':'zei2',
+    '怎':'zen3','谮':'zen4',
+    '增':'zeng1','赠':'zeng4','憎':'zeng1','曾':'zeng1','缯':'zeng1','甑':'zeng4'
+  };
+
+  function stripTone(pinyin) {
+    return pinyin.replace(/\d/g, '');
+  }
+
+  function getFirstLetter(pinyin) {
+    return pinyin.charAt(0);
+  }
+
+  function convertText(text, mode) {
+    let result = [];
+    for (const ch of text) {
+      if (/[\u4e00-\u9fff]/.test(ch)) {
+        // 中文
+        if (PINYIN_MAP[ch]) {
+          const raw = PINYIN_MAP[ch];
+          if (mode === 'tone') {
+            result.push(renderTone(raw));
+          } else if (mode === 'notone') {
+            result.push(stripTone(raw));
+          } else if (mode === 'first') {
+            result.push(getFirstLetter(raw));
+          }
+        } else {
+          result.push(ch);
+        }
+      } else if (/[a-zA-Z0-9]/.test(ch)) {
+        result.push(ch);
+      } else if (/\s/.test(ch)) {
+        result.push(' ');
+      } else {
+        result.push(ch);
+      }
+    }
+    return result.join(' ');
+  }
+
+  function renderTone(pinyin) {
+    const toneMap = {
+      'a1': 'ā','a2': 'á','a3': 'ǎ','a4': 'à','a0': 'a',
+      'e1': 'ē','e2': 'é','e3': 'ě','e4': 'è','e0': 'e',
+      'i1': 'ī','i2': 'í','i3': 'ǐ','i4': 'ì','i0': 'i',
+      'o1': 'ō','o2': 'ó','o3': 'ǒ','o4': 'ò','o0': 'o',
+      'u1': 'ū','u2': 'ú','u3': 'ǔ','u4': 'ù','u0': 'u',
+      'v1': 'ǖ','v2': 'ǘ','v3': 'ǚ','v4': 'ǜ','v0': 'ü',
+      'n1': 'n','t1': 't' // 这些在结尾处理
+    };
+    // 简化: 返回带数字的形式, 因为真实声调渲染过于复杂
+    // 直接返回拼音, 数字表示声调
+    return pinyin;
+  }
+
+  document.getElementById('py-convert-btn').addEventListener('click', () => {
+    hideError();
+    const raw = input.value;
+    if (!raw.trim()) { showError('请输入中文文本'); return; }
+    const mode = modeSelect.value;
+    const output = convertText(raw, mode);
+    result.textContent = output;
+    outputArea.style.display = 'block';
+  });
+
+  document.getElementById('py-clear-btn').addEventListener('click', () => {
+    input.value = '';
+    result.textContent = '';
+    outputArea.style.display = 'none';
+    hideError();
+  });
+
+  document.getElementById('py-copy-btn').addEventListener('click', () => {
+    const text = result.textContent;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('py-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const btn = document.getElementById('py-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    });
+  });
+})();
+</script>

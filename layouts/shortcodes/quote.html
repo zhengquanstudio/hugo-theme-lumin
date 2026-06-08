@@ -1,0 +1,17 @@
+<blockquote class="blockquote" style="
+  margin: 1.5em 0;
+  padding: 16px 20px;
+  border-left: 4px solid var(--accent-color, #2a9d8f);
+  background: var(--bg-secondary, #f9fafb);
+  border-radius: 0 8px 8px 0;
+  font-style: italic;
+">
+  {{ .Inner | markdownify }}
+  {{- with .Get "author" -}}
+    <footer style="margin-top: 12px; font-style: normal; font-size: 0.875rem; color: var(--text-muted, #6b7280);">
+      — {{ . }}
+      {{- $.Get "source" | printf "《%s》" -}}
+      {{- with $.Get "url" }} (<a href="{{ . }}" target="_blank" rel="noopener">来源</a>){{ end }}
+    </footer>
+  {{- end }}
+</blockquote>

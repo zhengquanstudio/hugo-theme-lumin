@@ -1,0 +1,246 @@
+{{ define "main" }}
+{{ $albums := hugo.Data.gallery.albums | default slice }}
+
+{{ partial "fancybox.html" . }}
+
+<style>
+:root {
+  --gal-bg: #f8fafc;
+  --gal-card: #ffffff;
+  --gal-text: #1e293b;
+  --gal-text-sec: #475569;
+  --gal-text-muted: #94a3b8;
+  --gal-accent: #22c55e;
+  --gal-accent-light: #dcfce7;
+  --gal-accent-glow: rgba(34,197,94,.25);
+  --gal-border: #e2e8f0;
+  --gal-hover: #f1f5f9;
+  --gal-shadow-sm: 0 1px 3px rgba(0,0,0,.06);
+  --gal-shadow-md: 0 4px 20px rgba(0,0,0,.08);
+  --gal-shadow-lg: 0 8px 40px rgba(0,0,0,.12);
+  --gal-grad-1: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0f9ff 100%);
+}
+[data-theme="dark"] {
+  --gal-bg: #0f172a;--gal-card: #1e293b;--gal-text: #f1f5f9;--gal-text-sec: #94a3b8;
+  --gal-text-muted: #64748b;--gal-border: #334155;--gal-hover: #334155;
+  --gal-accent-light: rgba(34,197,94,.12);--gal-shadow-sm: 0 1px 3px rgba(0,0,0,.2);
+  --gal-shadow-md: 0 4px 20px rgba(0,0,0,.35);--gal-shadow-lg: 0 8px 40px rgba(0,0,0,.45);
+  --gal-grad-1: linear-gradient(135deg, #0c1821 0%, #12231f 50%, #0d1926 100%);
+}
+
+.main-wrapper:has(#gallery-page) .container{max-width:100%!important;padding-left:40px!important;padding-right:40px!important;}
+#gallery-page{
+  max-width:1480px;margin:0 auto 24px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+@media(max-width:900px){.main-wrapper:has(#gallery-page) .container{padding-left:16px!important;padding-right:16px!important;}}
+
+.gallery-header{text-align:center;min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 24px;background:var(--gal-grad-1);border-radius:20px;margin-bottom:22px;box-shadow:var(--gal-shadow-md);border:1px solid rgba(34,197,94,.12);position:relative;overflow:hidden;}
+.gallery-header::before{content:'';position:absolute;top:-60%;left:-30%;width:200%;height:200%;background:radial-gradient(circle at 30% 40%,rgba(34,197,94,.07) 0%,transparent 55%);pointer-events:none;}
+.gallery-title{font-size:2rem;font-weight:800;color:var(--gal-text);margin:0 0 10px;display:inline-flex;align-items:center;gap:12px;position:relative;z-index:1;}
+.title-icon{font-size:1.35em;color:var(--gal-accent);animation:gal-bounce 2.5s ease-in-out infinite;display:inline-block;}
+@keyframes gal-bounce{0%,100%{transform:scale(1) rotate(-5deg)}50%{transform:scale(1.08) rotate(5deg)}}
+.gallery-subtitle{font-size:.95rem;color:var(--gal-text-sec);margin:0;line-height:1.6;position:relative;z-index:1;}
+
+.albums-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px;margin-bottom:28px;}
+.album-card{background:var(--gal-card);border-radius:16px;overflow:hidden;box-shadow:var(--gal-shadow-sm);border:1px solid var(--gal-border);cursor:pointer;transition:all .35s cubic-bezier(.4,0,.2,1);position:relative;}
+.album-card:hover{transform:translateY(-5px);box-shadow:var(--gal-shadow-lg);border-color:rgba(34,197,94,.25);}
+.album-cover{position:relative;width:100%;aspect-ratio:4/3;overflow:hidden;}
+.album-cover img{width:100%;height:100%;object-fit:cover;transition:transform .5s ease;}
+.album-card:hover .album-cover img{transform:scale(1.08);}
+.album-cover-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.55) 0%,transparent 50%);display:flex;align-items:flex-end;padding:14px;opacity:0;transition:opacity .3s ease;}
+.album-card:hover .album-cover-overlay{opacity:1;}
+.album-count-badge{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.5);color:#fff;font-size:11.5px;padding:3px 10px;border-radius:12px;backdrop-filter:blur(4px);font-weight:500;}
+.album-info{padding:14px 16px;text-align:center;}
+.album-name{font-size:15px;font-weight:600;color:var(--gal-text);margin:0 0 5px;}
+.album-desc{font-size:12.5px;color:var(--gal-text-muted);margin:0;line-height:1.5;}
+.album-card.active{border-color:var(--gal-accent);box-shadow:0 4px 20px var(--gal-accent-glow);}
+.album-card.active .album-info .album-name{color:var(--gal-accent);}
+
+.photo-section{background:var(--gal-card);border-radius:18px;box-shadow:var(--gal-shadow-md);padding:24px;border:1px solid var(--gal-border);margin-bottom:20px;}
+.photo-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--gal-border);}
+.photo-title{font-size:17px;font-weight:700;color:var(--gal-text);display:flex;align-items:center;gap:8px;}
+.photo-title i{color:var(--gal-accent);}
+.photo-count{font-size:13px;color:var(--gal-text-muted);background:var(--gal-accent-light);padding:3px 12px;border-radius:12px;font-weight:500;}
+.photo-back-btn{display:flex;align-items:center;gap:6px;padding:7px 16px;background:var(--gal-hover);border:1px solid var(--gal-border);border-radius:20px;color:var(--gal-text-sec);cursor:pointer;font-size:13px;transition:all .25s ease;white-space:nowrap;margin-bottom:16px;}
+.photo-back-btn:hover{border-color:var(--gal-accent);color:var(--gal-accent);}
+
+.masonry{column-count:4;column-gap:14px;margin:0;}
+.masonry-item{break-inside:avoid;margin-bottom:14px;display:block;border-radius:12px;overflow:hidden;position:relative;cursor:zoom-in;transition:box-shadow .35s ease,transform .35s cubic-bezier(.4,0,.2,1);}
+.masonry-item:hover{box-shadow:0 12px 36px rgba(0,0,0,.22);transform:scale(1.02);}
+.masonry-item img{width:100%;display:block;border-radius:12px;transition:transform .45s cubic-bezier(.4,0,.2,1);}
+.masonry-item:hover img{transform:scale(1.06);}
+.masonry-item .mi-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.45) 0%,transparent 60%);opacity:0;transition:opacity .3s ease;pointer-events:none;border-radius:12px;}
+.masonry-item:hover .mi-overlay{opacity:1;}
+.masonry-item .mi-index{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.45);color:#fff;font-size:11px;font-weight:600;width:24px;height:24px;border-radius:8px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);opacity:0;transition:opacity .3s ease;pointer-events:none;}
+.masonry-item:hover .mi-index{opacity:1;}
+
+.masonry-item.img-loading{opacity:0;transform:scale(.96);}
+.masonry-item.img-loaded{opacity:1;transform:scale(1);transition:opacity .5s ease,transform .5s cubic-bezier(.4,0,.2,1);}
+
+.gallery-empty{text-align:center;padding:60px 40px;color:var(--gal-text-muted);}
+.gallery-empty i{font-size:4rem;margin-bottom:16px;opacity:.5;}
+
+.bottom-quote{text-align:center;margin-top:20px;padding:18px 24px;background:rgba(34,197,94,.05);border-radius:14px;border:1px solid rgba(34,197,97,.12);font-size:14px;color:var(--gal-text-sec);}
+[data-theme="dark"] .bottom-quote{background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.15)}
+
+@media(max-width:1200px){.masonry{column-count:3;}}
+@media(max-width:900px){
+  .albums-grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;}
+  .masonry{column-count:2;column-gap:10px;}
+  .gallery-header{padding:26px 16px 20px}.gallery-title{font-size:1.65rem;}
+  .photo-section{padding:18px 16px;}
+}
+@media(max-width:600px){
+  .albums-grid{grid-template-columns:repeat(2,1fr);gap:10px;}
+  .masonry{column-count:2;column-gap:8px;}
+  .masonry-item{margin-bottom:8px;}
+  .gallery-header{padding:22px 12px 16px;}.gallery-title{font-size:1.4rem;}
+}
+</style>
+
+<script id="gallery-data" type="application/json">
+{{ $albums | jsonify | safeJS }}
+</script>
+
+<div id="gallery-page">
+  <div class="gallery-header">
+    <h1 class="gallery-title"><span class="title-icon"><i class="fas fa-images"></i></span>我的相册</h1>
+    <p class="gallery-subtitle">用镜头记录美好瞬间 · 每一张照片都是时光的标本</p>
+  </div>
+
+  <div class="albums-grid" id="albums-grid">
+    {{ range $idx, $album := $albums }}
+    {{ $imgCount := len $album.images }}
+    <div class="album-card" data-slug="{{ $album.slug }}" onclick="openAlbum({{ $idx }})">
+      <div class="album-cover">
+        {{ if $album.cover }}
+        <img src="{{ $album.cover }}" alt="{{ $album.name }}" loading="lazy">
+        {{ else }}
+        <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--gal-hover);color:var(--gal-text-muted);font-size:3rem;"><i class="fas fa-folder-open"></i></div>
+        {{ end }}
+        <div class="album-cover-overlay"></div>
+        <span class="album-count-badge">{{ $imgCount }} 张</span>
+      </div>
+      <div class="album-info">
+        <h3 class="album-name">{{ $album.name }}</h3>
+        <p class="album-desc">{{ $album.desc }}</p>
+      </div>
+    </div>
+    {{ else }}
+    <div class="gallery-empty" style="grid-column:1/-1">
+      <i class="fas fa-folder-open"></i>
+      <p style="color:var(--gal-text-sec)">暂无相册</p>
+    </div>
+    {{ end }}
+  </div>
+
+  <div class="photo-section" id="photo-section" style="display:none;">
+    <div class="photo-header">
+      <div class="photo-title"><i class="fas fa-photo-film"></i><span id="current-album-name">--</span></div>
+      <span class="photo-count" id="photo-count">0 张</span>
+    </div>
+    <button class="photo-back-btn" onclick="showAlbumList()"><i class="fas fa-arrow-left"></i> 返回相册列表</button>
+    <div class="masonry" id="photo-grid"></div>
+  </div>
+
+  <div class="bottom-quote"><i class="fas fa-camera-retro"></i> 每一张照片，都是时间的礼物 📷</div>
+
+  {{ partial "comments.html" . }}
+</div>
+
+<script>
+(function() {
+  var albums = [];
+  try {
+    var el = document.getElementById('gallery-data');
+    if (el) albums = JSON.parse(el.textContent);
+  } catch(e) {}
+  if (!albums.length) return;
+
+  var currentIdx = -1;
+  var grid = document.getElementById('albums-grid');
+  var photoSection = document.getElementById('photo-section');
+  var photoGrid = document.getElementById('photo-grid');
+  var albumName = document.getElementById('current-album-name');
+  var photoCount = document.getElementById('photo-count');
+
+  function initFancybox() {
+    if (typeof Fancybox === 'undefined') return false;
+    Fancybox.destroy();
+    Fancybox.bind('[data-fancybox="gallery"]', {
+      infinite: true,
+      transition: 'cross-fade',
+      preload: 2,
+      Thumbs: { autoStart: true },
+      Toolbar: { display: ['close'] },
+      Carousel: { infinite: true },
+      Slideshow: { playOnStart: false, timeout: 3000 }
+    });
+    return true;
+  }
+
+  function tryInitFancybox() {
+    if (!initFancybox()) {
+      if (!window.__FANCYBOX_LOADING__) {
+        var s = document.createElement('script');
+        s.src = '/libs/fancybox/fancybox.umd.js';
+        s.onload = function() {
+          window.__FANCYBOX_READY = true;
+          initFancybox();
+        };
+        document.head.appendChild(s);
+        var l = document.createElement('link');
+        l.rel = 'stylesheet';
+        l.href = '/libs/fancybox/fancybox.css';
+        document.head.appendChild(l);
+        window.__FANCYBOX_LOADING__ = true;
+      } else {
+        document.addEventListener('fancybox:ready', function() {
+          initFancybox();
+        }, { once: true });
+      }
+    }
+  }
+
+  window.openAlbum = function(idx) {
+    currentIdx = idx;
+    var album = albums[idx];
+    if (!album) return;
+    albumName.textContent = album.name || album.slug;
+    var imgs = album.images || [];
+    photoCount.textContent = imgs.length + ' 张';
+    if (imgs.length === 0) {
+      photoGrid.innerHTML = '<div class="gallery-empty"><i class="fas fa-image"></i><p style="color:var(--gal-text-sec)">暂无图片</p></div>';
+    } else {
+      var html = '';
+      for (var i = 0; i < imgs.length; i++) {
+        html += '<a class="masonry-item img-loading" href="' + imgs[i] + '" data-caption="' + album.name + ' - 第 ' + (i+1) + ' 张" data-fancybox="gallery">';
+        html += '<img src="' + imgs[i] + '" alt="' + album.name + '-' + (i+1) + '" loading="lazy" onload="this.parentElement.classList.add(\'img-loaded\')" onerror="this.parentElement.classList.add(\'img-loaded\')">';
+        html += '<div class="mi-overlay"></div>';
+        html += '<span class="mi-index">' + (i+1) + '</span>';
+        html += '</a>';
+      }
+      photoGrid.innerHTML = html;
+      tryInitFancybox();
+    }
+    var cards = document.querySelectorAll('.album-card');
+    for (var k = 0; k < cards.length; k++) cards[k].classList.toggle('active', k === idx);
+    grid.style.display = 'none';
+    photoSection.style.display = 'block';
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  };
+
+  window.showAlbumList = function() {
+    currentIdx = -1;
+    if (typeof Fancybox !== 'undefined') {
+      Fancybox.destroy();
+    }
+    photoSection.style.display = 'none';
+    grid.style.display = '';
+    var cards = document.querySelectorAll('.album-card');
+    for (var k = 0; k < cards.length; k++) cards[k].classList.remove('active');
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  };
+})();
+</script>
+{{ end }}

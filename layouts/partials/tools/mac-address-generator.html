@@ -1,0 +1,114 @@
+<div class="tool-input-group">
+  <label class="tool-label">生成数量</label>
+  <input class="tool-input" type="number" id="mag-count" min="1" max="100" value="5" style="width:120px;">
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">前缀 (可选)</label>
+  <input class="tool-input" type="text" id="mag-prefix" placeholder="如 00:1A:2B 留空则随机" style="width:200px;">
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">分隔符</label>
+  <select class="tool-select" id="mag-sep">
+    <option value=":" selected>冒号 :</option>
+    <option value="-">横线 -</option>
+  </select>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">大小写</label>
+  <select class="tool-select" id="mag-case">
+    <option value="upper" selected>大写</option>
+    <option value="lower">小写</option>
+  </select>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="mag-gen-btn">生成</button>
+  <button class="tool-btn tool-btn-success" id="mag-copy-all">复制全部</button>
+</div>
+
+<div class="tool-output" id="mag-output-area" style="display:none;">
+  <div class="tool-result" id="mag-result"></div>
+</div>
+
+<script>
+(function(){
+  var countInput = document.getElementById('mag-count');
+  var prefixInput = document.getElementById('mag-prefix');
+  var sepSelect = document.getElementById('mag-sep');
+  var caseSelect = document.getElementById('mag-case');
+  var genBtn = document.getElementById('mag-gen-btn');
+  var copyAllBtn = document.getElementById('mag-copy-all');
+  var resultEl = document.getElementById('mag-result');
+  var outputArea = document.getElementById('mag-output-area');
+
+  function randomHex(){
+    return Math.floor(Math.random() * 256).toString(16).padStart(2, '0');
+  }
+
+  function generateSingle(sep, isUpper){
+    var mac = [];
+    mac.push(Math.floor(Math.random() * 16 * 2).toString(16).padStart(2, '0')); // ensure unicast
+    for(var i = 1; i < 6; i++){
+      mac.push(randomHex());
+    }
+    var result = mac.join(sep);
+    return isUpper ? result.toUpperCase() : result.toLowerCase();
+  }
+
+  function generate(){
+    var count = Math.min(100, Math.max(1, parseInt(countInput.value, 10) || 5));
+    countInput.value = count;
+    var sep = sepSelect.value;
+    var isUpper = caseSelect.value === 'upper';
+    var prefix = prefixInput.value.trim();
+
+    var results = [];
+    for(var i = 0; i < count; i++){
+      if(prefix){
+        var remaining = 17 - prefix.length;
+        if(remaining <= 0){
+          results.push(prefix);
+          continue;
+        }
+        var neededOctets = Math.ceil(remaining / 3);
+        var mac = '';
+        for(var j = 0; j < neededOctets; j++){
+          if(j > 0) mac += sep;
+          mac += (isUpper ? randomHex().toUpperCase() : randomHex());
+        }
+        results.push(prefix + (mac ? sep + mac : ''));
+      } else {
+        results.push(generateSingle(sep, isUpper));
+      }
+    }
+
+    resultEl.textContent = results.join('\n');
+    outputArea.style.display = 'block';
+  }
+
+  genBtn.addEventListener('click', generate);
+
+  copyAllBtn.addEventListener('click', function(){
+    var text = resultEl.textContent;
+    if(!text) return;
+    navigator.clipboard.writeText(text).then(function(){
+      copyAllBtn.textContent = '已复制！';
+      setTimeout(function(){ copyAllBtn.textContent = '复制全部'; }, 1500);
+    }).catch(function(){
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      copyAllBtn.textContent = '已复制！';
+      setTimeout(function(){ copyAllBtn.textContent = '复制全部'; }, 1500);
+    });
+  });
+
+  generate();
+})();
+</script>

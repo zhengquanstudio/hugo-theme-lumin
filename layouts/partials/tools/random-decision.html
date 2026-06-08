@@ -1,0 +1,185 @@
+<div class="tool-tabs">
+  <button class="tool-tab active" data-rd-tab="yesno">是/否决策</button>
+  <button class="tool-tab" data-rd-tab="options">多选项随机</button>
+  <button class="tool-tab" data-rd-tab="spin">转盘抽奖</button>
+</div>
+
+<!-- 是/否决策 -->
+<div id="rd-panel-yesno" style="text-align:center;padding:20px 0;">
+  <p style="color:var(--text-muted,#6b7280);margin-bottom:20px;font-size:.9rem;">让随机决定你的答案</p>
+  <div id="rd-yn-result" style="display:none;margin-bottom:20px;">
+    <div id="rd-yn-answer" style="font-size:4rem;font-weight:900;"></div>
+    <div id="rd-yn-text" style="font-size:1.2rem;font-weight:700;margin-top:8px;"></div>
+  </div>
+  <button class="tool-btn tool-btn-primary" id="rd-yn-btn" style="font-size:1rem;padding:14px 36px;">
+    <i class="fas fa-question"></i> 随机决定！
+  </button>
+</div>
+
+<!-- 多选项随机 -->
+<div id="rd-panel-options" style="display:none;">
+  <div class="tool-input-group">
+    <label class="tool-label">输入选项（每行一个）</label>
+    <textarea class="tool-textarea" id="rd-options-input" placeholder="吃火锅&#10;吃寿司&#10;吃烤肉&#10;自己做饭" style="min-height:140px;"></textarea>
+  </div>
+  <div class="tool-input-group">
+    <label class="tool-label">抽取数量</label>
+    <input type="number" class="tool-input" id="rd-options-count" value="1" min="1" style="max-width:120px;">
+  </div>
+  <label class="tool-switch" style="margin-bottom:14px;display:inline-flex;"><input type="checkbox" id="rd-options-unique" checked><span class="tool-switch-track"></span>不重复抽取</label>
+  <div class="tool-btn-row">
+    <button class="tool-btn tool-btn-primary" id="rd-options-btn"><i class="fas fa-shuffle"></i> 随机抽取</button>
+    <button class="tool-btn tool-btn-danger" id="rd-options-clear"><i class="fas fa-trash"></i> 清空</button>
+  </div>
+  <div id="rd-options-result" style="display:none;margin-top:18px;text-align:center;padding:20px;background:var(--bg-secondary,#f9fafb);border-radius:14px;border:1.5px solid var(--border-color,#e5e7eb);">
+    <div style="font-size:.8rem;color:var(--text-muted,#9ca3af);margin-bottom:8px;">随机结果</div>
+    <div id="rd-options-answer" style="font-size:1.6rem;font-weight:800;color:#667eea;"></div>
+  </div>
+</div>
+
+<!-- 转盘抽奖 -->
+<div id="rd-panel-spin" style="display:none;">
+  <div class="tool-input-group">
+    <label class="tool-label">输入选项（每行一个，最多 12 个）</label>
+    <textarea class="tool-textarea" id="rd-spin-input" placeholder="选项 A&#10;选项 B&#10;选项 C" style="min-height:120px;"></textarea>
+  </div>
+  <div class="tool-btn-row">
+    <button class="tool-btn tool-btn-primary" id="rd-spin-build-btn"><i class="fas fa-rotate"></i> 生成转盘</button>
+  </div>
+  <div id="rd-spin-area" style="display:none;text-align:center;margin-top:18px;">
+    <div style="position:relative;display:inline-block;">
+      <canvas id="rd-spin-canvas" width="300" height="300" style="border-radius:50%;box-shadow:0 4px 20px rgba(0,0,0,.15);"></canvas>
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;background:#fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,.2);z-index:2;display:flex;align-items:center;justify-content:center;cursor:pointer;" id="rd-spin-center-btn">
+        <i class="fas fa-play" style="color:#667eea;font-size:12px;"></i>
+      </div>
+      <div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);font-size:20px;z-index:3;">▼</div>
+    </div>
+    <div id="rd-spin-winner" style="display:none;margin-top:16px;padding:12px 24px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-radius:12px;font-size:1.1rem;font-weight:700;"></div>
+    <div style="margin-top:12px;">
+      <button class="tool-btn tool-btn-primary" id="rd-spin-btn" style="margin:0 6px;"><i class="fas fa-rotate"></i> 开始转动</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const tabs = document.querySelectorAll('[data-rd-tab]');
+  const panels = {yesno:'rd-panel-yesno',options:'rd-panel-options',spin:'rd-panel-spin'};
+  tabs.forEach(tab=>{
+    tab.addEventListener('click',()=>{
+      tabs.forEach(t=>t.classList.remove('active'));tab.classList.add('active');
+      Object.values(panels).forEach(id=>document.getElementById(id).style.display='none');
+      document.getElementById(panels[tab.getAttribute('data-rd-tab')]).style.display='';
+    });
+  });
+
+  // Yes/No
+  const ynAnswers=[
+    {emoji:'✅',text:'是的，去做吧！',color:'#22c55e'},
+    {emoji:'❌',text:'不，放弃它',color:'#ef4444'},
+    {emoji:'🤔',text:'再想想？',color:'#f59e0b'},
+    {emoji:'🎯',text:'绝对要做！',color:'#22c55e'},
+    {emoji:'🙅',text:'千万别这么做',color:'#ef4444'},
+  ];
+  document.getElementById('rd-yn-btn').addEventListener('click',()=>{
+    const a=ynAnswers[Math.floor(Math.random()*ynAnswers.length)];
+    const r=document.getElementById('rd-yn-result');
+    document.getElementById('rd-yn-answer').textContent=a.emoji;
+    const textEl=document.getElementById('rd-yn-text');
+    textEl.textContent=a.text;textEl.style.color=a.color;
+    r.style.display='';
+    r.style.animation='none';
+    requestAnimationFrame(()=>{r.style.animation='';});
+  });
+
+  // Options
+  document.getElementById('rd-options-btn').addEventListener('click',()=>{
+    const lines=document.getElementById('rd-options-input').value.split('\n').map(s=>s.trim()).filter(s=>s!=='');
+    if(lines.length<2){alert('请输入至少 2 个选项');return;}
+    const count=parseInt(document.getElementById('rd-options-count').value)||1;
+    const unique=document.getElementById('rd-options-unique').checked;
+    if(unique&&count>lines.length){alert(`只有 ${lines.length} 个选项`);return;}
+    const shuffled=[...lines];
+    for(let i=shuffled.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];}
+    const picked=unique?shuffled.slice(0,count):Array.from({length:count},()=>lines[Math.floor(Math.random()*lines.length)]);
+    document.getElementById('rd-options-answer').textContent=picked.join(' / ');
+    document.getElementById('rd-options-result').style.display='';
+  });
+  document.getElementById('rd-options-clear').addEventListener('click',()=>{
+    document.getElementById('rd-options-input').value='';
+    document.getElementById('rd-options-result').style.display='none';
+  });
+
+  // Spin wheel
+  const spinColors=['#667eea','#ef4444','#22c55e','#f59e0b','#ec4899','#8b5cf6','#06b6d4','#f97316','#14b8a6','#a855f7','#0ea5e9','#84cc16'];
+  let spinItems=[],spinAngle=0,spinning=false;
+
+  function drawWheel(angle) {
+    const canvas=document.getElementById('rd-spin-canvas');
+    const ctx=canvas.getContext('2d');
+    const cx=150,cy=150,r=140;
+    ctx.clearRect(0,0,300,300);
+    const n=spinItems.length;
+    if(!n) return;
+    const arc=2*Math.PI/n;
+    for(let i=0;i<n;i++){
+      const start=angle+i*arc, end=start+arc;
+      ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,start,end);ctx.closePath();
+      ctx.fillStyle=spinColors[i%spinColors.length];ctx.fill();
+      ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
+      ctx.save();
+      ctx.translate(cx,cy);ctx.rotate(start+arc/2);
+      ctx.textAlign='right';ctx.fillStyle='#fff';ctx.font='bold 13px sans-serif';
+      ctx.shadowColor='rgba(0,0,0,.3)';ctx.shadowBlur=3;
+      const label=spinItems[i].length>8?spinItems[i].slice(0,7)+'…':spinItems[i];
+      ctx.fillText(label,r-10,4);
+      ctx.restore();
+    }
+    // Center circle
+    ctx.beginPath();ctx.arc(cx,cy,20,0,2*Math.PI);ctx.fillStyle='#fff';ctx.fill();
+  }
+
+  document.getElementById('rd-spin-build-btn').addEventListener('click',()=>{
+    const lines=document.getElementById('rd-spin-input').value.split('\n').map(s=>s.trim()).filter(s=>s!=='').slice(0,12);
+    if(lines.length<2){alert('请输入至少 2 个选项（最多 12 个）');return;}
+    spinItems=lines; spinAngle=0;
+    document.getElementById('rd-spin-area').style.display='';
+    document.getElementById('rd-spin-winner').style.display='none';
+    drawWheel(spinAngle);
+  });
+
+  function doSpin(){
+    if(spinning||!spinItems.length) return;
+    spinning=true;
+    document.getElementById('rd-spin-winner').style.display='none';
+    const totalRot = 2*Math.PI*5 + Math.random()*2*Math.PI;
+    const duration=3000;
+    const start=performance.now();
+    const startAngle=spinAngle;
+    function frame(now){
+      const elapsed=now-start;
+      const progress=Math.min(elapsed/duration,1);
+      const ease=1-Math.pow(1-progress,3);
+      spinAngle=startAngle+totalRot*ease;
+      drawWheel(spinAngle);
+      if(progress<1){requestAnimationFrame(frame);}
+      else{
+        spinning=false;
+        const n=spinItems.length;
+        const arc=2*Math.PI/n;
+        // Pointer at top (3*pi/2 from 0 = -pi/2)
+        const pointer = -Math.PI/2;
+        const normalAngle = ((pointer - spinAngle) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
+        const idx = Math.floor(normalAngle/arc) % n;
+        const winner = document.getElementById('rd-spin-winner');
+        winner.textContent = '🎉 ' + spinItems[idx];
+        winner.style.display='';
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  document.getElementById('rd-spin-btn').addEventListener('click', doSpin);
+  document.getElementById('rd-spin-center-btn').addEventListener('click', doSpin);
+})();
+</script>

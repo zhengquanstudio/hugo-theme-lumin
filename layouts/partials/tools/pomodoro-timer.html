@@ -1,0 +1,134 @@
+<div style="text-align:center;">
+  <div style="position:relative;display:inline-block;">
+    <svg id="pom-svg" width="200" height="200" viewBox="0 0 200 200">
+      <circle cx="100" cy="100" r="90" fill="none" stroke="#e0e0e0" stroke-width="8"/>
+      <circle id="pom-progress" cx="100" cy="100" r="90" fill="none" stroke="#4a90d9" stroke-width="8" stroke-linecap="round" stroke-dasharray="565.48" stroke-dashoffset="0" transform="rotate(-90 100 100)"/>
+    </svg>
+    <div id="pom-display" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:32px;font-family:monospace;font-weight:bold;">25:00</div>
+  </div>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;justify-content:center;">
+  <button class="pom-preset" data-time="25" style="padding:6px 12px;border:1px solid #4a90d9;background:#e8f0fe;border-radius:4px;cursor:pointer;">工作 25min</button>
+  <button class="pom-preset" data-time="5" style="padding:6px 12px;border:1px solid #ddd;background:#fff;border-radius:4px;cursor:pointer;">短休 5min</button>
+  <button class="pom-preset" data-time="15" style="padding:6px 12px;border:1px solid #ddd;background:#fff;border-radius:4px;cursor:pointer;">长休 15min</button>
+</div>
+<div class="tool-input-group" style="text-align:center;">
+  <label class="tool-label" style="display:inline-block;margin-right:8px;">自定义时长（分钟）</label>
+  <input class="tool-input" type="number" id="pom-custom" value="25" min="1" max="120" style="width:80px;display:inline-block;">
+</div>
+<div class="tool-btn-row" style="justify-content:center;">
+  <button class="tool-btn tool-btn-primary" id="pom-start">开始</button>
+  <button class="tool-btn" id="pom-pause" disabled>暂停</button>
+  <button class="tool-btn" id="pom-reset">重置</button>
+</div>
+
+<script>
+(function() {
+  var totalSeconds = 25 * 60;
+  var remaining = totalSeconds;
+  var timer = null, running = false;
+  var circumference = 2 * Math.PI * 90;
+
+  var display = document.getElementById('pom-display');
+  var progress = document.getElementById('pom-progress');
+
+  function format(sec) {
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  }
+
+  function updateDisplay() {
+    display.textContent = format(remaining);
+    var offset = circumference * (1 - remaining / totalSeconds);
+    progress.setAttribute('stroke-dashoffset', offset);
+  }
+
+  function beep() {
+    try {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 800;
+      osc.type = 'square';
+      gain.gain.value = 0.1;
+      osc.start();
+      setTimeout(function() { osc.stop(); ctx.close(); }, 200);
+    } catch(e) {}
+  }
+
+  document.getElementById('pom-start').addEventListener('click', function() {
+    if (running) return;
+    running = true;
+    timer = setInterval(function() {
+      remaining--;
+      updateDisplay();
+      if (remaining <= 0) {
+        clearInterval(timer);
+        running = false;
+        beep();
+        setTimeout(beep, 300);
+        setTimeout(beep, 600);
+        document.getElementById('pom-start').disabled = false;
+        document.getElementById('pom-pause').disabled = true;
+      }
+    }, 1000);
+    document.getElementById('pom-start').disabled = true;
+    document.getElementById('pom-pause').disabled = false;
+  });
+
+  document.getElementById('pom-pause').addEventListener('click', function() {
+    running = false;
+    clearInterval(timer);
+    document.getElementById('pom-start').disabled = false;
+    document.getElementById('pom-start').textContent = '继续';
+    document.getElementById('pom-pause').disabled = true;
+  });
+
+  document.getElementById('pom-reset').addEventListener('click', function() {
+    running = false;
+    clearInterval(timer);
+    remaining = totalSeconds;
+    updateDisplay();
+    document.getElementById('pom-start').disabled = false;
+    document.getElementById('pom-start').textContent = '开始';
+    document.getElementById('pom-pause').disabled = true;
+  });
+
+  var presets = document.querySelectorAll('.pom-preset');
+  for (var i = 0; i < presets.length; i++) {
+    presets[i].addEventListener('click', function() {
+      var min = parseInt(this.dataset.time);
+      totalSeconds = min * 60;
+      remaining = totalSeconds;
+      updateDisplay();
+      running = false;
+      clearInterval(timer);
+      document.getElementById('pom-start').disabled = false;
+      document.getElementById('pom-start').textContent = '开始';
+      document.getElementById('pom-pause').disabled = true;
+      document.getElementById('pom-custom').value = min;
+      for (var j = 0; j < presets.length; j++) { presets[j].style.background = '#fff'; presets[j].style.border = '1px solid #ddd'; }
+      this.style.background = '#e8f0fe';
+      this.style.border = '1px solid #4a90d9';
+    });
+  }
+
+  document.getElementById('pom-custom').addEventListener('change', function() {
+    var min = parseInt(this.value);
+    if (isNaN(min) || min < 1) return;
+    totalSeconds = min * 60;
+    remaining = totalSeconds;
+    updateDisplay();
+    running = false;
+    clearInterval(timer);
+    document.getElementById('pom-start').disabled = false;
+    document.getElementById('pom-start').textContent = '开始';
+    document.getElementById('pom-pause').disabled = true;
+  });
+
+  updateDisplay();
+})();
+</script>

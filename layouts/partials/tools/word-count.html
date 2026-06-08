@@ -1,0 +1,98 @@
+<div class="tool-input-group">
+  <label class="tool-label">输入文本</label>
+  <textarea class="tool-textarea" id="wc-textarea" placeholder="在此输入或粘贴文本，统计结果将实时更新..." style="min-height:200px;">Hugo 是一个基于 Go 语言开发的静态网站生成器，以其极快的构建速度和丰富的主题生态著称。它支持 Markdown 格式的内容创作，并提供强大的模板系统，让开发者可以灵活定制网站外观。
+
+Word count is useful for writers, bloggers, and developers who need to track the length of their content. This tool supports both Chinese and English text statistics.</textarea>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-danger" id="wc-clear-btn">🗑️ 清空</button>
+</div>
+
+<div class="tool-stats" id="wc-stats">
+  <div class="tool-stat">
+    <div class="tool-stat-value" id="wc-chars">0</div>
+    <div class="tool-stat-label">字符数（含空格）</div>
+  </div>
+  <div class="tool-stat">
+    <div class="tool-stat-value" id="wc-chars-no-space">0</div>
+    <div class="tool-stat-label">字符数（不含空格）</div>
+  </div>
+  <div class="tool-stat">
+    <div class="tool-stat-value" id="wc-words">0</div>
+    <div class="tool-stat-label">英文单词数</div>
+  </div>
+  <div class="tool-stat">
+    <div class="tool-stat-value" id="wc-cjk">0</div>
+    <div class="tool-stat-label">中文字符数</div>
+  </div>
+  <div class="tool-stat">
+    <div class="tool-stat-value" id="wc-lines">0</div>
+    <div class="tool-stat-label">行数</div>
+  </div>
+  <div class="tool-stat">
+    <div class="tool-stat-value" id="wc-paragraphs">0</div>
+    <div class="tool-stat-label">段落数</div>
+  </div>
+  <div class="tool-stat">
+    <div class="tool-stat-value" id="wc-bytes">0</div>
+    <div class="tool-stat-label">字节数（UTF-8）</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const textarea = document.getElementById('wc-textarea');
+  const clearBtn = document.getElementById('wc-clear-btn');
+  const charsEl = document.getElementById('wc-chars');
+  const charsNoSpaceEl = document.getElementById('wc-chars-no-space');
+  const wordsEl = document.getElementById('wc-words');
+  const cjkEl = document.getElementById('wc-cjk');
+  const linesEl = document.getElementById('wc-lines');
+  const paragraphsEl = document.getElementById('wc-paragraphs');
+  const bytesEl = document.getElementById('wc-bytes');
+
+  function countStats(text) {
+    // Characters with spaces
+    const chars = text.length;
+    // Characters without spaces
+    const charsNoSpace = text.replace(/\s/g, '').length;
+    // English words (sequences of latin letters/digits)
+    const wordMatches = text.match(/[a-zA-Z0-9]+/g);
+    const words = wordMatches ? wordMatches.length : 0;
+    // CJK characters
+    const cjkMatches = text.match(/[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/g);
+    const cjk = cjkMatches ? cjkMatches.length : 0;
+    // Lines
+    const lines = text.length === 0 ? 0 : text.split('\n').length;
+    // Paragraphs (non-empty lines separated by empty lines)
+    const paragraphs = text.length === 0 ? 0 : text.split(/\n\s*\n/).filter(p => p.trim().length > 0).length || (text.trim().length > 0 ? 1 : 0);
+    // UTF-8 bytes
+    const bytes = new Blob([text]).size;
+
+    return { chars, charsNoSpace, words, cjk, lines, paragraphs, bytes };
+  }
+
+  function update() {
+    const text = textarea.value;
+    const stats = countStats(text);
+    charsEl.textContent = stats.chars;
+    charsNoSpaceEl.textContent = stats.charsNoSpace;
+    wordsEl.textContent = stats.words;
+    cjkEl.textContent = stats.cjk;
+    linesEl.textContent = stats.lines;
+    paragraphsEl.textContent = stats.paragraphs;
+    bytesEl.textContent = stats.bytes.toLocaleString();
+  }
+
+  textarea.addEventListener('input', update);
+
+  clearBtn.addEventListener('click', () => {
+    textarea.value = '';
+    update();
+  });
+
+  // Initial state
+  update();
+})();
+</script>

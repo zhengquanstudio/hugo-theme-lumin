@@ -1,0 +1,50 @@
+{{ define "main" }}
+{{ $articleSections := partialCached "article-sections.html" . }}
+{{ $allPages := where site.RegularPages "Section" "in" $articleSections }}
+{{ $allPages = where $allPages "Params.excludeFromList" "!=" true }}
+{{ $allPages = $allPages.ByDate.Reverse }}
+{{ $pageSize := site.Params.archives.pageSize | default 30 }}
+
+<nav class="breadcrumb" aria-label="面包屑导航">
+  <ol class="breadcrumb-list">
+    <li class="breadcrumb-item"><a href="{{ site.BaseURL }}"><i class="fas fa-home" style="font-size:0.9em;margin-right:2px;"></i> 首页</a></li>
+    <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-archive" style="font-size:0.85em;margin-right:4px;opacity:0.8;"></i>归档</li>
+  </ol>
+</nav>
+
+<div class="list-page archives-page">
+  <header class="list-header archives-header">
+    <h1 class="list-title">归档</h1>
+    <div class="list-count">共 {{ len $allPages }} 篇文章</div>
+  </header>
+
+  <div class="archives-timeline" id="archives-timeline"
+       data-page-size="{{ $pageSize }}"
+       data-total="{{ len $allPages }}">
+    {{ range $idx, $page := $allPages }}
+    <article class="archive-item" data-index="{{ $idx }}">
+      <div class="archive-item-dot"></div>
+      <div class="archive-item-line"></div>
+      <time class="archive-item-date">{{ $page.Date.Format "2006-01-02" }}</time>
+      <div class="archive-item-body">
+        <a href="{{ $page.RelPermalink }}" class="archive-item-title">{{ $page.Title }}</a>
+      </div>
+      <div class="archive-item-footer">
+        {{ with $page.Params.categories }}
+        {{ range first 1 . }}
+        {{ $catSlug := . }}
+        <a href="/{{ $catSlug }}/" class="archive-item-cat">{{ partial "category-display-name.html" (dict "Site" $.Site "Slug" $catSlug) }}</a>
+        {{ end }}
+        {{ end }}
+      </div>
+    </article>
+    {{ end }}
+  </div>
+
+  <div class="archives-pagination" id="archives-pagination"></div>
+
+  {{ partial "taxonomy-cloud.html" (dict "showIcon" true) }}
+
+  {{ partial "comments.html" . }}
+</div>
+{{ end }}

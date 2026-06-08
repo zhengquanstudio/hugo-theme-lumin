@@ -1,0 +1,70 @@
+{{/*
+  网站统计分析脚本集合
+  - 51.la 统计（带错误处理 & 用户提示）
+  - 可扩展: Google Analytics / Baidu / Clarity 等
+  
+  使用方式: 在 baseof.html 中调用
+  {{ partial "scripts/analytics.html" . }}
+*/}}
+
+{{/* 51.la 统计 - 带错误降级 */}}
+{{ with site.Params.analytics.la51.id }}
+<script>
+(function() {
+  'use strict';
+  var sdkUrl = 'https://sdk.51.la/js-sdk-develop.min.js';
+  var laId = '{{ . }}';
+
+  function onError(msg) {
+    console.error('[51.la] ✗ 加载失败:', msg);
+
+    if (window.CDNToast) {
+      window.CDNToast.warning(
+        '分析统计加载失败',
+        '51.la统计SDK无法加载，访问数据将不会被记录\n不影响网站正常使用',
+        8000
+      );
+    }
+  }
+
+  try {
+    var script = document.createElement('script');
+    script.async = true;
+    script.src = sdkUrl;
+
+    script.onload = function() {
+      try {
+        if (typeof LA !== 'undefined' && LA.init) {
+          LA.init({ id: laId, ck: laId });
+          // 初始化成功
+        } else {
+          onError('LA对象未定义');
+        }
+      } catch(e) {
+        onError('初始化异常: ' + e.message);
+      }
+    };
+
+    script.onerror = function() {
+      onError('网络错误或SDK文件不存在');
+    };
+
+    var firstScript = document.querySelector('script');
+    if (firstScript) {
+      firstScript.parentNode.insertBefore(script, firstScript);
+    } else {
+      document.head.appendChild(script);
+    }
+
+    // 开始异步加载...
+  } catch(e) {
+    onError('脚本创建失败: ' + e.message);
+  }
+})();
+</script>
+{{ end }}
+
+{{/* 不蒜子访问统计 - 轻量级 PV/UV */}}
+{{ if site.Params.statistics.busuanzi }}
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+{{ end }}

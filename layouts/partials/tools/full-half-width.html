@@ -1,0 +1,153 @@
+<div class="tool-tabs" id="fh-tabs">
+  <button class="tool-tab active" data-tab="fh-to-half">全角 → 半角</button>
+  <button class="tool-tab" data-tab="fh-to-full">半角 → 全角</button>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">输入文本</label>
+  <textarea class="tool-textarea" id="fh-input" rows="8" placeholder="请输入需要转换的文本">ＨＥＬＬＯ　ＷＯＲＬＤ！这是全角文本：１２３４５６７８９０</textarea>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="fh-convert-btn">转换</button>
+  <button class="tool-btn" id="fh-clear-btn">清空</button>
+</div>
+
+<div id="fh-error" style="display:none;color:var(--color-error,#e53e3e);margin-top:8px;"></div>
+
+<div class="tool-output" id="fh-output-area" style="display:none;">
+  <div class="tool-result" id="fh-result"></div>
+  <button class="tool-copy-btn" id="fh-copy-btn">复制结果</button>
+</div>
+
+<script>
+(function(){
+  const input = document.getElementById('fh-input');
+  const result = document.getElementById('fh-result');
+  const outputArea = document.getElementById('fh-output-area');
+  const errorDiv = document.getElementById('fh-error');
+  const tabs = document.querySelectorAll('#fh-tabs .tool-tab');
+
+  let currentTab = 'fh-to-half';
+
+  function switchTab(tabId) {
+    currentTab = tabId;
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
+  }
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+  });
+
+  function showError(msg) {
+    errorDiv.textContent = msg;
+    errorDiv.style.display = 'block';
+    outputArea.style.display = 'none';
+  }
+
+  function hideError() {
+    errorDiv.style.display = 'none';
+  }
+
+  // 全角→半角转换
+  // 全角字符范围: FF01-FF5E 对应 半角 21-7E
+  // 全角空格: 3000 → 半角空格 0020
+  function toHalfWidth(text) {
+    let result = '';
+    for (const ch of text) {
+      const code = ch.charCodeAt(0);
+      if (code === 0x3000) {
+        // 全角空格 → 半角空格
+        result += '\u0020';
+      } else if (code >= 0xFF01 && code <= 0xFF5E) {
+        // 全角字符 → 半角字符
+        result += String.fromCharCode(code - 0xFEE0);
+      } else if (code >= 0xFF61 && code <= 0xFF9F) {
+        // 半角片假名范围, 保持不变或转换
+        switch(code) {
+          case 0xFF61: result += '\u3002'; break; // 。
+          case 0xFF62: result += '\u300C'; break; // 「
+          case 0xFF63: result += '\u300D'; break; // 」
+          case 0xFF64: result += '\u3001'; break; // 、
+          case 0xFF65: result += '\u30FB'; break; // ・
+          case 0xFF66: result += '\u30F2'; break;
+          case 0xFF67: result += '\u30A1'; break;
+          case 0xFF68: result += '\u30A3'; break;
+          case 0xFF69: result += '\u30A5'; break;
+          case 0xFF6A: result += '\u30A7'; break;
+          case 0xFF6B: result += '\u30A9'; break;
+          case 0xFF6C: result += '\u30E3'; break;
+          case 0xFF6D: result += '\u30E5'; break;
+          case 0xFF6E: result += '\u30E7'; break;
+          case 0xFF6F: result += '\u30C3'; break;
+          default: result += ch;
+        }
+      } else {
+        result += ch;
+      }
+    }
+    return result;
+  }
+
+  // 半角→全角转换
+  function toFullWidth(text) {
+    let result = '';
+    for (const ch of text) {
+      const code = ch.charCodeAt(0);
+      if (code === 0x0020) {
+        // 半角空格 → 全角空格
+        result += '\u3000';
+      } else if (code >= 0x0021 && code <= 0x007E) {
+        // 半角字符 → 全角字符
+        result += String.fromCharCode(code + 0xFEE0);
+      } else {
+        result += ch;
+      }
+    }
+    return result;
+  }
+
+  document.getElementById('fh-convert-btn').addEventListener('click', () => {
+    hideError();
+    const raw = input.value;
+    if (!raw.trim()) { showError('请输入文本'); return; }
+
+    let output = '';
+    if (currentTab === 'fh-to-half') {
+      output = toHalfWidth(raw);
+    } else {
+      output = toFullWidth(raw);
+    }
+
+    result.textContent = output;
+    outputArea.style.display = 'block';
+  });
+
+  document.getElementById('fh-clear-btn').addEventListener('click', () => {
+    input.value = '';
+    result.textContent = '';
+    outputArea.style.display = 'none';
+    hideError();
+  });
+
+  document.getElementById('fh-copy-btn').addEventListener('click', () => {
+    const text = result.textContent;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('fh-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const btn = document.getElementById('fh-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    });
+  });
+})();
+</script>

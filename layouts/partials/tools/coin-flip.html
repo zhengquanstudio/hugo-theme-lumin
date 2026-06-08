@@ -1,0 +1,46 @@
+<div class="tool-section">
+  <div class="tool-title"><i class="fa-regular fa-circle-question"></i> 硬币抛掷</div>
+  <div class="coin-flip-container">
+    <div class="coin-area">
+      <div class="coin" id="coin">
+        <div class="coin-face coin-heads">正</div>
+        <div class="coin-face coin-tails">反</div>
+      </div>
+      <button class="tool-btn tool-btn-primary" onclick="flipCoin()" style="margin-top:20px"><i class="fa-solid fa-rotate"></i> 抛掷</button>
+    </div>
+    <div class="coin-stats" id="coin-stats">
+      <div class="coin-stat"><span>总计</span><span id="coin-total">0</span></div>
+      <div class="coin-stat"><span>正面</span><span id="coin-heads">0</span></div>
+      <div class="coin-stat"><span>反面</span><span id="coin-tails">0</span></div>
+      <div class="coin-stat"><span>正面率</span><span id="coin-rate">—</span></div>
+    </div>
+  </div>
+  <div class="tool-row" style="margin-top:12px">
+    <div class="tool-input-group" style="flex:1">
+      <label class="tool-label">批量抛掷</label>
+      <input type="number" class="tool-input" id="coin-batch" min="1" max="1000" value="10">
+    </div>
+    <button class="tool-btn" style="align-self:flex-end" onclick="batchFlip()"><i class="fa-solid fa-repeat"></i> 批量</button>
+  </div>
+  <div id="coin-batch-result" class="tool-row" style="margin-top:12px"></div>
+</div>
+
+<style>
+.coin-flip-container{display:flex;gap:24px;align-items:flex-start}.coin-area{display:flex;flex-direction:column;align-items:center}.coin{width:100px;height:100px;border-radius:50%;position:relative;transform-style:preserve-3d;transition:transform .6s}.coin.flipping{animation:coinFlip 1.2s ease-out}.coin.heads .coin-heads{transform:rotateY(0)}.coin.heads .coin-tails{transform:rotateY(180deg)}.coin.tails .coin-heads{transform:rotateY(180deg)}.coin.tails .coin-tails{transform:rotateY(0)}.coin-face{position:absolute;width:100%;height:100%;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:800;backface-visibility:hidden}.coin-heads{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#fff}.coin-tails{background:linear-gradient(135deg,#9ca3af,#6b7280);color:#fff;transform:rotateY(180deg)}@keyframes coinFlip{0%{transform:rotateY(0)}100%{transform:rotateY(1800deg)}}.coin-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1}.coin-stat{padding:12px;background:var(--bg-card);border-radius:8px;text-align:center}.coin-stat span{display:block}.coin-stat span:first-child{font-size:.8rem;color:var(--text-secondary);margin-bottom:4px}.coin-stat span:last-child{font-size:1.4rem;font-weight:700}
+</style>
+
+<script>
+(function(){
+  var total=0,heads=0;
+  function updateStats(){total++;document.getElementById('coin-total').textContent=total;document.getElementById('coin-heads').textContent=heads;document.getElementById('coin-tails').textContent=total-heads;document.getElementById('coin-rate').textContent=(heads/total*100).toFixed(1)+'%';}
+  window.flipCoin=function(){
+    var isHeads=Math.random()<0.5;if(isHeads)heads++;var coin=document.getElementById('coin');coin.className='coin';void coin.offsetWidth;coin.className='coin flipping';setTimeout(function(){coin.className='coin '+(isHeads?'heads':'tails');updateStats();},1000);
+  };
+  window.batchFlip=function(){
+    var n=parseInt(document.getElementById('coin-batch').value)||10;var result=document.getElementById('coin-batch-result');result.innerHTML='';var h=0;
+    for(var i=0;i<n;i++){var isHeads=Math.random()<0.5;if(isHeads){h++;heads++;}total++;var el=document.createElement('span');el.className='coin-batch-item '+(isHeads?'heads-item':'tails-item');el.textContent=isHeads?'正':'反';result.appendChild(el);}
+    document.getElementById('coin-total').textContent=total;document.getElementById('coin-heads').textContent=heads;document.getElementById('coin-tails').textContent=total-heads;document.getElementById('coin-rate').textContent=(heads/total*100).toFixed(1)+'%';
+  };
+})();
+</script>
+<style>.coin-batch-item{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700}.heads-item{background:#fbbf24;color:#fff}.tails-item{background:#9ca3af;color:#fff}</style>

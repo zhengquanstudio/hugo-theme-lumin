@@ -1,0 +1,4 @@
+{{/* 文章内容后广告 */}}
+{{ if .widgetEnabled }}
+{{ partial "ads/render-ad.html" (dict "positionId" "content_after" "Page" .Page) }}
+{{ end }}

@@ -1,0 +1,106 @@
+<div class="tool-input-group">
+  <label class="tool-label">输入数字（每行一个，或用逗号/空格分隔，最多 20 个）</label>
+  <textarea class="tool-textarea" id="gl-input" placeholder="示例：12, 18, 24" style="min-height:100px;">12, 18, 24, 36</textarea>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="gl-calc-btn"><i class="fas fa-calculator"></i> 计算 GCD & LCM</button>
+  <button class="tool-btn tool-btn-danger" id="gl-clear-btn"><i class="fas fa-trash"></i> 清空</button>
+</div>
+
+<div id="gl-output" style="display:none;margin-top:18px;">
+  <div class="tool-stats" style="margin-bottom:16px;">
+    <div class="tool-stat">
+      <div class="tool-stat-value" id="gl-gcd">—</div>
+      <div class="tool-stat-label">最大公约数 (GCD)</div>
+    </div>
+    <div class="tool-stat">
+      <div class="tool-stat-value" id="gl-lcm">—</div>
+      <div class="tool-stat-label">最小公倍数 (LCM)</div>
+    </div>
+  </div>
+  <div id="gl-steps" style="padding:14px;background:var(--bg-secondary,#f9fafb);border-radius:12px;border:1px solid var(--border-color,#e5e7eb);">
+    <div style="font-size:.85rem;font-weight:600;color:var(--text-primary,#1f2937);margin-bottom:8px;">计算步骤</div>
+    <div id="gl-steps-content" style="font-size:.82rem;color:var(--text-muted,#6b7280);line-height:1.8;font-family:monospace;white-space:pre-wrap;"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  function gcd2(a, b) {
+    a=Math.abs(a); b=Math.abs(b);
+    while(b){let t=b; b=a%b; a=t;}
+    return a;
+  }
+  function lcm2(a, b) {
+    return Math.abs(a*b)/gcd2(a,b);
+  }
+  function gcdArray(nums) {
+    return nums.reduce((a,b)=>gcd2(a,b));
+  }
+  function lcmArray(nums) {
+    return nums.reduce((a,b)=>lcm2(a,b));
+  }
+  function primeFactors(n) {
+    const factors={};
+    let d=2;
+    while(n>1){
+      while(n%d===0){factors[d]=(factors[d]||0)+1; n/=d;}
+      d++;
+    }
+    return factors;
+  }
+
+  document.getElementById('gl-calc-btn').addEventListener('click', ()=>{
+    const text=document.getElementById('gl-input').value.trim();
+    if(!text) return;
+    const nums=text.split(/[\n,;\s]+/).map(s=>s.trim()).filter(s=>s!=='').map(s=>parseInt(s)).filter(n=>!isNaN(n)&&n>0);
+    if(nums.length<2){alert('请输入至少 2 个正整数');return;}
+    if(nums.length>20){alert('最多支持 20 个数字');return;}
+
+    const gcdVal=gcdArray(nums);
+    const lcmVal=lcmArray(nums);
+
+    document.getElementById('gl-gcd').textContent=gcdVal.toLocaleString();
+    document.getElementById('gl-lcm').textContent=lcmVal.toLocaleString();
+
+    let steps=`输入：${nums.join(', ')}\n\n`;
+    if(nums.length===2) {
+      const [a,b]=nums;
+      steps+=`辗转相除法（GCD）：\n`;
+      let x=Math.abs(a), y=Math.abs(b);
+      while(y){
+        steps+=`  ${x} = ${Math.floor(x/y)} × ${y} + ${x%y}\n`;
+        let t=y; y=x%y; x=t;
+      }
+      steps+=`  GCD(${a}, ${b}) = ${x}\n`;
+    } else {
+      steps+=`逐步计算 GCD：\n`;
+      let curGcd=nums[0];
+      steps+=`  初始：${curGcd}\n`;
+      for(let i=1;i<nums.length;i++){
+        const prev=curGcd;
+        curGcd=gcd2(curGcd,nums[i]);
+        steps+=`  GCD(${prev}, ${nums[i]}) = ${curGcd}\n`;
+      }
+      steps+=`\n逐步计算 LCM：\n`;
+      let curLcm=nums[0];
+      steps+=`  初始：${curLcm}\n`;
+      for(let i=1;i<nums.length;i++){
+        const prev=curLcm;
+        curLcm=lcm2(curLcm,nums[i]);
+        steps+=`  LCM(${prev}, ${nums[i]}) = ${curLcm}\n`;
+      }
+    }
+    steps+=`\n结论：GCD = ${gcdVal}，LCM = ${lcmVal}`;
+
+    document.getElementById('gl-steps-content').textContent=steps;
+    document.getElementById('gl-output').style.display='';
+  });
+
+  document.getElementById('gl-clear-btn').addEventListener('click', ()=>{
+    document.getElementById('gl-input').value='';
+    document.getElementById('gl-output').style.display='none';
+  });
+})();
+</script>

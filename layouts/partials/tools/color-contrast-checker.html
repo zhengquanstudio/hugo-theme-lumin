@@ -1,0 +1,161 @@
+<div class="tool-input-group">
+  <label class="tool-label">前景色</label>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <input type="color" id="cc-foreground" value="#333333">
+    <input class="tool-input" id="cc-fg-hex" value="#333333" style="width:120px;font-family:monospace;">
+  </div>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">背景色</label>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <input type="color" id="cc-background" value="#FFFFFF">
+    <input class="tool-input" id="cc-bg-hex" value="#FFFFFF" style="width:120px;font-family:monospace;">
+  </div>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn" id="cc-swap-btn">交换颜色</button>
+</div>
+
+<div id="cc-error" style="display:none;color:var(--color-error,#e53e3e);margin-top:8px;"></div>
+
+<!-- WCAG 结果 -->
+<div class="tool-stats" id="cc-stats" style="margin-top:16px;">
+  <div class="tool-stat" style="flex-direction:column;align-items:center;gap:4px;">
+    <span class="tool-stat-value" id="cc-stat-ratio" style="font-size:2em;">-</span>
+    <span class="tool-stat-label">对比度比率</span>
+  </div>
+  <div class="tool-stat" style="flex-direction:column;align-items:center;gap:4px;">
+    <span class="tool-stat-value" id="cc-stat-aa" style="font-size:1.5em;">-</span>
+    <span class="tool-stat-label">AA 正常文本 (4.5:1)</span>
+  </div>
+  <div class="tool-stat" style="flex-direction:column;align-items:center;gap:4px;">
+    <span class="tool-stat-value" id="cc-stat-aa-large" style="font-size:1.5em;">-</span>
+    <span class="tool-stat-label">AA 大文本 (3:1)</span>
+  </div>
+  <div class="tool-stat" style="flex-direction:column;align-items:center;gap:4px;">
+    <span class="tool-stat-value" id="cc-stat-aaa" style="font-size:1.5em;">-</span>
+    <span class="tool-stat-label">AAA 正常文本 (7:1)</span>
+  </div>
+  <div class="tool-stat" style="flex-direction:column;align-items:center;gap:4px;">
+    <span class="tool-stat-value" id="cc-stat-aaa-large" style="font-size:1.5em;">-</span>
+    <span class="tool-stat-label">AAA 大文本 (4.5:1)</span>
+  </div>
+</div>
+
+<!-- 预览区域 -->
+<div class="tool-output" id="cc-preview-area" style="margin-top:16px;">
+  <div class="tool-output-title">视觉预览</div>
+  <div id="cc-preview" style="padding:32px;border-radius:8px;border:1px solid var(--color-border,#e2e8f0);min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;">
+    <div style="font-size:28px;font-weight:700;" id="cc-preview-large">大号文字 Large Text</div>
+    <div style="font-size:14px;" id="cc-preview-normal">正常文字 Normal Text - 这是用于测试对比度效果的示例文本。</div>
+    <div style="font-size:12px;" id="cc-preview-small">小号文字 Small Text - The quick brown fox jumps over the lazy dog.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const fgColor = document.getElementById('cc-foreground');
+  const bgColor = document.getElementById('cc-background');
+  const fgHex = document.getElementById('cc-fg-hex');
+  const bgHex = document.getElementById('cc-bg-hex');
+  const preview = document.getElementById('cc-preview');
+  const previewLarge = document.getElementById('cc-preview-large');
+  const previewNormal = document.getElementById('cc-preview-normal');
+  const previewSmall = document.getElementById('cc-preview-small');
+
+  function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : null;
+  }
+
+  // 相对亮度计算 (WCAG 2.0)
+  function getLuminance(r, g, b) {
+    const a = [r, g, b].map(v => {
+      v /= 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
+  }
+
+  function getContrastRatio(fg, bg) {
+    const l1 = getLuminance(fg.r, fg.g, fg.b);
+    const l2 = getLuminance(bg.r, bg.g, bg.b);
+    const lighter = Math.max(l1, l2);
+    const darker = Math.min(l1, l2);
+    return (lighter + 0.05) / (darker + 0.05);
+  }
+
+  function updateCheck() {
+    const fgVal = fgColor.value;
+    const bgVal = bgColor.value;
+    fgHex.value = fgVal;
+    bgHex.value = bgVal;
+
+    const fg = hexToRgb(fgVal);
+    const bg = hexToRgb(bgVal);
+    if (!fg || !bg) return;
+
+    const ratio = getContrastRatio(fg, bg);
+
+    // 更新比率
+    document.getElementById('cc-stat-ratio').textContent = ratio.toFixed(2) + ':1';
+
+    // 判断各等级
+    function passFail(pass) {
+      return pass
+        ? '<span style="color:#38a169;">&#10004; 通过</span>'
+        : '<span style="color:#e53e3e;">&#10008; 不通过</span>';
+    }
+
+    document.getElementById('cc-stat-aa').innerHTML = passFail(ratio >= 4.5);
+    document.getElementById('cc-stat-aa-large').innerHTML = passFail(ratio >= 3);
+    document.getElementById('cc-stat-aaa').innerHTML = passFail(ratio >= 7);
+    document.getElementById('cc-stat-aaa-large').innerHTML = passFail(ratio >= 4.5);
+
+    // 更新预览
+    preview.style.backgroundColor = bgVal;
+    preview.style.color = fgVal;
+    previewLarge.style.color = fgVal;
+    previewNormal.style.color = fgVal;
+    previewSmall.style.color = fgVal;
+  }
+
+  // 颜色选择器变化
+  fgColor.addEventListener('input', updateCheck);
+  bgColor.addEventListener('input', updateCheck);
+
+  // 手动输入 HEX
+  fgHex.addEventListener('input', () => {
+    const val = fgHex.value.trim();
+    if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+      fgColor.value = val;
+      updateCheck();
+    }
+  });
+
+  bgHex.addEventListener('input', () => {
+    const val = bgHex.value.trim();
+    if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+      bgColor.value = val;
+      updateCheck();
+    }
+  });
+
+  // 交换颜色
+  document.getElementById('cc-swap-btn').addEventListener('click', () => {
+    const tmp = fgColor.value;
+    fgColor.value = bgColor.value;
+    bgColor.value = tmp;
+    updateCheck();
+  });
+
+  // 初始计算
+  updateCheck();
+})();
+</script>

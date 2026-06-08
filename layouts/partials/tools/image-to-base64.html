@@ -1,0 +1,62 @@
+<div class="tool-section">
+  <div class="tool-title"><i class="fa-solid fa-image"></i> 图片转 Base64</div>
+  <div class="tool-input-group">
+    <label class="tool-label">选择图片文件</label>
+    <div class="tool-row" style="align-items:center;gap:12px">
+      <input type="file" id="img-file" accept="image/*" onchange="convertImageToBase64(this)" style="flex:1">
+    </div>
+    <div class="tool-row" style="align-items:center;gap:12px;margin-top:8px">
+      <span style="font-size:.8rem;color:var(--text-secondary)">或拖拽图片到此处</span>
+      <label style="font-size:.8rem;cursor:pointer;color:var(--primary-color,#667eea)">
+        最大尺寸 <select id="img-max-size" onchange="convertImageToBase64(document.getElementById('img-file'))" style="margin:0 4px;padding:2px 6px;border-radius:4px;border:1px solid var(--border-color)">
+          <option value="0">原始</option><option value="100">100px</option><option value="200">200px</option><option value="400" selected>400px</option><option value="800">800px</option><option value="1200">1200px</option>
+        </select> 宽度
+      </label>
+    </div>
+  </div>
+  <div class="tool-row" style="gap:12px">
+    <div class="tool-input-group" style="flex:1">
+      <label class="tool-label">Base64 结果 <span id="b64-size" style="color:var(--text-secondary);font-weight:400"></span></label>
+      <textarea id="b64-output" class="tool-textarea" rows="5" readonly style="font-family:monospace;font-size:.75rem;word-break:break-all" placeholder="选择图片后自动生成..."></textarea>
+    </div>
+    <div class="tool-input-group" style="flex:0 0 200px">
+      <label class="tool-label">预览</label>
+      <div id="b64-preview" style="width:100%;min-height:120px;background:var(--bg-card);border-radius:8px;display:flex;align-items:center;justify-content:center;border:2px dashed var(--border-color);color:var(--text-secondary);font-size:.85rem">暂无图片</div>
+    </div>
+  </div>
+  <div class="tool-btn-group">
+    <button class="tool-btn" onclick="copyB64()"><i class="fa-solid fa-copy"></i> 复制</button>
+    <button class="tool-btn" onclick="downloadB64()"><i class="fa-solid fa-download"></i> 下载 .txt</button>
+    <button class="tool-btn" onclick="openB64Image()"><i class="fa-solid fa-up-right-from-square"></i> 新窗口预览</button>
+  </div>
+</div>
+
+<script>
+var currentB64='';
+window.convertImageToBase64=function(input){
+  var file=input.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var img=new Image();
+    img.onload=function(){
+      var maxSize=parseInt(document.getElementById('img-max-size').value);
+      if(maxSize>0&&(img.width>maxSize||img.height>maxSize)){
+        var scale=Math.min(maxSize/img.width,maxSize/img.height);
+        var c=document.createElement('canvas');
+        c.width=img.width*scale;c.height=img.height*scale;
+        c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+        currentB64=c.toDataURL(file.type||'image/png',0.9);
+      }else{currentB64=e.target.result;}
+      document.getElementById('b64-output').value=currentB64;
+      var kb=(currentB64.length*0.75/1024).toFixed(1);
+      document.getElementById('b64-size').textContent='('+kb+' KB Base64)';
+      document.getElementById('b64-preview').innerHTML='<img src="'+currentB64+'" style="max-width:100%;max-height:200px;border-radius:4px">';
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+};
+window.copyB64=function(){if(!currentB64)return;var el=document.getElementById('b64-output');el.select();document.execCommand('copy');};
+window.downloadB64=function(){if(!currentB64)return;var a=document.createElement('a');a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(currentB64);a.download='base64.txt';a.click();};
+window.openB64Image=function(){if(!currentB64)return;var w=window.open();w.document.write('<img src="'+currentB64+'" style="max-width:100%">');};
+</script>

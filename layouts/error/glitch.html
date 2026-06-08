@@ -1,0 +1,253 @@
+{{ define "main" }}
+<div class="error-page glitch-error">
+  <canvas id="matrix-canvas"></canvas>
+  <div class="glitch-content">
+    <div class="glitch-code" data-text="{{ .Params.errorCode }}">{{ .Params.errorCode }}</div>
+    <p class="glitch-title" id="glitch-title" data-text="{{ .Params.errorTitle | default "访问被拒绝" }}"></p>
+    <p class="glitch-desc">{{ .Params.errorDesc | default "抱歉，你没有权限访问此资源" }}</p>
+    <div class="glitch-actions">
+      <a href="{{ site.BaseURL }}" class="glitch-btn primary">返回首页</a>
+      <a href="javascript:history.back()" class="glitch-btn">返回上页</a>
+    </div>
+  </div>
+</div>
+
+<style>
+.glitch-error {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #0d0d0d;
+  color: #fff;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+}
+.glitch-error #matrix-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  opacity: 0.35;
+}
+.glitch-content {
+  position: relative;
+  z-index: 1;
+  padding: 2rem;
+}
+.glitch-code {
+  font-size: clamp(6rem, 15vw, 12rem);
+  font-weight: 900;
+  line-height: 1;
+  color: #fff;
+  position: relative;
+  user-select: none;
+}
+.glitch-code::before,
+.glitch-code::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.glitch-code::before {
+  color: #ff0040;
+  z-index: -1;
+  animation: glitch-1 3s infinite linear alternate-reverse;
+}
+.glitch-code::after {
+  color: #00ffff;
+  z-index: -2;
+  animation: glitch-2 3s infinite linear alternate-reverse;
+}
+@keyframes glitch-1 {
+  0%, 100% { clip-path: inset(0 0 0 0); transform: translate(0); }
+  5% { clip-path: inset(20% 0 60% 0); transform: translate(-5px, 2px); }
+  10% { clip-path: inset(50% 0 30% 0); transform: translate(3px, -1px); }
+  15% { clip-path: inset(0 0 0 0); transform: translate(0); }
+  20% { clip-path: inset(80% 0 5% 0); transform: translate(-3px, 1px); }
+  25% { clip-path: inset(0 0 0 0); transform: translate(0); }
+  50% { clip-path: inset(0 0 0 0); transform: translate(0); }
+  55% { clip-path: inset(30% 0 50% 0); transform: translate(4px, -2px); }
+  60% { clip-path: inset(70% 0 10% 0); transform: translate(-2px, 3px); }
+  65% { clip-path: inset(0 0 0 0); transform: translate(0); }
+}
+@keyframes glitch-2 {
+  0%, 100% { clip-path: inset(0 0 0 0); transform: translate(0); }
+  7% { clip-path: inset(60% 0 20% 0); transform: translate(4px, -1px); }
+  12% { clip-path: inset(10% 0 70% 0); transform: translate(-3px, 2px); }
+  17% { clip-path: inset(0 0 0 0); transform: translate(0); }
+  45% { clip-path: inset(0 0 0 0); transform: translate(0); }
+  52% { clip-path: inset(40% 0 40% 0); transform: translate(-4px, 1px); }
+  57% { clip-path: inset(80% 0 5% 0); transform: translate(2px, -3px); }
+  62% { clip-path: inset(0 0 0 0); transform: translate(0); }
+}
+.glitch-title {
+  font-size: clamp(1.2rem, 3vw, 1.8rem);
+  margin: 1rem 0 0.5rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: #ff0040;
+  min-height: 2.5rem;
+  border-right: 2px solid #ff0040;
+  padding-right: 4px;
+  display: inline-block;
+}
+.glitch-title.done {
+  border-right-color: transparent;
+  animation: blink-caret 0.7s step-end infinite;
+}
+@keyframes blink-caret {
+  0%, 100% { border-right-color: transparent; }
+  50% { border-right-color: #ff0040; }
+}
+.glitch-desc {
+  font-size: clamp(0.9rem, 2vw, 1.1rem);
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 2rem;
+}
+.glitch-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.glitch-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.7rem 1.8rem;
+  border-radius: 50px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 0, 64, 0.3);
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 0, 64, 0.05);
+  backdrop-filter: blur(10px);
+}
+.glitch-btn:hover {
+  border-color: rgba(255, 0, 64, 0.6);
+  background: rgba(255, 0, 64, 0.1);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(255, 0, 64, 0.2);
+}
+.glitch-btn.primary {
+  background: linear-gradient(135deg, #ff0040, #ff4d6d);
+  border: none;
+  color: #fff;
+}
+.glitch-btn.primary:hover {
+  background: linear-gradient(135deg, #ff4d6d, #ff0040);
+  box-shadow: 0 8px 30px rgba(255, 0, 64, 0.4);
+  transform: translateY(-2px);
+}
+[data-theme="light"] .glitch-error {
+  background: #f5f5f5;
+}
+[data-theme="light"] .glitch-code {
+  color: #1a1a1a;
+}
+[data-theme="light"] .glitch-code::before {
+  color: #d4003a;
+}
+[data-theme="light"] .glitch-code::after {
+  color: #00a3a3;
+}
+[data-theme="light"] #matrix-canvas {
+  opacity: 0.06;
+}
+[data-theme="light"] .glitch-title {
+  color: #d4003a;
+  border-right-color: #d4003a;
+}
+[data-theme="light"] .glitch-desc {
+  color: rgba(0, 0, 0, 0.45);
+}
+[data-theme="light"] .glitch-btn {
+  border-color: rgba(212, 0, 58, 0.2);
+  color: rgba(0, 0, 0, 0.7);
+  background: rgba(212, 0, 58, 0.03);
+}
+[data-theme="light"] .glitch-btn:hover {
+  border-color: rgba(212, 0, 58, 0.4);
+  background: rgba(212, 0, 58, 0.06);
+  color: rgba(0, 0, 0, 0.9);
+}
+[data-theme="light"] .glitch-btn.primary {
+  background: linear-gradient(135deg, #d4003a, #e8456b);
+  border: none;
+  color: #fff;
+}
+</style>
+
+<script>
+(function() {
+  var canvas = document.getElementById('matrix-canvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var w, h, columns, drops;
+  var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*<>/{}[]|';
+  var fontSize = 14;
+
+  function resize() {
+    w = canvas.width = canvas.offsetWidth;
+    h = canvas.height = canvas.offsetHeight;
+    columns = Math.floor(w / fontSize);
+    drops = [];
+    for (var i = 0; i < columns; i++) {
+      drops[i] = Math.random() * (h / fontSize);
+    }
+  }
+
+  function draw() {
+    ctx.fillStyle = 'rgba(13, 13, 13, 0.05)';
+    ctx.fillRect(0, 0, w, h);
+    ctx.font = fontSize + 'px monospace';
+    for (var i = 0; i < drops.length; i++) {
+      var text = chars.charAt(Math.floor(Math.random() * chars.length));
+      var brightness = Math.random() * 0.5 + 0.3;
+      ctx.fillStyle = 'rgba(0, 255, 0, ' + brightness + ')';
+      ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+      if (drops[i] * fontSize > h && Math.random() > 0.975) {
+        drops[i] = 0;
+      }
+      drops[i]++;
+    }
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  requestAnimationFrame(draw);
+})();
+
+(function() {
+  var el = document.getElementById('glitch-title');
+  if (!el) return;
+  var text = el.getAttribute('data-text') || '';
+  var index = 0;
+
+  function type() {
+    if (index < text.length) {
+      el.textContent += text.charAt(index);
+      index++;
+      setTimeout(type, 80 + Math.random() * 80);
+    } else {
+      el.classList.add('done');
+    }
+  }
+
+  setTimeout(type, 600);
+})();
+</script>
+{{ end }}

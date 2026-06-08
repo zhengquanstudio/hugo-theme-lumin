@@ -1,0 +1,6 @@
+{{- $result := "" -}}
+{{- range $i, $p := . -}}
+{{- if gt $i 0 }}{{ $result = printf "%s," $result }}{{ end -}}
+{{- $result = printf "%s[%.6f,%.6f]" $result (index $p 0) (index $p 1) -}}
+{{- end -}}
+{{ $result }}

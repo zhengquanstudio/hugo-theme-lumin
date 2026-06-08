@@ -1,0 +1,119 @@
+<footer class="site-footer">
+  <div class="container">
+    <!-- 版权信息栏 -->
+    <div class="footer-bottom">
+      <span class="footer-item">
+        &copy; {{ time.Now.Year }} {{ with site.Params.author }}{{ . }}{{ else }}{{ site.Title }}{{ end }} 版权所有
+      </span>
+      <span class="footer-sep">|</span>
+      <span class="footer-item">由 <a href="https://github.com/zhengquanstudio/hugo-theme-lumin" target="_blank" rel="noopener" class="footer-link">Lumin</a> 主题搭建</span>
+      <span class="footer-sep">|</span>
+      <a href="{{ "index.xml" | relURL }}" target="_blank" rel="noopener" class="footer-link">RSS订阅</a>
+      <span class="footer-sep">|</span>
+      <a href="{{ "sitemap.xml" | relURL }}" target="_blank" rel="noopener" class="footer-link">站点地图</a>
+      {{ $hasFiling := or site.Params.footer.icp site.Params.footer.publicSecurity }}
+      {{ with $hasFiling }}
+      <span class="footer-sep">|</span>
+      <span class="footer-item">
+        {{- with site.Params.footer.icp -}}
+          {{- $icpLink := site.Params.footer.icpLink | default "https://beian.miit.gov.cn/" -}}
+          <a href="{{ $icpLink }}" target="_blank" rel="noopener" class="footer-link footer-icp">{{ . }}</a>
+        {{- end -}}
+        {{- if and site.Params.footer.icp site.Params.footer.publicSecurity }} | {{ end -}}
+        {{- with site.Params.footer.publicSecurity -}}
+          {{- $psLink := "" -}}
+          {{- if site.Params.footer.publicSecurityLink -}}{{- $psLink = site.Params.footer.publicSecurityLink -}}{{- end -}}
+          <a{{ if $psLink }} href="{{ $psLink }}" target="_blank" rel="noopener"{{ end }} class="footer-link footer-ps">{{ . }}</a>
+        {{- end -}}
+      </span>
+      {{ end }}
+      {{ with site.Params.statistics.runningSince }}
+      <span class="footer-sep">|</span>
+      <span class="footer-item footer-uptime" data-since="{{ . }}">本站已运行 <strong>0</strong> 天</span>
+      {{ end }}
+    </div>
+
+    {{ with site.Params.footer.customText }}
+    <div class="footer-custom">{{ . | safeHTML }}</div>
+    {{ end }}
+  </div>
+</footer>
+
+<script>
+(function() {
+  var el = document.querySelector('.footer-uptime');
+  if (!el) return;
+  var since = el.getAttribute('data-since');
+  if (!since) return;
+  function update() {
+    var diff = Math.floor((new Date() - new Date(since)) / 86400000);
+    el.querySelector('strong').textContent = diff;
+  }
+  update();
+  setInterval(update, 86400000);
+})();
+</script>
+
+<style>
+.site-footer {
+  background: var(--bg-secondary, #f8f9fa);
+  border-top: 1px solid var(--border-color, #e5e7eb);
+  padding: 20px 0 16px;
+  margin-top: auto;
+}
+
+.footer-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #6b7280);
+  line-height: 1.8;
+}
+
+.footer-item { white-space: nowrap; }
+
+.footer-sep {
+  margin: 0 6px;
+  opacity: 0.35;
+  user-select: none;
+}
+
+.footer-link {
+  color: var(--text-secondary, #6b7280);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+.footer-link:hover {
+  color: var(--accent-color, #6366f1);
+}
+
+.footer-uptime strong {
+  color: var(--accent-color, #6366f1);
+  font-weight: 600;
+  min-width: 1.5em;
+  display: inline-block;
+  text-align: left;
+}
+
+.footer-custom {
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--text-muted, #9ca3af);
+  margin-top: 8px;
+  line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+  .footer-bottom { font-size: 0.75rem; }
+  .footer-sep { margin: 0 3px; }
+}
+
+[data-theme="dark"] .site-footer {
+  background: rgba(20, 20, 28, 0.95);
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+</style>

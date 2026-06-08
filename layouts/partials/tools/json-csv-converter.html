@@ -1,0 +1,224 @@
+<div class="tool-tabs" id="jcc-tabs">
+  <button class="tool-tab active" data-tab="jcc-to-csv">JSON → CSV</button>
+  <button class="tool-tab" data-tab="jcc-to-json">CSV → JSON</button>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">分隔符</label>
+  <select class="tool-select" id="jcc-delimiter">
+    <option value="," selected>逗号 (,)</option>
+    <option value=";">分号 (;)</option>
+    <option value="\t">制表符 (Tab)</option>
+  </select>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label" id="jcc-input-label">输入 JSON</label>
+  <textarea class="tool-textarea" id="jcc-input" rows="10" placeholder='请输入 JSON 数组，例如：
+[
+  {"name": "张三", "age": 25, "city": "北京"},
+  {"name": "李四", "age": 30, "city": "上海"}
+]'></textarea>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="jcc-convert-btn">转换</button>
+  <button class="tool-btn" id="jcc-clear-btn">清空</button>
+</div>
+
+<div class="tool-output" id="jcc-output-area" style="display:none;">
+  <label class="tool-label" id="jcc-output-label">输出 CSV</label>
+  <div class="tool-result" id="jcc-result"></div>
+  <button class="tool-copy-btn" id="jcc-copy-btn">复制</button>
+</div>
+
+<div id="jcc-error" style="display:none;color:var(--color-error,#e53e3e);margin-top:8px;"></div>
+
+<script>
+(function(){
+  var tabs = document.querySelectorAll('#jcc-tabs .tool-tab');
+  var inputLabel = document.getElementById('jcc-input-label');
+  var outputLabel = document.getElementById('jcc-output-label');
+  var input = document.getElementById('jcc-input');
+  var delimiter = document.getElementById('jcc-delimiter');
+  var result = document.getElementById('jcc-result');
+  var outputArea = document.getElementById('jcc-output-area');
+  var errorDiv = document.getElementById('jcc-error');
+  var copyBtn = document.getElementById('jcc-copy-btn');
+
+  var mode = 'jcc-to-csv';
+
+  tabs.forEach(function(tab){
+    tab.addEventListener('click', function(){
+      tabs.forEach(function(t){ t.classList.remove('active'); });
+      tab.classList.add('active');
+      mode = tab.dataset.tab;
+      if(mode === 'jcc-to-csv'){
+        inputLabel.textContent = '输入 JSON';
+        outputLabel.textContent = '输出 CSV';
+        input.placeholder = '请输入 JSON 数组，例如：\n[\n  {"name": "张三", "age": 25},\n  {"name": "李四", "age": 30}\n]';
+      } else {
+        inputLabel.textContent = '输入 CSV';
+        outputLabel.textContent = '输出 JSON';
+        input.placeholder = '请输入 CSV 数据，例如：\nname,age\n张三,25\n李四,30';
+      }
+    });
+  });
+
+  function escapeCsv(val, delim){
+    var str = String(val === null || val === undefined ? '' : val);
+    if(str.indexOf(delim) > -1 || str.indexOf('"') > -1 || str.indexOf('\n') > -1){
+      str = '"' + str.replace(/"/g, '""') + '"';
+    }
+    return str;
+  }
+
+  function getDelimiter(){
+    var v = delimiter.value;
+    if(v === '\\t') return '\t';
+    return v;
+  }
+
+  function jsonToCsv(jsonStr, delim){
+    var data = JSON.parse(jsonStr);
+    if(!Array.isArray(data) || data.length === 0){
+      throw new Error('请输入包含至少一个对象的 JSON 数组');
+    }
+
+    // Collect all keys
+    var keys = [];
+    var seen = {};
+    for(var i = 0; i < data.length; i++){
+      var obj = data[i];
+      if(typeof obj !== 'object' || obj === null) continue;
+      Object.keys(obj).forEach(function(k){
+        if(!seen[k]){
+          seen[k] = true;
+          keys.push(k);
+        }
+      });
+    }
+
+    var lines = [];
+    // Header
+    lines.push(keys.map(function(k){ return escapeCsv(k, delim); }).join(delim));
+
+    // Rows
+    for(var r = 0; r < data.length; r++){
+      var row = data[r];
+      var rowVals = keys.map(function(k){
+        var val = (row && typeof row === 'object') ? (row[k] !== undefined ? row[k] : '') : '';
+        return escapeCsv(val, delim);
+      });
+      lines.push(rowVals.join(delim));
+    }
+
+    return lines.join('\n');
+  }
+
+  function csvToJson(csvStr, delim){
+    var lines = csvStr.split(/\r?\n/).filter(function(l){ return l.trim(); });
+    if(lines.length < 2) throw new Error('CSV 至少需要包含表头和一行数据');
+
+    // Parse header
+    var header = parseCsvLine(lines[0], delim);
+
+    // Parse data
+    var data = [];
+    for(var i = 1; i < lines.length; i++){
+      var fields = parseCsvLine(lines[i], delim);
+      var obj = {};
+      for(var j = 0; j < header.length; j++){
+        var val = j < fields.length ? fields[j] : '';
+        // Try to parse numbers
+        if(/^-?\d+$/.test(val) && val.length < 16){
+          val = parseInt(val, 10);
+        } else if(/^-?\d+\.\d+$/.test(val)){
+          val = parseFloat(val);
+        } else if(val === 'true') val = true;
+        else if(val === 'false') val = false;
+        else if(val === 'null' || val === '') val = null;
+        obj[header[j]] = val;
+      }
+      data.push(obj);
+    }
+
+    return data;
+  }
+
+  function parseCsvLine(line, delim){
+    var fields = [];
+    var current = '';
+    var inQuotes = false;
+    for(var i = 0; i < line.length; i++){
+      var ch = line[i];
+      if(inQuotes){
+        if(ch === '"'){
+          if(i + 1 < line.length && line[i + 1] === '"'){
+            current += '"';
+            i++;
+          } else {
+            inQuotes = false;
+          }
+        } else {
+          current += ch;
+        }
+      } else {
+        if(ch === '"'){
+          inQuotes = true;
+        } else if(ch === delim){
+          fields.push(current);
+          current = '';
+        } else {
+          current += ch;
+        }
+      }
+    }
+    fields.push(current);
+    return fields;
+  }
+
+  function convert(){
+    errorDiv.style.display = 'none';
+    var raw = input.value.trim();
+    if(!raw) { showError('请输入内容'); return; }
+
+    try{
+      var delim = getDelimiter();
+      if(mode === 'jcc-to-csv'){
+        var csv = jsonToCsv(raw, delim);
+        result.textContent = csv;
+      } else {
+        var json = csvToJson(raw, delim);
+        result.textContent = JSON.stringify(json, null, 2);
+      }
+      outputArea.style.display = 'block';
+    } catch(e){
+      showError('转换失败：' + e.message);
+    }
+  }
+
+  function showError(msg){
+    errorDiv.textContent = msg;
+    errorDiv.style.display = 'block';
+    outputArea.style.display = 'none';
+  }
+
+  document.getElementById('jcc-convert-btn').addEventListener('click', convert);
+  document.getElementById('jcc-clear-btn').addEventListener('click', function(){
+    input.value = '';
+    result.textContent = '';
+    outputArea.style.display = 'none';
+    errorDiv.style.display = 'none';
+  });
+
+  copyBtn.addEventListener('click', function(){
+    var text = result.textContent;
+    if(!text) return;
+    navigator.clipboard.writeText(text).then(function(){
+      copyBtn.textContent = '已复制';
+      setTimeout(function(){ copyBtn.textContent = '复制'; }, 1500);
+    });
+  });
+})();
+</script>

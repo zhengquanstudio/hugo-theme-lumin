@@ -1,0 +1,30 @@
+{{ if or .widgetEnabled (and site.Params.widgets.reward site.Params.reward.enable) }}
+<div class="widget widget-reward">
+  <h4 class="widget-title">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 12V8H6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"></path>
+      <path d="M4 14h16a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2z"></path>
+      <line x1="12" y1="6" x2="12" y2="14"></line>
+    </svg>
+    打赏
+  </h4>
+  <div class="reward-grid">
+    {{ with site.Params.reward.wechat }}
+    <div class="reward-item">
+      <div class="reward-img-wrap">
+        <img src="{{ . }}" alt="微信打赏">
+      </div>
+      <span class="reward-label">微信</span>
+    </div>
+    {{ end }}
+    {{ with site.Params.reward.alipay }}
+    <div class="reward-item">
+      <div class="reward-img-wrap">
+        <img src="{{ . }}" alt="支付宝打赏">
+      </div>
+      <span class="reward-label">支付宝</span>
+    </div>
+    {{ end }}
+  </div>
+</div>
+{{ end }}

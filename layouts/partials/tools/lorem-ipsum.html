@@ -1,0 +1,151 @@
+<div class="tool-tabs">
+  <button class="tool-tab active" data-li-tab="lorem">Lorem Ipsum（英文）</button>
+  <button class="tool-tab" data-li-tab="chinese">中文占位文本</button>
+</div>
+
+<!-- Lorem Ipsum -->
+<div id="li-panel-lorem">
+  <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;margin-bottom:14px;">
+    <div class="tool-input-group" style="margin:0;flex:1;min-width:140px;">
+      <label class="tool-label">数量</label>
+      <input type="number" class="tool-input" id="li-count" value="3" min="1" max="50">
+    </div>
+    <div class="tool-input-group" style="margin:0;flex:1;min-width:160px;">
+      <label class="tool-label">类型</label>
+      <select class="tool-select" id="li-type">
+        <option value="paragraphs">段落</option>
+        <option value="sentences">句子</option>
+        <option value="words">单词</option>
+      </select>
+    </div>
+    <label class="tool-switch" style="padding-bottom:3px;"><input type="checkbox" id="li-start-lorem" checked><span class="tool-switch-track"></span>以 "Lorem ipsum..." 开头</label>
+  </div>
+  <div class="tool-btn-row">
+    <button class="tool-btn tool-btn-primary" id="li-generate-btn"><i class="fas fa-paragraph"></i> 生成</button>
+  </div>
+</div>
+
+<!-- 中文占位 -->
+<div id="li-panel-chinese" style="display:none;">
+  <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;margin-bottom:14px;">
+    <div class="tool-input-group" style="margin:0;flex:1;min-width:120px;">
+      <label class="tool-label">段落数</label>
+      <input type="number" class="tool-input" id="li-zh-para" value="3" min="1" max="20">
+    </div>
+    <div class="tool-input-group" style="margin:0;flex:1;min-width:160px;">
+      <label class="tool-label">每段句子数</label>
+      <input type="number" class="tool-input" id="li-zh-sent" value="4" min="1" max="20">
+    </div>
+    <div class="tool-input-group" style="margin:0;flex:1;min-width:160px;">
+      <label class="tool-label">主题风格</label>
+      <select class="tool-select" id="li-zh-topic">
+        <option value="general">通用</option>
+        <option value="tech">技术科技</option>
+        <option value="nature">自然风光</option>
+        <option value="business">商务财经</option>
+      </select>
+    </div>
+  </div>
+  <div class="tool-btn-row">
+    <button class="tool-btn tool-btn-primary" id="li-zh-generate-btn"><i class="fas fa-paragraph"></i> 生成中文占位文本</button>
+  </div>
+</div>
+
+<div class="tool-output" id="li-output" style="display:none;margin-top:6px;">
+  <div class="tool-output-label">
+    <span class="tool-output-title">生成结果 <span id="li-stat" style="font-weight:400;color:var(--text-muted,#9ca3af);font-size:.8rem;"></span></span>
+    <button class="tool-copy-btn" id="li-copy-btn"><i class="far fa-copy"></i> 复制</button>
+  </div>
+  <textarea class="tool-result" id="li-result" readonly style="min-height:200px;"></textarea>
+</div>
+
+<script>
+(function(){
+  const tabs = document.querySelectorAll('[data-li-tab]');
+  const panelLorem = document.getElementById('li-panel-lorem');
+  const panelZh = document.getElementById('li-panel-chinese');
+  tabs.forEach(tab=>{
+    tab.addEventListener('click',()=>{
+      tabs.forEach(t=>t.classList.remove('active'));tab.classList.add('active');
+      const t=tab.getAttribute('data-li-tab');
+      panelLorem.style.display=t==='lorem'?'':'none';
+      panelZh.style.display=t==='chinese'?'':'none';
+    });
+  });
+
+  // Lorem ipsum word bank
+  const words='lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua enim ad minim veniam quis nostrud exercitation ullamco laboris nisi aliquip ex ea commodo consequat duis aute irure reprehenderit voluptate velit esse cillum eu fugiat nulla pariatur excepteur sint occaecat cupidatat non proident sunt culpa qui officia deserunt mollit anim id est laborum'.split(' ');
+  const loremStart='Lorem ipsum dolor sit amet, consectetur adipiscing elit. ';
+
+  function capitalize(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+  function sentence(min=8,max=18){
+    const len=min+Math.floor(Math.random()*(max-min));
+    const ws=[];for(let i=0;i<len;i++)ws.push(words[Math.floor(Math.random()*words.length)]);
+    // Add comma occasionally
+    if(len>10&&Math.random()>0.5){ws.splice(Math.floor(len/2),0,ws[Math.floor(len/2)]+',');}
+    return capitalize(ws.join(' '))+'.';
+  }
+  function paragraph(minSent=4,maxSent=8){
+    const n=minSent+Math.floor(Math.random()*(maxSent-minSent));
+    const sents=[];for(let i=0;i<n;i++)sents.push(sentence());
+    return sents.join(' ');
+  }
+
+  document.getElementById('li-generate-btn').addEventListener('click',()=>{
+    const count=parseInt(document.getElementById('li-count').value)||3;
+    const type=document.getElementById('li-type').value;
+    const startLorem=document.getElementById('li-start-lorem').checked;
+    let result='';
+    if(type==='paragraphs'){
+      const paras=[];for(let i=0;i<count;i++)paras.push(paragraph());
+      if(startLorem) paras[0]=loremStart+paras[0];
+      result=paras.join('\n\n');
+    } else if(type==='sentences'){
+      const sents=[];for(let i=0;i<count;i++)sents.push(sentence());
+      if(startLorem) result=loremStart+sents.join(' ');
+      else result=sents.join(' ');
+    } else {
+      const ws=[];for(let i=0;i<count;i++)ws.push(words[Math.floor(Math.random()*words.length)]);
+      result=(startLorem?'Lorem ipsum ':'')+ws.join(' ');
+    }
+    document.getElementById('li-result').value=result;
+    document.getElementById('li-stat').textContent=`${result.length} 字符`;
+    document.getElementById('li-output').style.display='';
+  });
+
+  // Chinese text
+  const zhPools={
+    general:{chars:'的一是了我不人在他有这个上们来到时大地为子中你说生国年着就那和要她出也得里后自以会家可下而过天去能对小多然于心学么之都好看起发当没成只如事把还用第样道想作种开美总从无情己面最女但现前些所同日手又行意动方期它头经长儿回位分爱老因很给名法间斯知世什两次使身者被高已亲其进此话常与活正感见明问力理尔点文几定本公特做外孩相西果走将月十实向声车全信重三机工物气每并别真打太新比才便夫再书部水像眼等体却加电主界门利海受听表德少克白领别',colors:'美丽 壮观 宏伟 精彩 绚丽 辽阔 静谧 和谐 温馨 典雅'},
+    tech:{chars:'技术开发系统平台数据算法程序代码模块架构服务接口优化性能部署集成测试调试版本更新升级维护安全加密存储计算云端网络协议标准规范文档需求设计实现功能特性用户体验交互界面前端后端数据库服务器容器微服务分布式并发高可用扩展性可靠性稳定性效率精准智能自动化工具框架库组件插件配置环境工程项目管理迭代敏捷协作沟通研发创新突破解决方案',colors:'高效 智能 创新 精准 先进'},
+    nature:{chars:'山川河流森林草原天空云彩阳光雨露微风清泉鸟鸣虫唱花香叶绿溪流瀑布湖泊海洋沙滩礁石峰峦谷地平原盆地丘陵高原草甸湿地自然生态环境保护珍稀濒危物种植被覆盖水源涵养土壤肥沃空气清新宁静祥和壮美辽阔广袤无垠浩瀚无边绿意盎然生机勃勃万物复苏春暖花开秋高气爽冬雪皑皑夏绿阴浓',colors:'清新 壮美 辽阔 宁静 生机'},
+    business:{chars:'市场经济投资回报利润亏损增长下滑趋势分析报告数据统计财务预算成本控制风险评估战略规划品牌推广营销渠道客户服务供应链物流仓储采购销售谈判合同签约合规监管税务审计财报季报年报业绩股价估值融资上市并购重组整合转型升级创业孵化加速商业模式盈利用户增长市场占有率竞争优势差异化定位细分领域垂直深耕',colors:'稳健 高效 创值 卓越 可靠'}
+  };
+
+  function zhSentence(pool,minLen=20,maxLen=40){
+    const chars=pool.chars;
+    const len=minLen+Math.floor(Math.random()*(maxLen-minLen));
+    let s='';for(let i=0;i<len;i++)s+=chars[Math.floor(Math.random()*chars.length)];
+    return s+'。';
+  }
+
+  document.getElementById('li-zh-generate-btn').addEventListener('click',()=>{
+    const paras=parseInt(document.getElementById('li-zh-para').value)||3;
+    const sents=parseInt(document.getElementById('li-zh-sent').value)||4;
+    const topic=document.getElementById('li-zh-topic').value;
+    const pool=zhPools[topic]||zhPools.general;
+    const result=Array.from({length:paras},()=>Array.from({length:sents},()=>zhSentence(pool)).join('')).join('\n\n');
+    document.getElementById('li-result').value=result;
+    document.getElementById('li-stat').textContent=`${result.length} 字符`;
+    document.getElementById('li-output').style.display='';
+  });
+
+  document.getElementById('li-copy-btn').addEventListener('click',()=>{
+    const text=document.getElementById('li-result').value;
+    navigator.clipboard.writeText(text).then(()=>{
+      const btn=document.getElementById('li-copy-btn');
+      const orig=btn.innerHTML; btn.innerHTML='✅ 已复制'; btn.classList.add('copied');
+      setTimeout(()=>{btn.innerHTML=orig;btn.classList.remove('copied');},1500);
+    }).catch(()=>{});
+  });
+})();
+</script>

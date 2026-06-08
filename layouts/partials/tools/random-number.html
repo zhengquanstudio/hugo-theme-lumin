@@ -1,0 +1,205 @@
+<div class="tool-tabs">
+  <button class="tool-tab active" data-rn-tab="integer">随机整数</button>
+  <button class="tool-tab" data-rn-tab="float">随机小数</button>
+  <button class="tool-tab" data-rn-tab="batch">批量生成</button>
+</div>
+
+<div id="rn-panel-integer">
+  <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;margin-bottom:14px;">
+    <div class="tool-input-group" style="margin:0;flex:1;min-width:120px;">
+      <label class="tool-label">最小值</label>
+      <input type="number" class="tool-input" id="rn-int-min" value="1">
+    </div>
+    <div class="tool-input-group" style="margin:0;flex:1;min-width:120px;">
+      <label class="tool-label">最大值</label>
+      <input type="number" class="tool-input" id="rn-int-max" value="100">
+    </div>
+    <div class="tool-input-group" style="margin:0;flex:1;min-width:120px;">
+      <label class="tool-label">生成个数</label>
+      <input type="number" class="tool-input" id="rn-int-count" value="1" min="1" max="1000">
+    </div>
+  </div>
+  <label class="tool-switch" style="margin-bottom:14px;display:inline-flex;"><input type="checkbox" id="rn-int-unique"><span class="tool-switch-track"></span>不重复</label>
+  <div class="tool-btn-row">
+    <button class="tool-btn tool-btn-primary" id="rn-int-btn"><i class="fas fa-dice"></i> 生成</button>
+  </div>
+  <div class="tool-output" id="rn-int-output" style="display:none;">
+    <div class="tool-output-label">
+      <span class="tool-output-title">生成结果</span>
+      <button class="tool-copy-btn" id="rn-int-copy"><i class="far fa-copy"></i> 复制</button>
+    </div>
+    <div id="rn-int-big" style="font-size:2.5rem;font-weight:800;color:#667eea;text-align:center;padding:16px 0;display:none;"></div>
+    <textarea class="tool-result" id="rn-int-result" readonly style="display:none;min-height:80px;"></textarea>
+  </div>
+</div>
+
+<div id="rn-panel-float" style="display:none;">
+  <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;margin-bottom:14px;">
+    <div class="tool-input-group" style="margin:0;flex:1;min-width:120px;">
+      <label class="tool-label">最小值</label>
+      <input type="number" class="tool-input" id="rn-float-min" value="0" step="any">
+    </div>
+    <div class="tool-input-group" style="margin:0;flex:1;min-width:120px;">
+      <label class="tool-label">最大值</label>
+      <input type="number" class="tool-input" id="rn-float-max" value="1" step="any">
+    </div>
+    <div class="tool-input-group" style="margin:0;flex:1;min-width:120px;">
+      <label class="tool-label">小数位数</label>
+      <input type="number" class="tool-input" id="rn-float-decimals" value="4" min="1" max="15">
+    </div>
+    <div class="tool-input-group" style="margin:0;flex:1;min-width:120px;">
+      <label class="tool-label">生成个数</label>
+      <input type="number" class="tool-input" id="rn-float-count" value="1" min="1" max="100">
+    </div>
+  </div>
+  <div class="tool-btn-row">
+    <button class="tool-btn tool-btn-primary" id="rn-float-btn"><i class="fas fa-dice"></i> 生成</button>
+  </div>
+  <div class="tool-output" id="rn-float-output" style="display:none;">
+    <div class="tool-output-label">
+      <span class="tool-output-title">生成结果</span>
+      <button class="tool-copy-btn" id="rn-float-copy"><i class="far fa-copy"></i> 复制</button>
+    </div>
+    <div id="rn-float-big" style="font-size:2rem;font-weight:800;color:#667eea;text-align:center;padding:16px 0;display:none;"></div>
+    <textarea class="tool-result" id="rn-float-result" readonly style="display:none;min-height:80px;"></textarea>
+  </div>
+</div>
+
+<div id="rn-panel-batch" style="display:none;">
+  <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;margin-bottom:14px;">
+    <div class="tool-input-group" style="margin:0;flex:1;min-width:120px;">
+      <label class="tool-label">最小值</label>
+      <input type="number" class="tool-input" id="rn-batch-min" value="1">
+    </div>
+    <div class="tool-input-group" style="margin:0;flex:1;min-width:120px;">
+      <label class="tool-label">最大值</label>
+      <input type="number" class="tool-input" id="rn-batch-max" value="1000">
+    </div>
+    <div class="tool-input-group" style="margin:0;flex:1;min-width:120px;">
+      <label class="tool-label">数量（≤1000）</label>
+      <input type="number" class="tool-input" id="rn-batch-count" value="20" min="1" max="1000">
+    </div>
+  </div>
+  <label class="tool-switch" style="margin-bottom:14px;display:inline-flex;"><input type="checkbox" id="rn-batch-unique" checked><span class="tool-switch-track"></span>不重复</label>
+  <div class="tool-btn-row">
+    <button class="tool-btn tool-btn-primary" id="rn-batch-btn"><i class="fas fa-list"></i> 批量生成</button>
+  </div>
+  <div class="tool-output" id="rn-batch-output" style="display:none;">
+    <div class="tool-output-label">
+      <span class="tool-output-title">批量结果 <span id="rn-batch-count-label" style="font-weight:400;color:var(--text-muted,#9ca3af);font-size:.8rem;"></span></span>
+      <button class="tool-copy-btn" id="rn-batch-copy"><i class="far fa-copy"></i> 复制</button>
+    </div>
+    <textarea class="tool-result" id="rn-batch-result" readonly style="min-height:120px;"></textarea>
+  </div>
+</div>
+
+<script>
+(function(){
+  const tabs = document.querySelectorAll('[data-rn-tab]');
+  const panels = {
+    integer: document.getElementById('rn-panel-integer'),
+    float: document.getElementById('rn-panel-float'),
+    batch: document.getElementById('rn-panel-batch')
+  };
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t=>t.classList.remove('active')); tab.classList.add('active');
+      Object.values(panels).forEach(p=>p.style.display='none');
+      panels[tab.getAttribute('data-rn-tab')].style.display='';
+    });
+  });
+
+  function randInt(min, max) {
+    return Math.floor(Math.random()*(max-min+1))+min;
+  }
+
+  function copyText(text, btn) {
+    navigator.clipboard.writeText(text).then(()=>{
+      const orig=btn.innerHTML; btn.innerHTML='✅ 已复制'; btn.classList.add('copied');
+      setTimeout(()=>{btn.innerHTML=orig;btn.classList.remove('copied');},1500);
+    }).catch(()=>{});
+  }
+
+  // Integer
+  document.getElementById('rn-int-btn').addEventListener('click', ()=>{
+    const min=parseInt(document.getElementById('rn-int-min').value);
+    const max=parseInt(document.getElementById('rn-int-max').value);
+    const count=Math.min(1000,parseInt(document.getElementById('rn-int-count').value)||1);
+    const unique=document.getElementById('rn-int-unique').checked;
+    if(min>max){alert('最小值不能大于最大值');return;}
+    const range=max-min+1;
+    if(unique && count>range){alert(`范围内只有 ${range} 个不同整数，无法生成 ${count} 个不重复数字`);return;}
+
+    const nums=[];
+    if(unique){
+      const pool=Array.from({length:range},(_,i)=>min+i);
+      for(let i=pool.length-1;i>0;i--){const j=randInt(0,i);[pool[i],pool[j]]=[pool[j],pool[i]];}
+      nums.push(...pool.slice(0,count));
+    } else {
+      for(let i=0;i<count;i++) nums.push(randInt(min,max));
+    }
+
+    const bigEl=document.getElementById('rn-int-big');
+    const resEl=document.getElementById('rn-int-result');
+    if(count===1){bigEl.textContent=nums[0];bigEl.style.display='';resEl.style.display='none';}
+    else{resEl.value=nums.join(', ');resEl.style.display='';bigEl.style.display='none';}
+    document.getElementById('rn-int-output').style.display='';
+  });
+
+  document.getElementById('rn-int-copy').addEventListener('click', ()=>{
+    const txt=document.getElementById('rn-int-big').style.display!=='none'
+      ?document.getElementById('rn-int-big').textContent
+      :document.getElementById('rn-int-result').value;
+    copyText(txt, document.getElementById('rn-int-copy'));
+  });
+
+  // Float
+  document.getElementById('rn-float-btn').addEventListener('click', ()=>{
+    const min=parseFloat(document.getElementById('rn-float-min').value);
+    const max=parseFloat(document.getElementById('rn-float-max').value);
+    const decimals=parseInt(document.getElementById('rn-float-decimals').value)||4;
+    const count=Math.min(100,parseInt(document.getElementById('rn-float-count').value)||1);
+    if(min>=max){alert('最小值必须小于最大值');return;}
+    const nums=Array.from({length:count},()=>(Math.random()*(max-min)+min).toFixed(decimals));
+    const bigEl=document.getElementById('rn-float-big');
+    const resEl=document.getElementById('rn-float-result');
+    if(count===1){bigEl.textContent=nums[0];bigEl.style.display='';resEl.style.display='none';}
+    else{resEl.value=nums.join('\n');resEl.style.display='';bigEl.style.display='none';}
+    document.getElementById('rn-float-output').style.display='';
+  });
+
+  document.getElementById('rn-float-copy').addEventListener('click', ()=>{
+    const txt=document.getElementById('rn-float-big').style.display!=='none'
+      ?document.getElementById('rn-float-big').textContent
+      :document.getElementById('rn-float-result').value;
+    copyText(txt, document.getElementById('rn-float-copy'));
+  });
+
+  // Batch
+  document.getElementById('rn-batch-btn').addEventListener('click', ()=>{
+    const min=parseInt(document.getElementById('rn-batch-min').value);
+    const max=parseInt(document.getElementById('rn-batch-max').value);
+    const count=Math.min(1000,parseInt(document.getElementById('rn-batch-count').value)||20);
+    const unique=document.getElementById('rn-batch-unique').checked;
+    if(min>max){alert('最小值不能大于最大值');return;}
+    const range=max-min+1;
+    if(unique&&count>range){alert(`范围内只有 ${range} 个不同整数`);return;}
+    const nums=[];
+    if(unique){
+      const pool=Array.from({length:range},(_,i)=>min+i);
+      for(let i=pool.length-1;i>0;i--){const j=randInt(0,i);[pool[i],pool[j]]=[pool[j],pool[i]];}
+      nums.push(...pool.slice(0,count));
+    } else {
+      for(let i=0;i<count;i++) nums.push(randInt(min,max));
+    }
+    document.getElementById('rn-batch-result').value=nums.join('\n');
+    document.getElementById('rn-batch-count-label').textContent=`共 ${count} 个`;
+    document.getElementById('rn-batch-output').style.display='';
+  });
+
+  document.getElementById('rn-batch-copy').addEventListener('click', ()=>{
+    copyText(document.getElementById('rn-batch-result').value, document.getElementById('rn-batch-copy'));
+  });
+})();
+</script>

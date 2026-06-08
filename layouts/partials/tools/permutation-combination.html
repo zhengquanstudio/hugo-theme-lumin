@@ -1,0 +1,84 @@
+<div class="tool-section">
+  <div class="tool-title"><i class="fa-solid fa-shuffle"></i> 排列组合生成</div>
+  <div class="tool-tabs">
+    <button class="tool-tab-btn active" onclick="switchPCTab('permutation',this)">全排列</button>
+    <button class="tool-tab-btn" onclick="switchPCTab('combination',this)">组合 (n选k)</button>
+    <button class="tool-tab-btn" onclick="switchPCTab('count',this)">计数公式</button>
+  </div>
+  <div id="pc-tab-permutation" class="pc-tab-content active">
+    <div class="tool-input-group">
+      <label class="tool-label">输入元素 <span style="color:var(--text-secondary);font-weight:400">(用逗号分隔)</span></label>
+      <input type="text" class="tool-input" id="pc-elements" value="A,B,C,D" placeholder="A,B,C,D">
+    </div>
+    <button class="tool-btn tool-btn-primary" onclick="genPermutation()"><i class="fa-solid fa-play"></i> 生成全排列</button>
+    <div class="pc-result" id="pc-perm-result"></div>
+  </div>
+  <div id="pc-tab-combination" class="pc-tab-content" style="display:none">
+    <div class="tool-row">
+      <div class="tool-input-group" style="flex:2">
+        <label class="tool-label">元素总数 n</label>
+        <input type="number" class="tool-input" id="pc-n" min="1" max="20" value="6">
+      </div>
+      <div class="tool-input-group" style="flex:2">
+        <label class="tool-label">选取个数 k</label>
+        <input type="number" class="tool-input" id="pc-k" min="0" max="20" value="3">
+      </div>
+    </div>
+    <div class="tool-input-group">
+      <label class="tool-label">可选标签 <span style="color:var(--text-secondary);font-weight:400">(逗号分隔，或留空自动用编号)</span></label>
+      <input type="text" class="tool-input" id="pc-labels" placeholder="红,黄,蓝,绿,紫,橙">
+    </div>
+    <button class="tool-btn tool-btn-primary" onclick="genCombination()"><i class="fa-solid fa-play"></i> 生成组合</button>
+    <div class="pc-result" id="pc-comb-result"></div>
+  </div>
+  <div id="pc-tab-count" class="pc-tab-content" style="display:none">
+    <div class="tool-row">
+      <div class="tool-input-group" style="flex:1"><label class="tool-label">n</label><input type="number" class="tool-input" id="pc-cn" min="0" value="10"></div>
+      <div class="tool-input-group" style="flex:1"><label class="tool-label">k</label><input type="number" class="tool-input" id="pc-ck" min="0" value="3"></div>
+    </div>
+    <button class="tool-btn tool-btn-primary" onclick="calcPCCount()"><i class="fa-solid fa-calculator"></i> 计算</button>
+    <div id="pc-count-result" style="margin-top:12px;font-size:.95rem;"></div>
+  </div>
+</div>
+
+<style>
+.tool-tabs{display:flex;gap:4px;margin:8px 0;}
+.tool-tab-btn{padding:6px 16px;border-radius:6px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-secondary);cursor:pointer;font-size:.85rem;transition:all .2s;}
+.tool-tab-btn.active{background:var(--primary-color,#667eea);color:#fff;border-color:var(--primary-color,#667eea);}
+.pc-result{max-height:400px;overflow-y:auto;margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;}
+.pc-item{padding:2px 10px;background:var(--bg-card);border-radius:10px;font-size:.85rem;border:1px solid var(--border-color);}
+</style>
+
+<script>
+var pcTab='permutation';
+window.switchPCTab=function(tab,btn){
+  pcTab=tab;document.querySelectorAll('.tool-tab-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');
+  document.querySelectorAll('.pc-tab-content').forEach(function(c){c.style.display='none';});
+  document.getElementById('pc-tab-'+tab).style.display='block';
+};
+function permute(arr){if(arr.length<=1)return[arr];var result=[];for(var i=0;i<arr.length;i++){var rest=arr.slice(0,i).concat(arr.slice(i+1));var sub=permute(rest);for(var j=0;j<sub.length;j++){result.push([arr[i]].concat(sub[j]));}}return result;}
+function comb(arr,k){if(k===0)return[[]];if(arr.length<k)return[];var result=[];function backtrack(start,current){if(current.length===k){result.push(current.slice());return;}for(var i=start;i<arr.length;i++){current.push(arr[i]);backtrack(i+1,current);current.pop();}}backtrack(0,[]);return result;}
+function factorial(n){if(n<=1)return 1;var r=1;for(var i=2;i<=n;i++)r*=i;return r;}
+window.genPermutation=function(){
+  var elems=document.getElementById('pc-elements').value.split(/[,\s]+/).filter(Boolean);
+  if(!elems.length){alert('请输入元素');return;}
+  var perms=permute(elems);
+  document.getElementById('pc-perm-result').innerHTML='<p style="margin:8px 0">共 <b>'+perms.length+'</b> 种排列（'+elems.length+'! = '+factorial(elems.length)+'）</p>'+perms.map(function(p){return '<span class="pc-item">'+p.join(', ')+'</span>';}).join('');
+};
+window.genCombination=function(){
+  var n=parseInt(document.getElementById('pc-n').value)||6,k=parseInt(document.getElementById('pc-k').value)||3;
+  var labels=document.getElementById('pc-labels').value.trim();
+  var items=labels?labels.split(/[,\s]+/).filter(Boolean).slice(0,n):[];
+  if(!items.length){items=[];for(var i=0;i<n;i++)items.push(String(i+1));}
+  var combs=comb(items,k);
+  var cCount=factorial(n)/(factorial(k)*factorial(n-k));
+  document.getElementById('pc-comb-result').innerHTML='<p style="margin:8px 0">C('+n+','+k+') = <b>'+cCount+'</b></p>'+combs.map(function(c){return '<span class="pc-item">'+c.join(', ')+'</span>';}).join('');
+};
+window.calcPCCount=function(){
+  var n=parseInt(document.getElementById('pc-cn').value)||10,k=parseInt(document.getElementById('pc-ck').value)||3;
+  if(k>n){document.getElementById('pc-count-result').innerHTML='k 不能大于 n';return;}
+  var pCount=factorial(n)/factorial(n-k);
+  var cCount=factorial(n)/(factorial(k)*factorial(n-k));
+  document.getElementById('pc-count-result').innerHTML='<div>排列 P('+n+','+k+') = <b>'+pCount+'</b></div><div>组合 C('+n+','+k+') = <b>'+cCount+'</b></div>';
+};
+</script>

@@ -1,0 +1,41 @@
+{{ define "main" }}
+<style>
+/* 极简标题 - 统一样式 */
+.main-wrapper:has(.sponsor-page) .layout-grid{gap:36px!important}
+.sponsor-page .list-header{padding:28px 0;margin-bottom:32px;border-bottom:2px solid var(--border-color,#e5e7eb);background:transparent}
+.sponsor-page .list-title{font-size:1.8rem;font-weight:700;color:var(--text-primary,#1f2937);margin:0 0 10px 0;letter-spacing:-0.02em}
+.sponsor-page .list-description{font-size:0.95rem;color:var(--text-secondary,#6b7280);margin:0;line-height:1.6}
+</style>
+{{/* 面包屑导航 - 图标优先从菜单项 [menu.main.params].icon 读取 */}}
+{{ $pageSlug := .Page.File.TranslationBaseName }}
+{{ $currentIcon := "" }}
+{{ range site.Menus.main }}
+  {{ if eq .Identifier $pageSlug }}
+    {{ $currentIcon = .Params.icon | default "" }}
+  {{ end }}
+{{ end }}
+{{ if not $currentIcon }}{{ $currentIcon = index site.Params.breadcrumbIcons $pageSlug | default "" }}{{ end }}
+<nav class="breadcrumb" aria-label="面包屑导航">
+  <ol class="breadcrumb-list">
+    <li class="breadcrumb-item"><a href="{{ site.BaseURL }}"><i class="fas fa-home" style="font-size:0.9em;margin-right:2px;"></i> 首页</a></li>
+    <li class="breadcrumb-item active" aria-current="page">
+      {{ if $currentIcon }}<i class="fas {{ $currentIcon }}" style="font-size:0.85em;margin-right:4px;opacity:0.8;"></i>{{ end }}{{ .Title }}</li>
+  </ol>
+</nav>
+
+<div class="list-page sponsor-page">
+  <header class="list-header">
+    <h1 class="list-title">{{ .Title }}</h1>
+    {{ with .Description }}
+    <p class="list-description">{{ . }}</p>
+    {{ end }}
+  </header>
+
+  <div class="post-content sponsor-content">
+    {{ .Content }}
+  </div>
+
+  {{ partial "comments.html" . }}
+</div>
+
+{{ end }}

@@ -1,0 +1,103 @@
+<div class="tool-input-group">
+  <label class="tool-label">搜索端口</label>
+  <input class="tool-input" type="text" id="np-search" placeholder="输入端口号、协议或服务名搜索...">
+</div>
+<div class="tool-result" id="np-result"></div>
+
+<script>
+(function() {
+  var ports = [
+    { port:20, proto:'TCP', service:'FTP-DATA', desc:'文件传输协议-数据', cat:'文件传输' },
+    { port:21, proto:'TCP', service:'FTP', desc:'文件传输协议-控制', cat:'文件传输' },
+    { port:22, proto:'TCP', service:'SSH', desc:'安全外壳协议', cat:'远程访问' },
+    { port:23, proto:'TCP', service:'Telnet', desc:'远程终端协议', cat:'远程访问' },
+    { port:25, proto:'TCP', service:'SMTP', desc:'简单邮件传输协议', cat:'邮件' },
+    { port:53, proto:'TCP/UDP', service:'DNS', desc:'域名系统', cat:'网络基础' },
+    { port:67, proto:'UDP', service:'DHCP-Server', desc:'动态主机配置-服务端', cat:'网络基础' },
+    { port:68, proto:'UDP', service:'DHCP-Client', desc:'动态主机配置-客户端', cat:'网络基础' },
+    { port:69, proto:'UDP', service:'TFTP', desc:'简单文件传输协议', cat:'文件传输' },
+    { port:80, proto:'TCP', service:'HTTP', desc:'超文本传输协议', cat:'Web' },
+    { port:110, proto:'TCP', service:'POP3', desc:'邮局协议v3', cat:'邮件' },
+    { port:123, proto:'UDP', service:'NTP', desc:'网络时间协议', cat:'网络基础' },
+    { port:143, proto:'TCP', service:'IMAP', desc:'互联网消息访问协议', cat:'邮件' },
+    { port:161, proto:'UDP', service:'SNMP', desc:'简单网络管理协议', cat:'网络管理' },
+    { port:194, proto:'TCP', service:'IRC', desc:'互联网中继聊天', cat:'通讯' },
+    { port:443, proto:'TCP', service:'HTTPS', desc:'安全超文本传输协议', cat:'Web' },
+    { port:445, proto:'TCP', service:'SMB', desc:'服务器消息块(CIFS)', cat:'文件共享' },
+    { port:465, proto:'TCP', service:'SMTPS', desc:'安全SMTP', cat:'邮件' },
+    { port:514, proto:'UDP', service:'Syslog', desc:'系统日志', cat:'系统' },
+    { port:587, proto:'TCP', service:'SMTP', desc:'邮件提交', cat:'邮件' },
+    { port:636, proto:'TCP', service:'LDAPS', desc:'安全LDAP', cat:'目录服务' },
+    { port:873, proto:'TCP', service:'Rsync', desc:'远程同步', cat:'文件传输' },
+    { port:993, proto:'TCP', service:'IMAPS', desc:'安全IMAP', cat:'邮件' },
+    { port:995, proto:'TCP', service:'POP3S', desc:'安全POP3', cat:'邮件' },
+    { port:1080, proto:'TCP', service:'SOCKS', desc:'SOCKS代理', cat:'网络代理' },
+    { port:1433, proto:'TCP', service:'MSSQL', desc:'SQL Server数据库', cat:'数据库' },
+    { port:1521, proto:'TCP', service:'Oracle', desc:'Oracle数据库', cat:'数据库' },
+    { port:1723, proto:'TCP', service:'PPTP', desc:'点对点隧道协议', cat:'VPN' },
+    { port:1883, proto:'TCP', service:'MQTT', desc:'消息队列遥测传输', cat:'物联网' },
+    { port:2049, proto:'TCP/UDP', service:'NFS', desc:'网络文件系统', cat:'文件共享' },
+    { port:2181, proto:'TCP', service:'ZooKeeper', desc:'分布式协调服务', cat:'分布式系统' },
+    { port:2375, proto:'TCP', service:'Docker', desc:'Docker API(不安全)', cat:'容器' },
+    { port:2376, proto:'TCP', service:'Docker-TLS', desc:'Docker API(TLS)', cat:'容器' },
+    { port:3000, proto:'TCP', service:'-', desc:'Node.js/React开发服务器', cat:'开发' },
+    { port:3128, proto:'TCP', service:'Squid', desc:'Squid代理', cat:'网络代理' },
+    { port:3306, proto:'TCP', service:'MySQL', desc:'MySQL数据库', cat:'数据库' },
+    { port:3389, proto:'TCP', service:'RDP', desc:'远程桌面协议', cat:'远程访问' },
+    { port:3478, proto:'UDP', service:'STUN', desc:'NAT会话穿透', cat:'网络基础' },
+    { port:4000, proto:'TCP', service:'-', desc:'Phoenix/Next.js', cat:'开发' },
+    { port:4200, proto:'TCP', service:'-', desc:'Angular开发服务器', cat:'开发' },
+    { port:5000, proto:'TCP', service:'-', desc:'Flask开发服务器', cat:'开发' },
+    { port:5001, proto:'TCP', service:'-', desc:'ASP.NET/FastAPI', cat:'开发' },
+    { port:5173, proto:'TCP', service:'-', desc:'Vite开发服务器', cat:'开发' },
+    { port:5432, proto:'TCP', service:'PostgreSQL', desc:'PostgreSQL数据库', cat:'数据库' },
+    { port:5672, proto:'TCP', service:'AMQP', desc:'高级消息队列协议(RabbitMQ)', cat:'消息队列' },
+    { port:5900, proto:'TCP', service:'VNC', desc:'虚拟网络计算', cat:'远程访问' },
+    { port:5984, proto:'TCP', service:'CouchDB', desc:'CouchDB数据库', cat:'数据库' },
+    { port:6379, proto:'TCP', service:'Redis', desc:'Redis缓存', cat:'数据库' },
+    { port:6443, proto:'TCP', service:'K8s API', desc:'Kubernetes API Server', cat:'容器' },
+    { port:6667, proto:'TCP', service:'IRC', desc:'IRC聊天', cat:'通讯' },
+    { port:7474, proto:'TCP', service:'Neo4j', desc:'Neo4j图数据库', cat:'数据库' },
+    { port:8000, proto:'TCP', service:'-', desc:'Django开发服务器', cat:'开发' },
+    { port:8080, proto:'TCP', service:'HTTP-Alt', desc:'HTTP备选/Tomcat/Jenkins', cat:'Web' },
+    { port:8443, proto:'TCP', service:'HTTPS-Alt', desc:'HTTPS备选', cat:'Web' },
+    { port:8888, proto:'TCP', service:'-', desc:'Jupyter Notebook', cat:'开发' },
+    { port:9000, proto:'TCP', service:'-', desc:'PHP-FPM/MinIO', cat:'开发' },
+    { port:9090, proto:'TCP', service:'-', desc:'HTTP/Kafka REST Proxy', cat:'Web' },
+    { port:9092, proto:'TCP', service:'Kafka', desc:'Apache Kafka', cat:'消息队列' },
+    { port:9200, proto:'TCP', service:'Elasticsearch', desc:'Elasticsearch REST', cat:'搜索引擎' },
+    { port:9300, proto:'TCP', service:'Elasticsearch', desc:'Elasticsearch节点通信', cat:'搜索引擎' },
+    { port:11211, proto:'TCP', service:'Memcached', desc:'Memcached缓存', cat:'数据库' },
+    { port:15672, proto:'TCP', service:'RabbitMQ', desc:'RabbitMQ管理界面', cat:'消息队列' },
+    { port:25565, proto:'TCP', service:'Minecraft', desc:'Minecraft服务器', cat:'游戏' },
+    { port:27017, proto:'TCP', service:'MongoDB', desc:'MongoDB数据库', cat:'数据库' },
+    { port:3724, proto:'TCP', service:'WoW', desc:'魔兽世界', cat:'游戏' },
+    { port:27015, proto:'TCP/UDP', service:'SRCDS', desc:'Source引擎服务器(CS)', cat:'游戏' },
+    { port:28960, proto:'UDP', service:'CoD', desc:'使命召唤', cat:'游戏' },
+    { port:2456, proto:'UDP', service:'Valheim', desc:'Valheim', cat:'游戏' },
+    { port:7777, proto:'UDP', service:'Terraria', desc:'泰拉瑞亚', cat:'游戏' },
+    { port:8211, proto:'UDP', service:'ARK', desc:'方舟生存进化', cat:'游戏' },
+    { port:19132, proto:'UDP', service:'MC-Bedrock', desc:'Minecraft基岩版', cat:'游戏' }
+  ];
+
+  function render(search) {
+    search = (search || '').toLowerCase();
+    var filtered = ports.filter(function(p) {
+      return !search || String(p.port).indexOf(search) >= 0 || p.proto.toLowerCase().indexOf(search) >= 0 || p.service.toLowerCase().indexOf(search) >= 0 || p.desc.toLowerCase().indexOf(search) >= 0 || p.cat.toLowerCase().indexOf(search) >= 0;
+    });
+
+    var html = '<div class="tool-output"><div class="tool-output-title">常用网络端口（共 ' + filtered.length + ' 条）</div>';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+    html += '<tr style="background:#f5f5f5;"><th style="padding:6px;text-align:left;">端口</th><th style="padding:6px;text-align:left;">协议</th><th style="padding:6px;text-align:left;">服务</th><th style="padding:6px;text-align:left;">分类</th><th style="padding:6px;text-align:left;">描述</th></tr>';
+
+    for (var i = 0; i < filtered.length; i++) {
+      html += '<tr style="border-bottom:1px solid #eee;"><td style="padding:6px;font-family:monospace;">' + filtered[i].port + '</td><td style="padding:6px;font-size:12px;">' + filtered[i].proto + '</td><td style="padding:6px;font-weight:bold;font-size:12px;">' + filtered[i].service + '</td><td style="padding:6px;font-size:12px;color:#666;">' + filtered[i].cat + '</td><td style="padding:6px;font-size:12px;">' + filtered[i].desc + '</td></tr>';
+    }
+    html += '</table></div>';
+    document.getElementById('np-result').innerHTML = html;
+  }
+
+  document.getElementById('np-search').addEventListener('input', function(){ render(this.value); });
+  render('');
+})();
+</script>

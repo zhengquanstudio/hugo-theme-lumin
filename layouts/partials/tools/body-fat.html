@@ -1,0 +1,193 @@
+<div class="tool-input-group">
+  <label class="tool-label">性别</label>
+  <select class="tool-select" id="bf-gender">
+    <option value="male">男</option>
+    <option value="female">女</option>
+  </select>
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">年龄（岁）</label>
+  <input class="tool-input" type="number" id="bf-age" value="25" min="1" max="120" placeholder="年龄">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">身高（cm）</label>
+  <input class="tool-input" type="number" id="bf-height" value="170" step="0.1" min="50" max="300" placeholder="身高">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">体重（kg）</label>
+  <input class="tool-input" type="number" id="bf-weight" value="70" step="0.1" min="1" max="500" placeholder="体重">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">颈围（cm）</label>
+  <input class="tool-input" type="number" id="bf-neck" value="38" step="0.1" min="20" max="80" placeholder="颈围">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">腰围（cm）</label>
+  <input class="tool-input" type="number" id="bf-waist" value="80" step="0.1" min="30" max="200" placeholder="腰围">
+</div>
+<div class="tool-input-group" id="bf-hip-group" style="display:none;">
+  <label class="tool-label">臀围（cm）</label>
+  <input class="tool-input" type="number" id="bf-hip" value="95" step="0.1" min="40" max="200" placeholder="臀围">
+</div>
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="bf-calc">计算体脂率</button>
+</div>
+<div class="tool-result" id="bf-result"></div>
+
+<script>
+(function() {
+  var hipGroup = document.getElementById("bf-hip-group");
+
+  // Toggle hip field based on gender
+  document.getElementById("bf-gender").addEventListener("change", function() {
+    if (this.value === "female") {
+      hipGroup.style.display = "block";
+    } else {
+      hipGroup.style.display = "none";
+    }
+  });
+
+  function getBodyFatRating(bf, gender) {
+    if (gender === "male") {
+      if (bf < 6) return { text: "必需脂肪", color: "var(--info-color,#3b82f6)" };
+      if (bf < 14) return { text: "运动员", color: "var(--success-color,#22c55e)" };
+      if (bf < 18) return { text: "健康", color: "var(--success-color,#10b981)" };
+      if (bf < 25) return { text: "平均水平", color: "var(--warning-color,#f59e0b)" };
+      return { text: "超重", color: "var(--error-color,#ef4444)" };
+    } else {
+      if (bf < 14) return { text: "必需脂肪", color: "var(--info-color,#3b82f6)" };
+      if (bf < 21) return { text: "运动员", color: "var(--success-color,#22c55e)" };
+      if (bf < 25) return { text: "健康", color: "var(--success-color,#10b981)" };
+      if (bf < 32) return { text: "平均水平", color: "var(--warning-color,#f59e0b)" };
+      return { text: "超重", color: "var(--error-color,#ef4444)" };
+    }
+  }
+
+  function getBarPosition(bf, gender) {
+    var minBf = 2;
+    var maxBf = gender === "male" ? 38 : 45;
+    var pos = ((bf - minBf) / (maxBf - minBf)) * 100;
+    return Math.max(0, Math.min(100, pos));
+  }
+
+  function getRanges(gender) {
+    if (gender === "male") {
+      return [
+        { label: "必需", min: 2, max: 5, color: "var(--info-color,#3b82f6)" },
+        { label: "运动员", min: 6, max: 13, color: "var(--success-color,#22c55e)" },
+        { label: "健康", min: 14, max: 17, color: "var(--success-color,#10b981)" },
+        { label: "平均", min: 18, max: 24, color: "var(--warning-color,#f59e0b)" },
+        { label: "超重", min: 25, max: 38, color: "var(--error-color,#ef4444)" }
+      ];
+    } else {
+      return [
+        { label: "必需", min: 10, max: 13, color: "var(--info-color,#3b82f6)" },
+        { label: "运动员", min: 14, max: 20, color: "var(--success-color,#22c55e)" },
+        { label: "健康", min: 21, max: 24, color: "var(--success-color,#10b981)" },
+        { label: "平均", min: 25, max: 31, color: "var(--warning-color,#f59e0b)" },
+        { label: "超重", min: 32, max: 45, color: "var(--error-color,#ef4444)" }
+      ];
+    }
+  }
+
+  document.getElementById("bf-calc").addEventListener("click", function() {
+    var gender = document.getElementById("bf-gender").value;
+    var age = parseFloat(document.getElementById("bf-age").value);
+    var height = parseFloat(document.getElementById("bf-height").value);
+    var weight = parseFloat(document.getElementById("bf-weight").value);
+    var neck = parseFloat(document.getElementById("bf-neck").value);
+    var waist = parseFloat(document.getElementById("bf-waist").value);
+    var hip = parseFloat(document.getElementById("bf-hip").value);
+    var result = document.getElementById("bf-result");
+
+    if (isNaN(age) || isNaN(height) || isNaN(weight) || isNaN(neck) || isNaN(waist)) {
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">输入错误</div><p>请填写所有必填数据。</p></div>';
+      return;
+    }
+    if (gender === "female" && isNaN(hip)) {
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">输入错误</div><p>女性需要填写臀围数据。</p></div>';
+      return;
+    }
+
+    var bf;
+    if (gender === "male") {
+      bf = 86.010 * Math.log10(waist - neck) - 70.041 * Math.log10(height) + 36.76;
+    } else {
+      bf = 163.205 * Math.log10(waist + hip - neck) - 97.684 * Math.log10(height) - 78.387;
+    }
+
+    bf = Math.max(0, Math.round(bf * 10) / 10);
+
+    var rating = getBodyFatRating(bf, gender);
+    var pos = getBarPosition(bf, gender);
+    var ranges = getRanges(gender);
+
+    // Lean mass and fat mass
+    var fatMass = weight * bf / 100;
+    var leanMass = weight - fatMass;
+    var genderLabel = gender === "male" ? "男性" : "女性";
+
+    var html = '<div class="tool-output"><div class="tool-output-title">体脂率计算结果 (' + genderLabel + ')</div>';
+
+    // Large body fat percentage
+    html += '<div style="text-align:center;padding:20px 0;">';
+    html += '<div style="font-size:48px;font-weight:700;color:' + rating.color + ';line-height:1;">' + bf + '%</div>';
+    html += '<div style="font-size:18px;font-weight:600;color:' + rating.color + ';margin-top:4px;">' + rating.text + '</div>';
+    html += '</div>';
+
+    // Colored rating bar
+    var totalRange = gender === "male" ? 36 : 43;
+    html += '<div style="position:relative;width:100%;height:24px;border-radius:12px;overflow:hidden;margin:0 0 8px 0;display:flex;">';
+    for (var i = 0; i < ranges.length; i++) {
+      var segWidth = ((ranges[i].max - ranges[i].min) / totalRange) * 100;
+      html += '<div style="width:' + segWidth + '%;background:' + ranges[i].color + ';"></div>';
+    }
+    html += '</div>';
+
+    // Indicator
+    html += '<div style="position:relative;width:100%;height:20px;margin-bottom:8px;">';
+    html += '<div style="position:absolute;left:' + pos + '%;top:0;transform:translateX(-50%);">';
+    html += '<div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:10px solid ' + rating.color + ';margin:0 auto;"></div>';
+    html += '</div>';
+    html += '</div>';
+
+    // Labels for each range
+    html += '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-secondary,#6b7280);margin-bottom:16px;">';
+    for (var j = 0; j < ranges.length; j++) {
+      html += '<span>' + ranges[j].label + '</span>';
+    }
+    html += '</div>';
+
+    // Tool stats
+    html += '<div class="tool-stats">';
+    html += '<div class="tool-stat"><div class="tool-stat-value">' + bf + '%</div><div class="tool-stat-label">体脂率</div></div>';
+    html += '<div class="tool-stat"><div class="tool-stat-value">' + leanMass.toFixed(1) + ' kg</div><div class="tool-stat-label">瘦体重</div></div>';
+    html += '<div class="tool-stat"><div class="tool-stat-value">' + fatMass.toFixed(1) + ' kg</div><div class="tool-stat-label">脂肪重量</div></div>';
+    html += '</div>';
+
+    // Rating table
+    html += '<h4 style="margin:16px 0 8px 0;font-size:14px;color:var(--text-primary,#1f2937);">' + genderLabel + '体脂率评级标准</h4>';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+    html += '<thead><tr style="background:var(--bg-secondary,#f5f5f5);"><th style="padding:8px;text-align:left;font-weight:600;">评级</th><th style="padding:8px;text-align:right;font-weight:600;">范围</th></tr></thead>';
+    html += '<tbody>';
+    for (var k = 0; k < ranges.length; k++) {
+      var isCurrent = (bf >= ranges[k].min && bf <= ranges[k].max);
+      var rowBg2 = isCurrent ? 'var(--bg-highlight, rgba(102,126,234,.08))' : 'transparent';
+      var rowStyle2 = isCurrent ? 'font-weight:600;' : '';
+      html += '<tr style="border-bottom:1px solid var(--border-color,#e5e7eb);background:' + rowBg2 + ';">';
+      html += '<td style="padding:8px;' + rowStyle2 + '"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + ranges[k].color + ';margin-right:6px;"></span>' + ranges[k].label + '</td>';
+      html += '<td style="padding:8px;text-align:right;font-family:monospace;' + rowStyle2 + '">' + ranges[k].min + '% - ' + ranges[k].max + '%</td>';
+      html += '</tr>';
+    }
+    html += '</tbody></table>';
+
+    html += '<p style="margin-top:10px;font-size:12px;color:var(--text-secondary,#6b7280);">使用美国海军体脂率公式计算。瘦体重 = 体重 - 脂肪重量。体脂率评级因年龄和个体差异可能有所不同，仅供参考。</p>';
+    html += '</div>';
+
+    result.innerHTML = html;
+  });
+
+  // Initial calculation
+  document.getElementById("bf-calc").click();
+})();
+</script>

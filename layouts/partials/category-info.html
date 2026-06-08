@@ -1,0 +1,8 @@
+{{- $slug := . -}}
+{{- $site := site -}}
+{{- $info := dict "slug" $slug "title" $slug "icon" "" -}}
+{{- $sectionPage := $site.GetPage (printf "/%s" $slug) -}}
+{{- if $sectionPage -}}
+  {{- $info = dict "slug" $slug "title" ($sectionPage.Title | default $slug) "icon" ($sectionPage.Params.icon | default "") -}}
+{{- end -}}
+{{- return $info -}}

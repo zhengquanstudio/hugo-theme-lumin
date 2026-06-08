@@ -1,0 +1,30 @@
+<div class="tool-section">
+  <div class="tool-title"><i class="fa-solid fa-file-code"></i> XML 格式化</div>
+  <div class="tool-row">
+    <div class="tool-input-group" style="flex:1">
+      <label class="tool-label">输入</label>
+      <textarea id="xml-input" class="tool-textarea" rows="8" placeholder='&lt;root&gt;&lt;item id=&quot;1&quot;&gt;Hello&lt;/item&gt;&lt;item id=&quot;2&quot;&gt;World&lt;/item&gt;&lt;/root&gt;'>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;bookstore&gt;&lt;book category="fiction"&gt;&lt;title lang="zh"&gt;三体&lt;/title&gt;&lt;author&gt;刘慈欣&lt;/author&gt;&lt;price&gt;39.90&lt;/price&gt;&lt;/book&gt;&lt;book category="tech"&gt;&lt;title lang="en"&gt;Clean Code&lt;/title&gt;&lt;author&gt;Robert C. Martin&lt;/author&gt;&lt;price&gt;59.00&lt;/price&gt;&lt;/book&gt;&lt;/bookstore&gt;</textarea>
+    </div>
+    <div class="tool-input-group" style="flex:1">
+      <label class="tool-label">输出</label>
+      <textarea id="xml-output" class="tool-textarea" rows="8" readonly placeholder="格式化结果..."></textarea>
+    </div>
+  </div>
+  <div class="tool-btn-group">
+    <button class="tool-btn tool-btn-primary" onclick="formatXML()"><i class="fa-solid fa-indent"></i> 格式化</button>
+    <button class="tool-btn" onclick="minifyXML()"><i class="fa-solid fa-compress"></i> 压缩</button>
+    <button class="tool-btn" onclick="xmlToJSON()"><i class="fa-solid fa-code"></i> 转 JSON</button>
+    <button class="tool-btn" onclick="xmlCopy()"><i class="fa-solid fa-copy"></i> 复制</button>
+  </div>
+  <div id="xml-error" style="color:#ef4444;margin-top:8px;font-size:.85rem;"></div>
+</div>
+
+<script>
+function formatXMLStr(xml,indent){var useTab=(arguments.length>1&&indent!==undefined)?indent:'  ',formatted='',ind=0,tab=useTab,xmlStr=xml.replace(/(>)(<)(\/*)/g,'$1\n$2$3');var nodes=xmlStr.split('\n');for(var i=0;i<nodes.length;i++){var node=nodes[i].trim();if(node.match(/.+<\/\w[^>]*>$/)){formatted+=tab.repeat(ind)+node+'\n';}else if(node.match(/^<\/\w/)){ind--;if(ind<0)ind=0;formatted+=tab.repeat(ind)+node+'\n';}else if(node.match(/^<\w[^>]*[^\/]>.*$/)){formatted+=tab.repeat(ind)+node+'\n';if(!node.match(/^<\w[^>]*\/>/))ind++;}else{if(node.length>0)formatted+=tab.repeat(ind)+node+'\n';}}return formatted.trim();}
+function minifyXMLStr(xml){return xml.replace(/>\s+</g,'><').replace(/\s+/g,' ').trim();}
+function xml2json(xml){var obj={};if(xml.nodeType===1){if(xml.attributes.length>0){for(var j=0;j<xml.attributes.length;j++){var attr=xml.attributes.item(j);obj['@'+attr.nodeName]=attr.nodeValue;}}}if(xml.hasChildNodes()){for(var i=0;i<xml.childNodes.length;i++){var item=xml.childNodes.item(i),nodeName=item.nodeName;if(nodeName==='#text'){var text=item.nodeValue.trim();if(text)obj['#text']=text;}else if(nodeName==='#cdata-section'){obj['#cdata']=item.nodeValue;}else{var child=xml2json(item);if(typeof obj[nodeName]==='undefined')obj[nodeName]=child;else{if(!Array.isArray(obj[nodeName]))obj[nodeName]=[obj[nodeName]];obj[nodeName].push(child);}}}}return obj;}
+window.formatXML=function(){document.getElementById('xml-error').textContent='';try{var input=document.getElementById('xml-input').value;if(!input.trim()){document.getElementById('xml-output').value='';return;}document.getElementById('xml-output').value=formatXMLStr(input);}catch(e){document.getElementById('xml-error').textContent='格式化错误: '+e.message;}};
+window.minifyXML=function(){document.getElementById('xml-error').textContent='';try{var input=document.getElementById('xml-input').value;document.getElementById('xml-output').value=minifyXMLStr(input);}catch(e){document.getElementById('xml-error').textContent='压缩错误: '+e.message;}};
+window.xmlToJSON=function(){document.getElementById('xml-error').textContent='';try{var input=document.getElementById('xml-input').value;var parser=new DOMParser();var doc=parser.parseFromString(input,'text/xml');var err=doc.querySelector('parsererror');if(err){document.getElementById('xml-error').textContent='XML 解析错误: '+err.textContent;return;}var json=xml2json(doc.documentElement);document.getElementById('xml-output').value=JSON.stringify(json,null,2);}catch(e){document.getElementById('xml-error').textContent='转换错误: '+e.message;}};
+window.xmlCopy=function(){var el=document.getElementById('xml-output');el.select();document.execCommand('copy');};
+</script>

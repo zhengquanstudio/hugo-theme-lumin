@@ -1,0 +1,189 @@
+<div class="tool-tabs" id="cb-tabs">
+  <button class="tool-tab active" data-tab="cb-beautify">美化</button>
+  <button class="tool-tab" data-tab="cb-minify">压缩</button>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">输入 CSS 代码</label>
+  <textarea class="tool-textarea" id="cb-input" rows="10" placeholder='请输入 CSS 代码，例如：body{color:#333;font-size:16px}.header{background:#fff;padding:10px}'>body{margin:0;padding:0;font-family:'PingFang SC',sans-serif;font-size:16px;color:#333;background:#f5f5f5}.container{max-width:1200px;margin:0 auto;padding:0 20px}.card{background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1);padding:24px;margin-bottom:16px}.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:14px;transition:all .2s}.btn-primary{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none}</textarea>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="cb-beautify-btn">美化</button>
+  <button class="tool-btn tool-btn-primary" id="cb-minify-btn">压缩</button>
+  <button class="tool-btn" id="cb-clear-btn">清空</button>
+</div>
+
+<div id="cb-error" style="display:none;color:var(--color-error,#e53e3e);margin-top:8px;"></div>
+
+<div class="tool-output" id="cb-output-area" style="display:none;">
+  <div class="tool-result" id="cb-result"></div>
+  <button class="tool-copy-btn" id="cb-copy-btn">复制结果</button>
+</div>
+
+<div class="tool-stats" id="cb-stats" style="display:none;">
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="cb-stat-original">0</span>
+    <span class="tool-stat-label">原始大小</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="cb-stat-result">0</span>
+    <span class="tool-stat-label">结果大小</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="cb-stat-rules">0</span>
+    <span class="tool-stat-label">规则数</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  const input = document.getElementById('cb-input');
+  const result = document.getElementById('cb-result');
+  const outputArea = document.getElementById('cb-output-area');
+  const errorDiv = document.getElementById('cb-error');
+  const statsDiv = document.getElementById('cb-stats');
+  const tabs = document.querySelectorAll('#cb-tabs .tool-tab');
+
+  let currentTab = 'cb-beautify';
+
+  function switchTab(tabId) {
+    currentTab = tabId;
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
+  }
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+  });
+
+  function showError(msg) {
+    errorDiv.textContent = msg;
+    errorDiv.style.display = 'block';
+    outputArea.style.display = 'none';
+    statsDiv.style.display = 'none';
+  }
+
+  function hideError() {
+    errorDiv.style.display = 'none';
+  }
+
+  function showResult(text, origSize) {
+    result.textContent = text;
+    outputArea.style.display = 'block';
+    statsDiv.style.display = 'flex';
+    document.getElementById('cb-stat-original').textContent = formatSize(origSize);
+    document.getElementById('cb-stat-result').textContent = formatSize(new Blob([text]).size);
+    const rules = (text.match(/\{[^}]+\}/g) || []).length;
+    document.getElementById('cb-stat-rules').textContent = rules;
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    return (bytes / 1024).toFixed(1) + ' KB';
+  }
+
+  function beautifyCSS(css) {
+    // 移除注释
+    let result = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    // 在 { 前加空格, 在 } 后换行
+    result = result.replace(/\s*\{\s*/g, ' {\n  ');
+    result = result.replace(/\s*;\s*/g, ';\n  ');
+    result = result.replace(/\s*\}\s*/g, '\n}\n\n');
+    // 清理 } 后面的多余空白
+    result = result.replace(/\}\n\s+\}/g, '}\n}');
+    // 清理空行
+    result = result.replace(/\n{3,}/g, '\n\n');
+    // 去掉开头结尾空白
+    result = result.trim();
+    // 确保每个属性单独一行
+    const lines = result.split('\n');
+    const out = [];
+    for (const line of lines) {
+      const t = line.trim();
+      if (!t) { out.push(''); continue; }
+      if (t === '{') { out.push('{'); continue; }
+      if (t === '}') { out.push('}'); continue; }
+      if (t.includes(':') && !t.includes('{') && !t.includes('}')) {
+        // 属性行: 去除多余分号，一行一个属性
+        const props = t.split(';').map(p => p.trim()).filter(Boolean);
+        for (const p of props) {
+          if (p.includes(':')) {
+            out.push('  ' + p + ';');
+          }
+        }
+      } else {
+        out.push(line);
+      }
+    }
+    return out.join('\n');
+  }
+
+  function minifyCSS(css) {
+    // 移除注释
+    let result = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    // 移除空白
+    result = result.replace(/\s+/g, ' ');
+    result = result.replace(/\s*\{\s*/g, '{');
+    result = result.replace(/\s*;\s*/g, ';');
+    result = result.replace(/\s*\}\s*/g, '}');
+    result = result.replace(/;\}/g, '}');
+    result = result.replace(/\s*,\s*/g, ',');
+    result = result.replace(/\s*:\s*/g, ':');
+    return result.trim();
+  }
+
+  document.getElementById('cb-beautify-btn').addEventListener('click', () => {
+    hideError();
+    const raw = input.value;
+    if (!raw.trim()) { showError('请输入 CSS 代码'); return; }
+    try {
+      const formatted = beautifyCSS(raw);
+      showResult(formatted, new Blob([raw]).size);
+      switchTab('cb-beautify');
+    } catch(e) {
+      showError('美化失败：' + e.message);
+    }
+  });
+
+  document.getElementById('cb-minify-btn').addEventListener('click', () => {
+    hideError();
+    const raw = input.value;
+    if (!raw.trim()) { showError('请输入 CSS 代码'); return; }
+    try {
+      const minified = minifyCSS(raw);
+      showResult(minified, new Blob([raw]).size);
+      switchTab('cb-minify');
+    } catch(e) {
+      showError('压缩失败：' + e.message);
+    }
+  });
+
+  document.getElementById('cb-clear-btn').addEventListener('click', () => {
+    input.value = '';
+    result.textContent = '';
+    outputArea.style.display = 'none';
+    statsDiv.style.display = 'none';
+    hideError();
+  });
+
+  document.getElementById('cb-copy-btn').addEventListener('click', () => {
+    const text = result.textContent;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('cb-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const btn = document.getElementById('cb-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    });
+  });
+})();
+</script>

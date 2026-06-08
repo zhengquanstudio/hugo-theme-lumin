@@ -1,0 +1,148 @@
+<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px;">
+  <div>
+    <input type="color" id="cc-picker" value="#667eea" style="width:70px;height:56px;border-radius:12px;border:1.5px solid var(--border-color,#e5e7eb);cursor:pointer;padding:3px;">
+  </div>
+  <div style="flex:1;min-width:200px;">
+    <label class="tool-label">输入颜色值（支持 HEX/RGB/HSL）</label>
+    <input type="text" class="tool-input" id="cc-input" value="#667eea" placeholder="#667eea 或 rgb(102,126,234) 或 hsl(232,75%,66%)">
+  </div>
+  <button class="tool-btn tool-btn-primary" id="cc-convert-btn" style="margin-top:22px;"><i class="fas fa-arrows-rotate"></i> 转换</button>
+</div>
+
+<div id="cc-output" style="display:none;">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:18px;">
+    <div class="tool-stat" id="cc-hex-block">
+      <div style="font-size:.78rem;color:var(--text-muted,#9ca3af);margin-bottom:4px;">HEX</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <code id="cc-hex" style="font-size:1.1rem;font-weight:700;color:#667eea;flex:1;"></code>
+        <button class="tool-copy-btn cc-copy" data-target="cc-hex"><i class="far fa-copy"></i></button>
+      </div>
+    </div>
+    <div class="tool-stat" id="cc-rgb-block">
+      <div style="font-size:.78rem;color:var(--text-muted,#9ca3af);margin-bottom:4px;">RGB</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <code id="cc-rgb" style="font-size:.95rem;font-weight:700;color:#667eea;flex:1;"></code>
+        <button class="tool-copy-btn cc-copy" data-target="cc-rgb"><i class="far fa-copy"></i></button>
+      </div>
+    </div>
+    <div class="tool-stat" id="cc-hsl-block">
+      <div style="font-size:.78rem;color:var(--text-muted,#9ca3af);margin-bottom:4px;">HSL</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <code id="cc-hsl" style="font-size:.95rem;font-weight:700;color:#667eea;flex:1;"></code>
+        <button class="tool-copy-btn cc-copy" data-target="cc-hsl"><i class="far fa-copy"></i></button>
+      </div>
+    </div>
+    <div class="tool-stat" id="cc-cmyk-block">
+      <div style="font-size:.78rem;color:var(--text-muted,#9ca3af);margin-bottom:4px;">CMYK</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <code id="cc-cmyk" style="font-size:.95rem;font-weight:700;color:#667eea;flex:1;"></code>
+        <button class="tool-copy-btn cc-copy" data-target="cc-cmyk"><i class="far fa-copy"></i></button>
+      </div>
+    </div>
+    <div class="tool-stat" id="cc-hsv-block">
+      <div style="font-size:.78rem;color:var(--text-muted,#9ca3af);margin-bottom:4px;">HSV / HSB</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <code id="cc-hsv" style="font-size:.95rem;font-weight:700;color:#667eea;flex:1;"></code>
+        <button class="tool-copy-btn cc-copy" data-target="cc-hsv"><i class="far fa-copy"></i></button>
+      </div>
+    </div>
+  </div>
+  <div style="height:56px;border-radius:14px;border:1.5px solid var(--border-color,#e5e7eb);margin-bottom:8px;" id="cc-preview"></div>
+  <div style="font-size:.8rem;color:var(--text-muted,#9ca3af);text-align:center;" id="cc-preview-label"></div>
+</div>
+
+<script>
+(function(){
+  const picker = document.getElementById('cc-picker');
+  const input = document.getElementById('cc-input');
+  const convertBtn = document.getElementById('cc-convert-btn');
+  const output = document.getElementById('cc-output');
+
+  function hexToRgb(hex) {
+    hex=hex.replace('#','');
+    if(hex.length===3) hex=hex.split('').map(c=>c+c).join('');
+    return [parseInt(hex.slice(0,2),16),parseInt(hex.slice(2,4),16),parseInt(hex.slice(4,6),16)];
+  }
+  function rgbToHex(r,g,b){return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');}
+  function rgbToHsl(r,g,b){
+    r/=255;g/=255;b/=255;
+    const max=Math.max(r,g,b),min=Math.min(r,g,b);
+    let h,s,l=(max+min)/2;
+    if(max===min){h=s=0;}
+    else{const d=max-min;s=l>0.5?d/(2-max-min):d/(max+min);
+      switch(max){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break;}h/=6;}
+    return [Math.round(h*360),Math.round(s*100),Math.round(l*100)];
+  }
+  function hslToRgb(h,s,l){
+    s/=100;l/=100;
+    const a=s*Math.min(l,1-l);
+    const f=n=>{const k=(n+h/30)%12;return l-a*Math.max(Math.min(k-3,9-k,1),-1);};
+    return [Math.round(f(0)*255),Math.round(f(8)*255),Math.round(f(4)*255)];
+  }
+  function rgbToCmyk(r,g,b){
+    const rv=r/255,gv=g/255,bv=b/255;
+    const k=1-Math.max(rv,gv,bv);
+    if(k===1) return [0,0,0,100];
+    return [Math.round((1-rv-k)/(1-k)*100),Math.round((1-gv-k)/(1-k)*100),Math.round((1-bv-k)/(1-k)*100),Math.round(k*100)];
+  }
+  function rgbToHsv(r,g,b){
+    r/=255;g/=255;b/=255;
+    const max=Math.max(r,g,b),min=Math.min(r,g,b),d=max-min;
+    let h=0;
+    if(d!==0){switch(max){case r:h=(g-b)/d%(6);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break;}h=Math.round(h*60);if(h<0)h+=360;}
+    return [h,max===0?0:Math.round(d/max*100),Math.round(max*100)];
+  }
+
+  function parseInput(val) {
+    val=val.trim();
+    if(/^#?[0-9a-fA-F]{6}$/.test(val)) {
+      const hex=val.startsWith('#')?val:'#'+val;
+      return hexToRgb(hex);
+    }
+    const rgbM=val.match(/rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/i);
+    if(rgbM) return [parseInt(rgbM[1]),parseInt(rgbM[2]),parseInt(rgbM[3])];
+    const hslM=val.match(/hsl\s*\(\s*([\d.]+)\s*,\s*([\d.]+)%?\s*,\s*([\d.]+)%?\s*\)/i);
+    if(hslM) return hslToRgb(parseFloat(hslM[1]),parseFloat(hslM[2]),parseFloat(hslM[3]));
+    return null;
+  }
+
+  function copyText(text, btn) {
+    navigator.clipboard.writeText(text).then(()=>{
+      const orig=btn.innerHTML; btn.innerHTML='✅'; btn.classList.add('copied');
+      setTimeout(()=>{btn.innerHTML=orig;btn.classList.remove('copied');},1500);
+    }).catch(()=>{});
+  }
+
+  document.querySelectorAll('.cc-copy').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = document.getElementById(btn.getAttribute('data-target'));
+      if(target) copyText(target.textContent, btn);
+    });
+  });
+
+  function convert() {
+    const rgb=parseInput(input.value);
+    if(!rgb){alert('无法识别颜色格式，支持 HEX、rgb()、hsl()');return;}
+    const [r,g,b]=rgb;
+    const hex=rgbToHex(r,g,b);
+    const [h,s,l]=rgbToHsl(r,g,b);
+    const [c,m,y,k]=rgbToCmyk(r,g,b);
+    const [hv,sv,v]=rgbToHsv(r,g,b);
+
+    document.getElementById('cc-hex').textContent=hex;
+    document.getElementById('cc-rgb').textContent=`rgb(${r}, ${g}, ${b})`;
+    document.getElementById('cc-hsl').textContent=`hsl(${h}, ${s}%, ${l}%)`;
+    document.getElementById('cc-cmyk').textContent=`cmyk(${c}%, ${m}%, ${y}%, ${k}%)`;
+    document.getElementById('cc-hsv').textContent=`hsv(${hv}, ${sv}%, ${v}%)`;
+    document.getElementById('cc-preview').style.background=hex;
+    document.getElementById('cc-preview-label').textContent=`颜色预览: ${hex}`;
+    picker.value=hex;
+    output.style.display='';
+  }
+
+  convertBtn.addEventListener('click', convert);
+  picker.addEventListener('input', ()=>{input.value=picker.value; convert();});
+  input.addEventListener('keydown', e=>{if(e.key==='Enter')convert();});
+  convert();
+})();
+</script>

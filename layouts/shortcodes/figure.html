@@ -1,0 +1,22 @@
+{{/* 带说明的图片 */}}
+{{ $src := .Get "src" | default (.Get 0) }}
+{{ $caption := .Get "caption" | default (.Get 0) }}
+{{ $alt := .Get "alt" | default $caption }}
+
+<figure style="margin:1.5em auto;text-align:center;" class="figure-img">
+  <img src="{{ $src }}" alt="{{ $alt }}"
+       style="
+         max-width:100%;height:auto;border-radius:10px;
+         box-shadow:0 2px 12px rgba(0,0,0,.08);
+         transition:transform .3s ease,box-shadow .3s ease;
+       "
+       onmouseover="this.style.transform='scale(1.01)';this.style.boxShadow='0 8px 28px rgba(0,0,0,.12)'"
+       onmouseout="this.style.transform='';this.style.boxShadow='0 2px 12px rgba(0,0,0,.08)'"
+  />
+  {{ with $caption }}
+  <figcaption style="
+    margin-top:10px;font-size:.85rem;color:var(--text-muted,#6b7280);
+    font-style:italic;line-height:1.5;
+  ">{{ . }}</figcaption>
+  {{ end }}
+</figure>

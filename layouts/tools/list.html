@@ -1,0 +1,116 @@
+{{ define "main" }}
+{{ $tools := hugo.Data.tools.tools | default slice }}
+{{ $total := len $tools }}
+{{ $toolsJson := $tools | jsonify | safeJS }}
+
+{{ partial "tools/styles.html" . }}
+
+<div class="tools-layout" id="tools-page">
+  {{/* 左侧菜单栏 */}}
+  {{ partial "tools/sidebar.html" . }}
+
+  {{/* 右侧内容区 */}}
+  <div class="tools-content">
+    {{ if gt $total 0 }}
+    <div id="tools-cards-container"></div>
+    {{ else }}
+    <div style="text-align:center;padding:56px 20px;color:var(--text-muted,#9ca3af)">
+      <div style="width:64px;height:64px;border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;color:var(--border-color,#d1d5db);background:var(--bg-secondary,#f9fafb);margin-bottom:12px"><i class="fas fa-wrench"></i></div>
+      <p style="font-size:.95rem;margin:0 0 6px">暂无工具</p>
+      <p style="font-size:.8rem;color:var(--border-color,#d1d5db);margin:0">工具正在建设中，敬请期待</p>
+    </div>
+    {{ end }}
+
+    {{ partial "comments.html" . }}
+  </div>
+</div>
+
+<script>
+(function(){
+  var toolsData = {{ $toolsJson }};
+
+  // 按分类分组
+  var catMap = {};
+  var catIcons = {};
+  var catColors = {};
+  toolsData.forEach(function(t){
+    var cat = t.category || '其他';
+    if(!catMap[cat]) catMap[cat] = [];
+    catMap[cat].push(t);
+    if(!catIcons[cat]) catIcons[cat] = t.categoryIcon || 'fa-solid fa-folder';
+    if(!catColors[cat]) catColors[cat] = t.color || '#667eea';
+  });
+
+  var cats = Object.keys(catMap).sort();
+  var container = document.getElementById('tools-cards-container');
+  if(!container) return;
+
+  cats.forEach(function(cat){
+    var items = catMap[cat];
+    var section = document.createElement('div');
+    section.className = 'tools-category-section';
+    section.style.marginBottom = '24px';
+    section.innerHTML =
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">' +
+        '<span style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,' + catColors[cat] + ',' + catColors[cat] + 'cc);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:13px"><i class="' + catIcons[cat] + '"></i></span>' +
+        '<h2 style="font-size:1.05rem;font-weight:700;color:var(--text-primary,#1f2937);margin:0">' + cat + '</h2>' +
+        '<span style="font-size:.75rem;color:var(--text-muted,#9ca3af)">' + items.length + ' 个工具</span>' +
+      '</div>' +
+      '<div class="tools-grid">' +
+        items.map(function(t){
+          return '<a href="' + t.url + '" class="tool-card" title="' + t.name + ' - ' + t.desc + '">' +
+            '<span class="tool-card-icon" style="background:linear-gradient(135deg,' + t.color + ',' + t.color + 'cc)"><i class="' + t.icon + '"></i></span>' +
+            '<div class="tool-card-info"><div class="tool-card-name">' + t.name + '</div><div class="tool-card-desc">' + t.desc + '</div></div>' +
+            '<span class="tool-card-arrow"><i class="fas fa-arrow-right"></i></span></a>';
+        }).join('') +
+      '</div>';
+    container.appendChild(section);
+  });
+
+  // 侧边栏折叠
+  var sidebar = document.getElementById('tools-sidebar');
+  var collapseBtn = document.getElementById('tools-sidebar-collapse');
+  if(collapseBtn && sidebar){
+    collapseBtn.addEventListener('click',function(){
+      sidebar.classList.toggle('collapsed');
+      localStorage.setItem('tools-sidebar-collapsed',sidebar.classList.contains('collapsed'));
+    });
+    if(localStorage.getItem('tools-sidebar-collapsed')==='true'){
+      sidebar.classList.add('collapsed');
+    }
+  }
+
+  // 分类折叠
+  document.querySelectorAll('.tools-sidebar-group-header').forEach(function(h){
+    h.addEventListener('click',function(){
+      this.classList.toggle('collapsed');
+      var items = this.nextElementSibling;
+      if(this.classList.contains('collapsed')){
+        items.style.maxHeight = items.scrollHeight+'px';
+        requestAnimationFrame(function(){ items.classList.add('collapsed'); });
+      } else {
+        items.classList.remove('collapsed');
+        items.style.maxHeight = items.scrollHeight+'px';
+        requestAnimationFrame(function(){ items.style.maxHeight = 'none'; });
+      }
+    });
+  });
+
+  // 移动端选择器
+  var mobileSelector = document.getElementById('tools-mobile-selector');
+  var mobileBtn = document.getElementById('tools-mobile-selector-btn');
+  var mobileDropdown = document.getElementById('tools-mobile-dropdown');
+  if(mobileBtn && mobileDropdown){
+    mobileBtn.addEventListener('click',function(e){
+      e.stopPropagation();
+      mobileSelector.classList.toggle('open');
+      mobileDropdown.classList.toggle('open');
+    });
+    document.addEventListener('click',function(){
+      mobileSelector.classList.remove('open');
+      mobileDropdown.classList.remove('open');
+    });
+  }
+})();
+</script>
+{{ end }}

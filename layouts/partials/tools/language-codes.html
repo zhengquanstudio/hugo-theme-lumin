@@ -1,0 +1,125 @@
+<div class="tool-input-group">
+  <label class="tool-label">搜索语言代码</label>
+  <input class="tool-input" type="text" id="lc-search" placeholder="搜索语言名称或代码...">
+</div>
+<div class="tool-result" id="lc-result"></div>
+
+<script>
+(function() {
+  var languages = [
+    { name:'English', iso1:'en', iso2:'eng', cn:'英语' },
+    { name:'Chinese (Simplified)', iso1:'zh', iso2:'zho', cn:'中文(简体)' },
+    { name:'Chinese (Traditional)', iso1:'zh-TW', iso2:'zho', cn:'中文(繁体)' },
+    { name:'Japanese', iso1:'ja', iso2:'jpn', cn:'日语' },
+    { name:'Korean', iso1:'ko', iso2:'kor', cn:'韩语' },
+    { name:'Arabic', iso1:'ar', iso2:'ara', cn:'阿拉伯语' },
+    { name:'Spanish', iso1:'es', iso2:'spa', cn:'西班牙语' },
+    { name:'Portuguese', iso1:'pt', iso2:'por', cn:'葡萄牙语' },
+    { name:'French', iso1:'fr', iso2:'fra', cn:'法语' },
+    { name:'German', iso1:'de', iso2:'deu', cn:'德语' },
+    { name:'Russian', iso1:'ru', iso2:'rus', cn:'俄语' },
+    { name:'Italian', iso1:'it', iso2:'ita', cn:'意大利语' },
+    { name:'Dutch', iso1:'nl', iso2:'nld', cn:'荷兰语' },
+    { name:'Polish', iso1:'pl', iso2:'pol', cn:'波兰语' },
+    { name:'Swedish', iso1:'sv', iso2:'swe', cn:'瑞典语' },
+    { name:'Danish', iso1:'da', iso2:'dan', cn:'丹麦语' },
+    { name:'Norwegian', iso1:'no', iso2:'nor', cn:'挪威语' },
+    { name:'Finnish', iso1:'fi', iso2:'fin', cn:'芬兰语' },
+    { name:'Greek', iso1:'el', iso2:'ell', cn:'希腊语' },
+    { name:'Turkish', iso1:'tr', iso2:'tur', cn:'土耳其语' },
+    { name:'Hungarian', iso1:'hu', iso2:'hun', cn:'匈牙利语' },
+    { name:'Czech', iso1:'cs', iso2:'ces', cn:'捷克语' },
+    { name:'Slovak', iso1:'sk', iso2:'slk', cn:'斯洛伐克语' },
+    { name:'Romanian', iso1:'ro', iso2:'ron', cn:'罗马尼亚语' },
+    { name:'Bulgarian', iso1:'bg', iso2:'bul', cn:'保加利亚语' },
+    { name:'Serbian', iso1:'sr', iso2:'srp', cn:'塞尔维亚语' },
+    { name:'Croatian', iso1:'hr', iso2:'hrv', cn:'克罗地亚语' },
+    { name:'Slovenian', iso1:'sl', iso2:'slv', cn:'斯洛文尼亚语' },
+    { name:'Ukrainian', iso1:'uk', iso2:'ukr', cn:'乌克兰语' },
+    { name:'Hebrew', iso1:'he', iso2:'heb', cn:'希伯来语' },
+    { name:'Hindi', iso1:'hi', iso2:'hin', cn:'印地语' },
+    { name:'Bengali', iso1:'bn', iso2:'ben', cn:'孟加拉语' },
+    { name:'Urdu', iso1:'ur', iso2:'urd', cn:'乌尔都语' },
+    { name:'Tamil', iso1:'ta', iso2:'tam', cn:'泰米尔语' },
+    { name:'Telugu', iso1:'te', iso2:'tel', cn:'泰卢固语' },
+    { name:'Marathi', iso1:'mr', iso2:'mar', cn:'马拉地语' },
+    { name:'Gujarati', iso1:'gu', iso2:'guj', cn:'古吉拉特语' },
+    { name:'Punjabi', iso1:'pa', iso2:'pan', cn:'旁遮普语' },
+    { name:'Malayalam', iso1:'ml', iso2:'mal', cn:'马拉雅拉姆语' },
+    { name:'Kannada', iso1:'kn', iso2:'kan', cn:'卡纳达语' },
+    { name:'Thai', iso1:'th', iso2:'tha', cn:'泰语' },
+    { name:'Vietnamese', iso1:'vi', iso2:'vie', cn:'越南语' },
+    { name:'Indonesian', iso1:'id', iso2:'ind', cn:'印尼语' },
+    { name:'Malay', iso1:'ms', iso2:'msa', cn:'马来语' },
+    { name:'Filipino', iso1:'fil', iso2:'fil', cn:'菲律宾语' },
+    { name:'Burmese', iso1:'my', iso2:'mya', cn:'缅甸语' },
+    { name:'Khmer', iso1:'km', iso2:'khm', cn:'高棉语' },
+    { name:'Lao', iso1:'lo', iso2:'lao', cn:'老挝语' },
+    { name:'Mongolian', iso1:'mn', iso2:'mon', cn:'蒙古语' },
+    { name:'Tibetan', iso1:'bo', iso2:'bod', cn:'藏语' },
+    { name:'Uyghur', iso1:'ug', iso2:'uig', cn:'维吾尔语' },
+    { name:'Kazakh', iso1:'kk', iso2:'kaz', cn:'哈萨克语' },
+    { name:'Uzbek', iso1:'uz', iso2:'uzb', cn:'乌兹别克语' },
+    { name:'Kyrgyz', iso1:'ky', iso2:'kir', cn:'吉尔吉斯语' },
+    { name:'Tajik', iso1:'tg', iso2:'tgk', cn:'塔吉克语' },
+    { name:'Turkmen', iso1:'tk', iso2:'tuk', cn:'土库曼语' },
+    { name:'Azerbaijani', iso1:'az', iso2:'aze', cn:'阿塞拜疆语' },
+    { name:'Georgian', iso1:'ka', iso2:'kat', cn:'格鲁吉亚语' },
+    { name:'Armenian', iso1:'hy', iso2:'hye', cn:'亚美尼亚语' },
+    { name:'Persian', iso1:'fa', iso2:'fas', cn:'波斯语' },
+    { name:'Pashto', iso1:'ps', iso2:'pus', cn:'普什图语' },
+    { name:'Kurdish', iso1:'ku', iso2:'kur', cn:'库尔德语' },
+    { name:'Sinhala', iso1:'si', iso2:'sin', cn:'僧伽罗语' },
+    { name:'Nepali', iso1:'ne', iso2:'nep', cn:'尼泊尔语' },
+    { name:'Dhivehi', iso1:'dv', iso2:'div', cn:'迪维希语' },
+    { name:'Amharic', iso1:'am', iso2:'amh', cn:'阿姆哈拉语' },
+    { name:'Somali', iso1:'so', iso2:'som', cn:'索马里语' },
+    { name:'Swahili', iso1:'sw', iso2:'swa', cn:'斯瓦希里语' },
+    { name:'Hausa', iso1:'ha', iso2:'hau', cn:'豪萨语' },
+    { name:'Yoruba', iso1:'yo', iso2:'yor', cn:'约鲁巴语' },
+    { name:'Igbo', iso1:'ig', iso2:'ibo', cn:'伊博语' },
+    { name:'Zulu', iso1:'zu', iso2:'zul', cn:'祖鲁语' },
+    { name:'Afrikaans', iso1:'af', iso2:'afr', cn:'南非荷兰语' },
+    { name:'Maltese', iso1:'mt', iso2:'mlt', cn:'马耳他语' },
+    { name:'Icelandic', iso1:'is', iso2:'isl', cn:'冰岛语' },
+    { name:'Irish', iso1:'ga', iso2:'gle', cn:'爱尔兰语' },
+    { name:'Scottish Gaelic', iso1:'gd', iso2:'gla', cn:'苏格兰盖尔语' },
+    { name:'Welsh', iso1:'cy', iso2:'cym', cn:'威尔士语' },
+    { name:'Basque', iso1:'eu', iso2:'eus', cn:'巴斯克语' },
+    { name:'Catalan', iso1:'ca', iso2:'cat', cn:'加泰罗尼亚语' },
+    { name:'Galician', iso1:'gl', iso2:'glg', cn:'加利西亚语' },
+    { name:'Lithuanian', iso1:'lt', iso2:'lit', cn:'立陶宛语' },
+    { name:'Latvian', iso1:'lv', iso2:'lav', cn:'拉脱维亚语' },
+    { name:'Estonian', iso1:'et', iso2:'est', cn:'爱沙尼亚语' },
+    { name:'Albanian', iso1:'sq', iso2:'sqi', cn:'阿尔巴尼亚语' },
+    { name:'Macedonian', iso1:'mk', iso2:'mkd', cn:'马其顿语' },
+    { name:'Bosnian', iso1:'bs', iso2:'bos', cn:'波斯尼亚语' },
+    { name:'Belarusian', iso1:'be', iso2:'bel', cn:'白俄罗斯语' },
+    { name:'Moldovan', iso1:'ro', iso2:'ron', cn:'摩尔多瓦语' },
+    { name:'Luxembourgish', iso1:'lb', iso2:'ltz', cn:'卢森堡语' },
+    { name:'Esperanto', iso1:'eo', iso2:'epo', cn:'世界语' },
+    { name:'Latin', iso1:'la', iso2:'lat', cn:'拉丁语' },
+    { name:'Yiddish', iso1:'yi', iso2:'yid', cn:'意第绪语' }
+  ];
+
+  function render(search) {
+    search = (search || '').toLowerCase();
+    var filtered = languages.filter(function(l) {
+      return !search || l.name.toLowerCase().indexOf(search) >= 0 || l.iso1.toLowerCase().indexOf(search) >= 0 || l.iso2.toLowerCase().indexOf(search) >= 0 || l.cn.indexOf(search) >= 0;
+    });
+
+    var html = '<div class="tool-output"><div class="tool-output-title">语言代码参考（共 ' + filtered.length + ' 条）</div>';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+    html += '<tr style="background:#f5f5f5;"><th style="padding:6px;text-align:left;">语言名称</th><th style="padding:6px;text-align:left;">中文名</th><th style="padding:6px;text-align:left;">ISO 639-1</th><th style="padding:6px;text-align:left;">ISO 639-2</th></tr>';
+
+    for (var i = 0; i < filtered.length; i++) {
+      html += '<tr style="border-bottom:1px solid #eee;"><td style="padding:6px;">' + filtered[i].name + '</td><td style="padding:6px;">' + filtered[i].cn + '</td><td style="padding:6px;font-family:monospace;">' + filtered[i].iso1 + '</td><td style="padding:6px;font-family:monospace;">' + filtered[i].iso2 + '</td></tr>';
+    }
+    html += '</table></div>';
+    document.getElementById('lc-result').innerHTML = html;
+  }
+
+  document.getElementById('lc-search').addEventListener('input', function(){ render(this.value); });
+  render('');
+})();
+</script>

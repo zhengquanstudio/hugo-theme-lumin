@@ -1,0 +1,28 @@
+{{ if site.Params.live2d.enable }}
+{{ $isMobile := site.Params.live2d.mobile | default false }}
+<script src="https://cdn.jsdelivr.net/npm/l2d-widget@0.0.2/dist/index.min.js" defer></script>
+
+{{ if not $isMobile }}
+<div id="l2d-config" style="display:none"
+  data-model="{{ site.Params.live2d.model | default "/live2d/miku/miku_sample_t04.model3.json" }}"
+  data-width="{{ site.Params.live2d.width | default 280 }}"
+  data-height="{{ site.Params.live2d.height | default 250 }}"
+  data-position="{{ site.Params.live2d.position | default "left" }}"
+></div>
+<script>
+  if (/Android|iPhone|iPad|iPod|webOS/i.test(navigator.userAgent) || window.innerWidth < 768) {
+    document.getElementById('l2d-config').remove();
+  }
+</script>
+{{ else }}
+<div id="l2d-config" style="display:none"
+  data-model="{{ site.Params.live2d.model | default "/live2d/miku/miku_sample_t04.model3.json" }}"
+  data-width="{{ site.Params.live2d.width | default 280 }}"
+  data-height="{{ site.Params.live2d.height | default 250 }}"
+  data-position="{{ site.Params.live2d.position | default "left" }}"
+></div>
+{{ end }}
+
+{{ $l2dJS := resources.Get "js/modules/live2d-init.js" | minify | fingerprint }}
+<script src="{{ $l2dJS.RelPermalink }}" defer></script>
+{{ end }}

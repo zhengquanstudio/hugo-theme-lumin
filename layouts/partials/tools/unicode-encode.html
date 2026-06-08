@@ -1,0 +1,128 @@
+<div class="tool-tabs">
+  <button class="tool-tab active" data-ue-tab="to-unicode">文本 → Unicode</button>
+  <button class="tool-tab" data-ue-tab="from-unicode">Unicode → 文本</button>
+</div>
+
+<div id="ue-panel-to-unicode">
+  <div class="tool-input-group">
+    <label class="tool-label">输入文本</label>
+    <textarea class="tool-textarea" id="ue-input" placeholder="输入包含中文或其他字符的文本...">你好世界！Unicode编码工具。Hello World!</textarea>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:14px;">
+    <label class="tool-switch"><input type="checkbox" id="ue-only-non-ascii" checked><span class="tool-switch-track"></span>仅转义非 ASCII 字符</label>
+    <label class="tool-switch"><input type="checkbox" id="ue-upper"><span class="tool-switch-track"></span>大写 \\uXXXX</label>
+  </div>
+  <div class="tool-btn-row">
+    <button class="tool-btn tool-btn-primary" id="ue-encode-btn"><i class="fas fa-arrow-right"></i> 转换为 Unicode</button>
+    <button class="tool-btn tool-btn-danger" id="ue-clear-btn"><i class="fas fa-trash"></i> 清空</button>
+  </div>
+  <div class="tool-output" id="ue-encode-output" style="display:none;">
+    <div class="tool-output-label">
+      <span class="tool-output-title">Unicode 转义结果</span>
+      <button class="tool-copy-btn" id="ue-encode-copy"><i class="far fa-copy"></i> 复制</button>
+    </div>
+    <textarea class="tool-result" id="ue-encode-result" readonly></textarea>
+  </div>
+</div>
+
+<div id="ue-panel-from-unicode" style="display:none;">
+  <div class="tool-input-group">
+    <label class="tool-label">输入 Unicode 转义序列</label>
+    <textarea class="tool-textarea" id="ue-decode-input" placeholder="输入如 \u4e2d\u6587 或 \\u4E2D\\u6587..."></textarea>
+  </div>
+  <div class="tool-btn-row">
+    <button class="tool-btn tool-btn-primary" id="ue-decode-btn"><i class="fas fa-arrow-left"></i> 解码为文本</button>
+    <button class="tool-btn tool-btn-danger" id="ue-decode-clear-btn"><i class="fas fa-trash"></i> 清空</button>
+  </div>
+  <div class="tool-output" id="ue-decode-output" style="display:none;">
+    <div class="tool-output-label">
+      <span class="tool-output-title">解码结果</span>
+      <button class="tool-copy-btn" id="ue-decode-copy"><i class="far fa-copy"></i> 复制</button>
+    </div>
+    <div class="tool-result" id="ue-decode-result"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const tabs = document.querySelectorAll('[data-ue-tab]');
+  const panelEncode = document.getElementById('ue-panel-to-unicode');
+  const panelDecode = document.getElementById('ue-panel-from-unicode');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const t = tab.getAttribute('data-ue-tab');
+      panelEncode.style.display = t === 'to-unicode' ? '' : 'none';
+      panelDecode.style.display = t === 'from-unicode' ? '' : 'none';
+    });
+  });
+
+  function copyText(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+      const orig = btn.innerHTML; btn.innerHTML = '✅ 已复制'; btn.classList.add('copied');
+      setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('copied'); }, 1500);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position='fixed'; ta.style.left='-9999px';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+      document.body.removeChild(ta);
+      const orig = btn.innerHTML; btn.innerHTML = '✅ 已复制'; btn.classList.add('copied');
+      setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('copied'); }, 1500);
+    });
+  }
+
+  document.getElementById('ue-encode-btn').addEventListener('click', () => {
+    const text = document.getElementById('ue-input').value;
+    if (!text) return;
+    const onlyNonAscii = document.getElementById('ue-only-non-ascii').checked;
+    const upper = document.getElementById('ue-upper').checked;
+    let result = '';
+    for (const ch of text) {
+      const code = ch.codePointAt(0);
+      if (onlyNonAscii && code < 128) { result += ch; continue; }
+      const hex = code.toString(16).padStart(4, '0');
+      result += '\\u' + (upper ? hex.toUpperCase() : hex);
+    }
+    const out = document.getElementById('ue-encode-result');
+    out.value = result;
+    document.getElementById('ue-encode-output').style.display = '';
+  });
+
+  document.getElementById('ue-encode-copy').addEventListener('click', () => {
+    copyText(document.getElementById('ue-encode-result').value, document.getElementById('ue-encode-copy'));
+  });
+
+  document.getElementById('ue-clear-btn').addEventListener('click', () => {
+    document.getElementById('ue-input').value = '';
+    document.getElementById('ue-encode-result').value = '';
+    document.getElementById('ue-encode-output').style.display = 'none';
+  });
+
+  document.getElementById('ue-decode-btn').addEventListener('click', () => {
+    const text = document.getElementById('ue-decode-input').value;
+    if (!text) return;
+    try {
+      const decoded = text.replace(/\\u([0-9a-fA-F]{4})/g, (m, hex) =>
+        String.fromCodePoint(parseInt(hex, 16))
+      );
+      const out = document.getElementById('ue-decode-result');
+      out.textContent = decoded;
+      document.getElementById('ue-decode-output').style.display = '';
+    } catch(e) {
+      alert('解码失败：' + e.message);
+    }
+  });
+
+  document.getElementById('ue-decode-copy').addEventListener('click', () => {
+    copyText(document.getElementById('ue-decode-result').textContent, document.getElementById('ue-decode-copy'));
+  });
+
+  document.getElementById('ue-decode-clear-btn').addEventListener('click', () => {
+    document.getElementById('ue-decode-input').value = '';
+    document.getElementById('ue-decode-result').textContent = '';
+    document.getElementById('ue-decode-output').style.display = 'none';
+  });
+})();
+</script>

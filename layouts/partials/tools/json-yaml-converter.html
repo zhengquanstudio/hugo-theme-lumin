@@ -1,0 +1,259 @@
+<div class="tool-tabs" id="jyc-tabs">
+  <button class="tool-tab active" data-tab="jyc-to-yaml">JSON → YAML</button>
+  <button class="tool-tab" data-tab="jyc-to-json">YAML → JSON</button>
+</div>
+
+<div class="tool-input-group" id="jyc-input-group">
+  <label class="tool-label" id="jyc-input-label">输入 JSON</label>
+  <textarea class="tool-textarea" id="jyc-input" rows="12" placeholder='请输入 JSON 数据，例如：
+{
+  "name": "张三",
+  "age": 25,
+  "skills": ["Python", "JavaScript"]
+}'></textarea>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="jyc-convert-btn">转换</button>
+  <button class="tool-btn" id="jyc-swap-btn">交换</button>
+  <button class="tool-btn" id="jyc-clear-btn">清空</button>
+</div>
+
+<div class="tool-output" id="jyc-output-area" style="display:none;">
+  <label class="tool-label" id="jyc-output-label">输出 YAML</label>
+  <div class="tool-result" id="jyc-result"></div>
+  <button class="tool-copy-btn" id="jyc-copy-btn">复制</button>
+</div>
+
+<div id="jyc-error" style="display:none;color:var(--color-error,#e53e3e);margin-top:8px;"></div>
+
+<script>
+(function(){
+  var tabs = document.querySelectorAll('#jyc-tabs .tool-tab');
+  var inputLabel = document.getElementById('jyc-input-label');
+  var outputLabel = document.getElementById('jyc-output-label');
+  var input = document.getElementById('jyc-input');
+  var result = document.getElementById('jyc-result');
+  var outputArea = document.getElementById('jyc-output-area');
+  var errorDiv = document.getElementById('jyc-error');
+  var copyBtn = document.getElementById('jyc-copy-btn');
+
+  var mode = 'jyc-to-yaml';
+
+  tabs.forEach(function(tab){
+    tab.addEventListener('click', function(){
+      tabs.forEach(function(t){ t.classList.remove('active'); });
+      tab.classList.add('active');
+      mode = tab.dataset.tab;
+      if(mode === 'jyc-to-yaml'){
+        inputLabel.textContent = '输入 JSON';
+        outputLabel.textContent = '输出 YAML';
+        input.placeholder = '请输入 JSON 数据，例如：\n{\n  "name": "张三",\n  "age": 25\n}';
+      } else {
+        inputLabel.textContent = '输入 YAML';
+        outputLabel.textContent = '输出 JSON';
+        input.placeholder = '请输入 YAML 数据，例如：\nname: 张三\nage: 25\nskills:\n  - Python\n  - JavaScript';
+      }
+    });
+  });
+
+  // Simple YAML parser (repeated for independence)
+  function parseYaml(text){
+    var lines = text.split('\n').filter(function(l){ return l.trim() || l === ''; });
+    var result = {};
+    var stack = [{ obj: result, indent: -1 }];
+
+    for(var i = 0; i < lines.length; i++){
+      var line = lines[i];
+      var trimmed = line.trim();
+      if(!trimmed || trimmed.startsWith('#')) continue;
+
+      var indent = line.search(/\S|$/);
+      var colonIdx = trimmed.indexOf(':');
+      var isKey = colonIdx > 0 && (colonIdx === trimmed.length - 1 || trimmed.slice(colonIdx + 1).trim() === '');
+
+      while(stack.length > 1 && stack[stack.length - 1].indent >= indent){
+        stack.pop();
+      }
+      var parent = stack[stack.length - 1].obj;
+
+      if(trimmed.startsWith('- ')){
+        var value = trimmed.slice(2).trim();
+        var arrItem;
+        if(value.indexOf(':') >= 0){
+          var ci = value.indexOf(':');
+          var ak = value.slice(0, ci).trim();
+          var av = parseVal(value.slice(ci + 1).trim());
+          arrItem = {};
+          arrItem[ak] = av;
+        } else {
+          arrItem = parseVal(value);
+        }
+        if(!Array.isArray(parent)){
+          // Find parent key and make it an array
+          for(var p = stack.length - 2; p >= 0; p--){
+            var pobj = stack[p].obj;
+            var keys = Object.keys(pobj);
+            for(var ki = 0; ki < keys.length; ki++){
+              if(pobj[keys[ki]] === parent){
+                pobj[keys[ki]] = [arrItem];
+                break;
+              }
+            }
+          }
+        } else {
+          parent.push(arrItem);
+        }
+      } else if(isKey && colonIdx > 0){
+        var key = trimmed.slice(0, colonIdx).trim();
+        var newObj = {};
+        if(Array.isArray(parent)){
+          parent.push(newObj);
+        } else {
+          parent[key] = newObj;
+        }
+        stack.push({ obj: newObj, indent: indent });
+      } else if(colonIdx > 0){
+        var parts = trimmed.split(':');
+        var k = parts[0].trim();
+        var v = parseVal(parts.slice(1).join(':').trim());
+        if(Array.isArray(parent)){
+          var obj = {};
+          obj[k] = v;
+          parent.push(obj);
+        } else {
+          parent[k] = v;
+        }
+      }
+    }
+    return result;
+  }
+
+  function parseVal(val){
+    if(val === '' || val === 'null' || val === '~') return null;
+    if(val === 'true') return true;
+    if(val === 'false') return false;
+    if(/^\d+$/.test(val) && val.length < 16) return parseInt(val, 10);
+    if(/^\d+\.\d+$/.test(val)) return parseFloat(val);
+    if((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+      return val.slice(1, -1);
+    }
+    return val;
+  }
+
+  function objToYaml(obj, indent){
+    indent = indent || 0;
+    var spaces = '';
+    for(var i = 0; i < indent; i++) spaces += '  ';
+    var lines = [];
+
+    if(Array.isArray(obj)){
+      for(var a = 0; a < obj.length; a++){
+        var item = obj[a];
+        if(item && typeof item === 'object' && !Array.isArray(item)){
+          var subLines = objToYaml(item, 0);
+          lines.push(spaces + '- ' + subLines[0].trim());
+          for(var j = 1; j < subLines.length; j++){
+            lines.push(spaces + '  ' + subLines[j]);
+          }
+        } else if(Array.isArray(item)){
+          lines.push(spaces + '-');
+          lines = lines.concat(objToYaml(item, indent + 2));
+        } else {
+          lines.push(spaces + '- ' + yamlVal(item));
+        }
+      }
+    } else {
+      var keys = Object.keys(obj);
+      for(var k = 0; k < keys.length; k++){
+        var key = keys[k];
+        var val = obj[key];
+        if(val && typeof val === 'object' && !Array.isArray(val)){
+          lines.push(spaces + key + ':');
+          lines = lines.concat(objToYaml(val, indent + 1));
+        } else if(Array.isArray(val)){
+          if(val.length === 0){
+            lines.push(spaces + key + ': []');
+          } else {
+            lines.push(spaces + key + ':');
+            lines = lines.concat(objToYaml(val, indent + 1));
+          }
+        } else {
+          lines.push(spaces + key + ': ' + yamlVal(val));
+        }
+      }
+    }
+    return lines;
+  }
+
+  function yamlVal(val){
+    if(val === null || val === undefined) return 'null';
+    if(typeof val === 'boolean') return val.toString();
+    if(typeof val === 'number') return val.toString();
+    if(val.indexOf(':') > -1 || val.indexOf('#') > -1) return '"' + val + '"';
+    return val;
+  }
+
+  function convert(){
+    errorDiv.style.display = 'none';
+    try{
+      var raw = input.value.trim();
+      if(!raw) { showError('请输入内容'); return; }
+
+      if(mode === 'jyc-to-yaml'){
+        var obj = JSON.parse(raw);
+        result.textContent = objToYaml(obj).join('\n');
+      } else {
+        var obj = parseYaml(raw);
+        result.textContent = JSON.stringify(obj, null, 2);
+      }
+      outputArea.style.display = 'block';
+    } catch(e){
+      showError('转换失败：' + e.message);
+    }
+  }
+
+  function showError(msg){
+    errorDiv.textContent = msg;
+    errorDiv.style.display = 'block';
+    outputArea.style.display = 'none';
+  }
+
+  document.getElementById('jyc-convert-btn').addEventListener('click', convert);
+  document.getElementById('jyc-clear-btn').addEventListener('click', function(){
+    input.value = '';
+    result.textContent = '';
+    outputArea.style.display = 'none';
+    errorDiv.style.display = 'none';
+  });
+
+  document.getElementById('jyc-swap-btn').addEventListener('click', function(){
+    var inp = input.value;
+    var res = result.textContent;
+    if(!res) return;
+    input.value = res;
+    mode = mode === 'jyc-to-yaml' ? 'jyc-to-json' : 'jyc-to-yaml';
+    tabs.forEach(function(t){
+      t.classList.toggle('active', t.dataset.tab === mode);
+    });
+    if(mode === 'jyc-to-yaml'){
+      inputLabel.textContent = '输入 JSON';
+      outputLabel.textContent = '输出 YAML';
+    } else {
+      inputLabel.textContent = '输入 YAML';
+      outputLabel.textContent = '输出 JSON';
+    }
+    errorDiv.style.display = 'none';
+    convert();
+  });
+
+  copyBtn.addEventListener('click', function(){
+    var text = result.textContent;
+    if(!text) return;
+    navigator.clipboard.writeText(text).then(function(){
+      copyBtn.textContent = '已复制';
+      setTimeout(function(){ copyBtn.textContent = '复制'; }, 1500);
+    });
+  });
+})();
+</script>

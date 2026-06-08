@@ -1,0 +1,4 @@
+{{/* 页脚上方广告 */}}
+{{ if .widgetEnabled }}
+{{ partial "ads/render-ad.html" (dict "positionId" "footer_above") }}
+{{ end }}

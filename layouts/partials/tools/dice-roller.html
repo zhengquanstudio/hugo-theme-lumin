@@ -1,0 +1,77 @@
+<div class="tool-section">
+  <div class="tool-title"><i class="fa-solid fa-dice"></i> 骰子投掷</div>
+
+  <div class="tool-select-group">
+    <label>骰子类型</label>
+    <div class="dice-type-grid">
+      <button class="tool-btn dice-type-btn active" data-sides="4" style="--dice-color: #f87171">D4</button>
+      <button class="tool-btn dice-type-btn" data-sides="6" style="--dice-color: #fb923c">D6</button>
+      <button class="tool-btn dice-type-btn" data-sides="8" style="--dice-color: #facc15">D8</button>
+      <button class="tool-btn dice-type-btn" data-sides="10" style="--dice-color: #4ade80">D10</button>
+      <button class="tool-btn dice-type-btn" data-sides="12" style="--dice-color: #60a5fa">D12</button>
+      <button class="tool-btn dice-type-btn" data-sides="20" style="--dice-color: #a78bfa">D20</button>
+    </div>
+  </div>
+  <div class="tool-row">
+    <div class="tool-input-group" style="flex:1">
+      <label>投掷数量</label>
+      <input type="number" id="dice-count" min="1" max="100" value="2">
+    </div>
+    <div class="tool-input-group" style="flex:1">
+      <label>投掷次数</label>
+      <input type="number" id="dice-rolls" min="1" max="50" value="1">
+    </div>
+  </div>
+  <button class="tool-btn tool-btn-primary" onclick="rollDice()"><i class="fa-solid fa-rotate"></i> 投掷</button>
+  <div class="dice-result-area" id="dice-result">
+    <div class="dice-canvas-area" id="dice-canvas-area"></div>
+    <div class="dice-summary" id="dice-summary"></div>
+  </div>
+  <div id="dice-history" class="dice-history"></div>
+</div>
+
+<style>
+.dice-type-grid{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;}
+.dice-type-btn{width:56px;height:56px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.1rem;border-radius:12px;background:var(--bg-card);color:var(--text-primary);border:2px solid transparent;transition:all .2s;}
+.dice-type-btn.active{border-color:var(--dice-color);box-shadow:0 0 12px var(--dice-color);color:var(--dice-color);}
+.dice-type-btn:hover{transform:scale(1.1);}
+.dice-result-area{display:flex;gap:16px;margin-top:16px;align-items:flex-start;}
+.dice-canvas-area{flex:1;display:flex;flex-wrap:wrap;gap:12px;justify-content:center;min-height:80px;align-items:center;}
+.dice-face{width:64px;height:64px;background:var(--bg-card);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:800;border:2px solid var(--border-color);animation:dice-roll .4s ease-out;}
+@keyframes dice-roll{0%{transform:rotateZ(0) scale(.6);opacity:.3}50%{transform:rotateZ(180deg) scale(1.15)}100%{transform:rotateZ(360deg) scale(1);opacity:1}}
+.dice-summary{flex:0 0 180px;padding:12px;background:var(--bg-card);border-radius:8px;font-size:.9rem;}
+.dice-history{margin-top:12px;display:flex;gap:6px;flex-wrap:wrap;}
+.dice-hist-item{padding:4px 10px;border-radius:14px;background:var(--bg-card);font-size:.8rem;color:var(--text-secondary);}
+</style>
+
+<script>
+(function(){
+  var sides=6,canvasArea=document.getElementById('dice-canvas-area'),summary=document.getElementById('dice-summary'),history=document.getElementById('dice-history'),historyData=[];
+  document.querySelectorAll('.dice-type-btn').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.dice-type-btn').forEach(function(x){x.classList.remove('active')});b.classList.add('active');sides=parseInt(b.dataset.sides);});});
+  window.rollDice=function(){
+    var count=parseInt(document.getElementById('dice-count').value)||2;
+    var rolls=parseInt(document.getElementById('dice-rolls').value)||1;
+    canvasArea.innerHTML='';var allResults=[];
+    for(var r=0;r<rolls;r++){
+      var results=[];
+      for(var i=0;i<count;i++){results.push(Math.floor(Math.random()*sides)+1);}
+      allResults.push(results);
+      for(var i=0;i<results.length;i++){
+        var face=document.createElement('div');face.className='dice-face';
+        face.textContent=results[i];
+        face.style.animationDelay=((r*count+i)*0.04)+'s';
+        canvasArea.appendChild(face);
+      }
+    }
+    for(var j=0;j<allResults.length;j++){historyData.push(allResults[j].join('+'));}
+    if(historyData.length>30)historyData.shift();
+    var totalSum=0,totalCount=0;
+    for(var k=0;k<allResults.length;k++){for(var m=0;m<allResults[k].length;m++){totalSum+=allResults[k][m];totalCount++;}}
+    var maxR=allResults[0],maxS=0;
+    for(var n=0;n<allResults.length;n++){var s=0;for(var o=0;o<allResults[n].length;o++)s+=allResults[n][o];if(s>maxS){maxS=s;maxR=allResults[n];}}
+    summary.innerHTML='<div>总点数: <b>'+totalSum+'</b></div><div>平均值: <b>'+(totalSum/totalCount).toFixed(2)+'</b></div><div>最高: <b>'+maxS+'</b> ('+maxR.join('+')+')</div><div>次数: <b>'+rolls+'</b> × <b>'+count+'d'+sides+'</b></div>';
+    history.innerHTML=historyData.map(function(h){return '<span class="dice-hist-item">'+h+'</span>';}).join('');
+  };
+  rollDice();
+})();
+</script>

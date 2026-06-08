@@ -1,0 +1,122 @@
+<div style="display:flex;flex-wrap:wrap;gap:16px;margin-bottom:18px;">
+  <div class="tool-input-group" style="flex:1;min-width:150px;">
+    <label class="tool-label">初始本金（元）</label>
+    <input type="number" class="tool-input" id="ci-principal" value="10000" min="0" step="100">
+  </div>
+  <div class="tool-input-group" style="flex:1;min-width:150px;">
+    <label class="tool-label">年利率（%）</label>
+    <input type="number" class="tool-input" id="ci-rate" value="8" min="0" step="0.1">
+  </div>
+  <div class="tool-input-group" style="flex:1;min-width:150px;">
+    <label class="tool-label">投资年限（年）</label>
+    <input type="number" class="tool-input" id="ci-years" value="10" min="1" max="100">
+  </div>
+  <div class="tool-input-group" style="flex:1;min-width:150px;">
+    <label class="tool-label">每年追加投入（元）</label>
+    <input type="number" class="tool-input" id="ci-annual" value="0" min="0" step="100">
+  </div>
+</div>
+
+<div class="tool-input-group" style="max-width:280px;">
+  <label class="tool-label">复利频率</label>
+  <select class="tool-select" id="ci-freq">
+    <option value="1">每年一次</option>
+    <option value="4">每季度一次</option>
+    <option value="12" selected>每月一次</option>
+    <option value="365">每天一次</option>
+  </select>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="ci-calc-btn"><i class="fas fa-calculator"></i> 计算</button>
+  <button class="tool-btn tool-btn-danger" id="ci-clear-btn"><i class="fas fa-trash"></i> 重置</button>
+</div>
+
+<div id="ci-output" style="display:none;">
+  <div class="tool-stats" style="margin-bottom:18px;">
+    <div class="tool-stat">
+      <div class="tool-stat-value" id="ci-total" style="font-size:1.3rem;color:#22c55e;"></div>
+      <div class="tool-stat-label">最终总资产（元）</div>
+    </div>
+    <div class="tool-stat">
+      <div class="tool-stat-value" id="ci-principal-total" style="font-size:1.3rem;"></div>
+      <div class="tool-stat-label">累计本金（元）</div>
+    </div>
+    <div class="tool-stat">
+      <div class="tool-stat-value" id="ci-interest" style="font-size:1.3rem;color:#667eea;"></div>
+      <div class="tool-stat-label">累计利息（元）</div>
+    </div>
+    <div class="tool-stat">
+      <div class="tool-stat-value" id="ci-growth" style="font-size:1.3rem;color:#f59e0b;"></div>
+      <div class="tool-stat-label">总增长率</div>
+    </div>
+  </div>
+
+  <div style="margin-bottom:14px;font-size:.9rem;font-weight:600;color:var(--text-primary,#1f2937);">年度明细</div>
+  <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:.82rem;">
+      <thead>
+        <tr style="background:var(--bg-secondary,#f9fafb);">
+          <th style="padding:8px 12px;text-align:left;border:1px solid var(--border-color,#e5e7eb);color:var(--text-muted,#6b7280);">年份</th>
+          <th style="padding:8px 12px;text-align:right;border:1px solid var(--border-color,#e5e7eb);color:var(--text-muted,#6b7280);">追加投入</th>
+          <th style="padding:8px 12px;text-align:right;border:1px solid var(--border-color,#e5e7eb);color:var(--text-muted,#6b7280);">年度利息</th>
+          <th style="padding:8px 12px;text-align:right;border:1px solid var(--border-color,#e5e7eb);color:var(--text-muted,#6b7280);">期末总资产</th>
+        </tr>
+      </thead>
+      <tbody id="ci-table-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+(function(){
+  function fmt(n){return n.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});}
+
+  document.getElementById('ci-calc-btn').addEventListener('click',()=>{
+    const principal=parseFloat(document.getElementById('ci-principal').value)||0;
+    const rate=parseFloat(document.getElementById('ci-rate').value)||0;
+    const years=parseInt(document.getElementById('ci-years').value)||1;
+    const annual=parseFloat(document.getElementById('ci-annual').value)||0;
+    const freq=parseInt(document.getElementById('ci-freq').value)||12;
+
+    const r=rate/100/freq;
+    let balance=principal;
+    let totalPrincipal=principal;
+    const tbody=document.getElementById('ci-table-body');
+    tbody.innerHTML='';
+
+    for(let y=1;y<=years;y++){
+      const startBal=balance;
+      // Add annual contribution at start of year
+      if(y>1){balance+=annual;totalPrincipal+=annual;}
+      // Compound for freq periods
+      const annualInterest=balance*(Math.pow(1+r,freq)-1);
+      balance=balance*Math.pow(1+r,freq);
+
+      const tr=document.createElement('tr');
+      tr.style.cssText=y%2?'':'background:var(--bg-secondary,#f9fafb);';
+      tr.innerHTML=`<td style="padding:7px 12px;border:1px solid var(--border-color,#e5e7eb);">第 ${y} 年</td>
+        <td style="padding:7px 12px;border:1px solid var(--border-color,#e5e7eb);text-align:right;">${y>1?fmt(annual):'—'}</td>
+        <td style="padding:7px 12px;border:1px solid var(--border-color,#e5e7eb);text-align:right;color:#667eea;">¥${fmt(annualInterest)}</td>
+        <td style="padding:7px 12px;border:1px solid var(--border-color,#e5e7eb);text-align:right;font-weight:700;color:#22c55e;">¥${fmt(balance)}</td>`;
+      tbody.appendChild(tr);
+    }
+
+    const totalInterest=balance-totalPrincipal;
+    const growth=((balance-totalPrincipal)/totalPrincipal*100).toFixed(2);
+    document.getElementById('ci-total').textContent='¥'+fmt(balance);
+    document.getElementById('ci-principal-total').textContent='¥'+fmt(totalPrincipal);
+    document.getElementById('ci-interest').textContent='¥'+fmt(totalInterest);
+    document.getElementById('ci-growth').textContent=growth+'%';
+    document.getElementById('ci-output').style.display='';
+  });
+
+  document.getElementById('ci-clear-btn').addEventListener('click',()=>{
+    document.getElementById('ci-principal').value='10000';
+    document.getElementById('ci-rate').value='8';
+    document.getElementById('ci-years').value='10';
+    document.getElementById('ci-annual').value='0';
+    document.getElementById('ci-output').style.display='none';
+  });
+})();
+</script>

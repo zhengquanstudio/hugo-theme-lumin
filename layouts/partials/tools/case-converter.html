@@ -1,0 +1,129 @@
+<div class="tool-input-group">
+  <label class="tool-label">输入文本</label>
+  <textarea class="tool-textarea" id="cc-input" placeholder="在此输入需要转换大小写的文本...">Hello World, this is a Case Converter Test. Hugo Theme Lumin is Awesome!</textarea>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn" data-cc-case="upper">全大写</button>
+  <button class="tool-btn" data-cc-case="lower">全小写</button>
+  <button class="tool-btn" data-cc-case="capitalize">首字母大写</button>
+  <button class="tool-btn" data-cc-case="camel">驼峰命名</button>
+  <button class="tool-btn" data-cc-case="pascal">帕斯卡命名</button>
+  <button class="tool-btn" data-cc-case="snake">下划线命名</button>
+  <button class="tool-btn" data-cc-case="kebab">短横线命名</button>
+  <button class="tool-btn" data-cc-case="constant">常量命名</button>
+</div>
+
+<div class="tool-output" id="cc-output" style="display:none;">
+  <div class="tool-output-label">
+    <span class="tool-output-title">转换结果</span>
+    <button class="tool-copy-btn" id="cc-copy-btn">📋 复制</button>
+  </div>
+  <div class="tool-result" id="cc-result"></div>
+</div>
+
+<div class="tool-btn-row" style="margin-top:12px;">
+  <button class="tool-btn tool-btn-danger" id="cc-clear-btn">🗑️ 清空</button>
+</div>
+
+<script>
+(function(){
+  const input = document.getElementById('cc-input');
+  const output = document.getElementById('cc-output');
+  const result = document.getElementById('cc-result');
+  const copyBtn = document.getElementById('cc-copy-btn');
+  const clearBtn = document.getElementById('cc-clear-btn');
+  const caseBtns = document.querySelectorAll('[data-cc-case]');
+
+  function copyText(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+      const orig = btn.innerHTML;
+      btn.innerHTML = '✅ 已复制'; btn.classList.add('copied');
+      setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('copied'); }, 1500);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+      document.body.removeChild(ta);
+      const orig = btn.innerHTML;
+      btn.innerHTML = '✅ 已复制'; btn.classList.add('copied');
+      setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('copied'); }, 1500);
+    });
+  }
+
+  // Split text into words (handles camelCase, PascalCase, snake_case, kebab-case, CONSTANT_CASE)
+  function splitWords(text) {
+    // Replace separators with spaces, then split camelCase
+    return text
+      .replace(/[_\-]+/g, ' ')
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+      .trim()
+      .split(/\s+/)
+      .filter(w => w.length > 0);
+  }
+
+  function convert(text, caseType) {
+    if (!text) return '';
+    switch (caseType) {
+      case 'upper':
+        return text.toUpperCase();
+      case 'lower':
+        return text.toLowerCase();
+      case 'capitalize':
+        return text.replace(/\b\w/g, c => c.toUpperCase());
+      case 'camel': {
+        const words = splitWords(text);
+        return words.map((w, i) => {
+          const lower = w.toLowerCase();
+          return i === 0 ? lower : lower.charAt(0).toUpperCase() + lower.slice(1);
+        }).join('');
+      }
+      case 'pascal': {
+        const words = splitWords(text);
+        return words.map(w => {
+          const lower = w.toLowerCase();
+          return lower.charAt(0).toUpperCase() + lower.slice(1);
+        }).join('');
+      }
+      case 'snake': {
+        const words = splitWords(text);
+        return words.map(w => w.toLowerCase()).join('_');
+      }
+      case 'kebab': {
+        const words = splitWords(text);
+        return words.map(w => w.toLowerCase()).join('-');
+      }
+      case 'constant': {
+        const words = splitWords(text);
+        return words.map(w => w.toUpperCase()).join('_');
+      }
+      default:
+        return text;
+    }
+  }
+
+  caseBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const text = input.value;
+      if (!text.trim()) return;
+      const caseType = btn.getAttribute('data-cc-case');
+      const converted = convert(text, caseType);
+      result.textContent = converted;
+      output.style.display = '';
+    });
+  });
+
+  copyBtn.addEventListener('click', () => {
+    const text = result.textContent;
+    if (!text) return;
+    copyText(text, copyBtn);
+  });
+
+  clearBtn.addEventListener('click', () => {
+    input.value = '';
+    result.textContent = '';
+    output.style.display = 'none';
+  });
+})();
+</script>

@@ -1,0 +1,124 @@
+<div class="tool-input-group">
+  <label class="tool-label">搜索货币代码</label>
+  <input class="tool-input" type="text" id="cc-search" placeholder="搜索国家/货币名称/代码...">
+</div>
+<div class="tool-result" id="cc-result"></div>
+
+<script>
+(function() {
+  var currencies = [
+    { country:'中国', name:'人民币', code:'CNY', symbol:'¥' },
+    { country:'美国', name:'美元', code:'USD', symbol:'$' },
+    { country:'欧盟', name:'欧元', code:'EUR', symbol:'€' },
+    { country:'英国', name:'英镑', code:'GBP', symbol:'£' },
+    { country:'日本', name:'日元', code:'JPY', symbol:'¥' },
+    { country:'韩国', name:'韩元', code:'KRW', symbol:'₩' },
+    { country:'印度', name:'印度卢比', code:'INR', symbol:'₹' },
+    { country:'俄罗斯', name:'俄罗斯卢布', code:'RUB', symbol:'₽' },
+    { country:'加拿大', name:'加拿大元', code:'CAD', symbol:'C$' },
+    { country:'澳大利亚', name:'澳大利亚元', code:'AUD', symbol:'A$' },
+    { country:'瑞士', name:'瑞士法郎', code:'CHF', symbol:'CHF' },
+    { country:'新加坡', name:'新加坡元', code:'SGD', symbol:'S$' },
+    { country:'巴西', name:'巴西雷亚尔', code:'BRL', symbol:'R$' },
+    { country:'墨西哥', name:'墨西哥比索', code:'MXN', symbol:'Mex$' },
+    { country:'泰国', name:'泰铢', code:'THB', symbol:'฿' },
+    { country:'越南', name:'越南盾', code:'VND', symbol:'₫' },
+    { country:'马来西亚', name:'马来西亚林吉特', code:'MYR', symbol:'RM' },
+    { country:'印尼', name:'印尼卢比', code:'IDR', symbol:'Rp' },
+    { country:'菲律宾', name:'菲律宾比索', code:'PHP', symbol:'₱' },
+    { country:'阿联酋', name:'迪拉姆', code:'AED', symbol:'د.إ' },
+    { country:'沙特', name:'沙特里亚尔', code:'SAR', symbol:'﷼' },
+    { country:'土耳其', name:'土耳其里拉', code:'TRY', symbol:'₺' },
+    { country:'南非', name:'南非兰特', code:'ZAR', symbol:'R' },
+    { country:'尼日利亚', name:'尼日利亚奈拉', code:'NGN', symbol:'₦' },
+    { country:'埃及', name:'埃及镑', code:'EGP', symbol:'E£' },
+    { country:'阿根廷', name:'阿根廷比索', code:'ARS', symbol:'AR$' },
+    { country:'智利', name:'智利比索', code:'CLP', symbol:'CLP$' },
+    { country:'哥伦比亚', name:'哥伦比亚比索', code:'COP', symbol:'COL$' },
+    { country:'秘鲁', name:'秘鲁索尔', code:'PEN', symbol:'S/.' },
+    { country:'新西兰', name:'新西兰元', code:'NZD', symbol:'NZ$' },
+    { country:'瑞典', name:'瑞典克朗', code:'SEK', symbol:'kr' },
+    { country:'挪威', name:'挪威克朗', code:'NOK', symbol:'kr' },
+    { country:'丹麦', name:'丹麦克朗', code:'DKK', symbol:'kr' },
+    { country:'波兰', name:'波兰兹罗提', code:'PLN', symbol:'zł' },
+    { country:'捷克', name:'捷克克朗', code:'CZK', symbol:'Kč' },
+    { country:'匈牙利', name:'匈牙利福林', code:'HUF', symbol:'Ft' },
+    { country:'罗马尼亚', name:'罗马尼亚列伊', code:'RON', symbol:'lei' },
+    { country:'保加利亚', name:'保加利亚列弗', code:'BGN', symbol:'лв' },
+    { country:'克罗地亚', name:'克罗地亚库纳', code:'HRK', symbol:'kn' },
+    { country:'乌克兰', name:'格里夫纳', code:'UAH', symbol:'₴' },
+    { country:'以色列', name:'以色列谢克尔', code:'ILS', symbol:'₪' },
+    { country:'伊朗', name:'伊朗里亚尔', code:'IRR', symbol:'﷼' },
+    { country:'伊拉克', name:'伊拉克第纳尔', code:'IQD', symbol:'ع.د' },
+    { country:'科威特', name:'科威特第纳尔', code:'KWD', symbol:'د.ك' },
+    { country:'卡塔尔', name:'卡塔尔里亚尔', code:'QAR', symbol:'ر.ق' },
+    { country:'巴基斯坦', name:'巴基斯坦卢比', code:'PKR', symbol:'₨' },
+    { country:'孟加拉', name:'塔卡', code:'BDT', symbol:'৳' },
+    { country:'斯里兰卡', name:'斯里兰卡卢比', code:'LKR', symbol:'₨' },
+    { country:'缅甸', name:'缅元', code:'MMK', symbol:'K' },
+    { country:'柬埔寨', name:'柬埔寨瑞尔', code:'KHR', symbol:'៛' },
+    { country:'老挝', name:'老挝基普', code:'LAK', symbol:'₭' },
+    { country:'蒙古', name:'图格里克', code:'MNT', symbol:'₮' },
+    { country:'哈萨克斯坦', name:'坚戈', code:'KZT', symbol:'₸' },
+    { country:'乌兹别克斯坦', name:'苏姆', code:'UZS', symbol:'so\'m' },
+    { country:'塔吉克斯坦', name:'索莫尼', code:'TJS', symbol:'SM' },
+    { country:'吉尔吉斯斯坦', name:'索姆', code:'KGS', symbol:'с' },
+    { country:'阿富汗', name:'阿富汗尼', code:'AFN', symbol:'؋' },
+    { country:'尼泊尔', name:'尼泊尔卢比', code:'NPR', symbol:'₨' },
+    { country:'约旦', name:'约旦第纳尔', code:'JOD', symbol:'د.ا' },
+    { country:'黎巴嫩', name:'黎巴嫩镑', code:'LBP', symbol:'ل.ل' },
+    { country:'叙利亚', name:'叙利亚镑', code:'SYP', symbol:'£S' },
+    { country:'巴林', name:'巴林第纳尔', code:'BHD', symbol:'.د.ب' },
+    { country:'阿曼', name:'阿曼里亚尔', code:'OMR', symbol:'ر.ع.' },
+    { country:'也门', name:'也门里亚尔', code:'YER', symbol:'﷼' },
+    { country:'摩洛哥', name:'摩洛哥迪拉姆', code:'MAD', symbol:'د.م.' },
+    { country:'阿尔及利亚', name:'第纳尔', code:'DZD', symbol:'دج' },
+    { country:'突尼斯', name:'突尼斯第纳尔', code:'TND', symbol:'د.ت' },
+    { country:'利比亚', name:'利比亚第纳尔', code:'LYD', symbol:'ل.د' },
+    { country:'肯尼亚', name:'肯尼亚先令', code:'KES', symbol:'KSh' },
+    { country:'坦桑尼亚', name:'坦桑尼亚先令', code:'TZS', symbol:'TSh' },
+    { country:'乌干达', name:'乌干达先令', code:'UGX', symbol:'USh' },
+    { country:'埃塞俄比亚', name:'比尔', code:'ETB', symbol:'Br' },
+    { country:'加纳', name:'加纳塞地', code:'GHS', symbol:'GH₵' },
+    { country:'冰岛', name:'冰岛克朗', code:'ISK', symbol:'kr' },
+    { country:'斐济', name:'斐济元', code:'FJD', symbol:'FJ$' },
+    { country:'巴布亚新几内亚', name:'基那', code:'PGK', symbol:'K' },
+    { country:'塞尔维亚', name:'第纳尔', code:'RSD', symbol:'дин' },
+    { country:'白俄罗斯', name:'白俄罗斯卢布', code:'BYN', symbol:'Br' },
+    { country:'阿塞拜疆', name:'马纳特', code:'AZN', symbol:'₼' },
+    { country:'格鲁吉亚', name:'拉里', code:'GEL', symbol:'₾' },
+    { country:'亚美尼亚', name:'德拉姆', code:'AMD', symbol:'֏' },
+    { country:'委内瑞拉', name:'玻利瓦尔', code:'VES', symbol:'Bs.' },
+    { country:'古巴', name:'古巴比索', code:'CUP', symbol:'$MN' },
+    { country:'巴拿马', name:'巴波亚', code:'PAB', symbol:'B/.' },
+    { country:'乌拉圭', name:'乌拉圭比索', code:'UYU', symbol:'$U' },
+    { country:'巴拉圭', name:'瓜拉尼', code:'PYG', symbol:'₲' },
+    { country:'玻利维亚', name:'玻利维亚诺', code:'BOB', symbol:'Bs' },
+    { country:'厄瓜多尔', name:'美元', code:'USD', symbol:'$' },
+    { country:'哥斯达黎加', name:'科朗', code:'CRC', symbol:'₡' },
+    { country:'多米尼加', name:'多米尼加比索', code:'DOP', symbol:'RD$' },
+    { country:'危地马拉', name:'格查尔', code:'GTQ', symbol:'Q' },
+    { country:'洪都拉斯', name:'伦皮拉', code:'HNL', symbol:'L' }
+  ];
+
+  function render(search) {
+    search = (search || '').toLowerCase();
+    var filtered = currencies.filter(function(c) {
+      return !search || c.country.toLowerCase().indexOf(search) >= 0 || c.name.toLowerCase().indexOf(search) >= 0 || c.code.toLowerCase().indexOf(search) >= 0 || c.symbol.indexOf(search) >= 0;
+    });
+
+    var html = '<div class="tool-output"><div class="tool-output-title">货币代码参考（共 ' + filtered.length + ' 条）</div>';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+    html += '<tr style="background:#f5f5f5;"><th style="padding:6px;text-align:left;">国家/地区</th><th style="padding:6px;text-align:left;">货币名称</th><th style="padding:6px;text-align:left;">ISO代码</th><th style="padding:6px;text-align:center;">符号</th></tr>';
+
+    for (var i = 0; i < filtered.length; i++) {
+      html += '<tr style="border-bottom:1px solid #eee;"><td style="padding:6px;">' + filtered[i].country + '</td><td style="padding:6px;">' + filtered[i].name + '</td><td style="padding:6px;font-family:monospace;font-weight:bold;">' + filtered[i].code + '</td><td style="padding:6px;text-align:center;font-size:16px;">' + filtered[i].symbol + '</td></tr>';
+    }
+    html += '</table></div>';
+    document.getElementById('cc-result').innerHTML = html;
+  }
+
+  document.getElementById('cc-search').addEventListener('input', function(){ render(this.value); });
+  render('');
+})();
+</script>

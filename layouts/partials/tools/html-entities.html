@@ -1,0 +1,148 @@
+<div class="tool-input-group">
+  <label class="tool-label">搜索 HTML 实体</label>
+  <input class="tool-input" type="text" id="he-search" placeholder="搜索字符、名称或描述...">
+</div>
+<div class="tool-tabs" id="he-tabs" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;"></div>
+<div class="tool-result" id="he-result"></div>
+
+<script>
+(function() {
+  var entities = {
+    常用: [
+      { char:'<', name:'&lt;', num:'&#60;', desc:'小于号' },
+      { char:'>', name:'&gt;', num:'&#62;', desc:'大于号' },
+      { char:'&', name:'&amp;', num:'&#38;', desc:'与号' },
+      { char:'"', name:'&quot;', num:'&#34;', desc:'双引号' },
+      { char:"'", name:'&apos;', num:'&#39;', desc:'单引号' },
+      { char:'©', name:'&copy;', num:'&#169;', desc:'版权符号' },
+      { char:'®', name:'&reg;', num:'&#174;', desc:'注册商标' },
+      { char:'™', name:'&trade;', num:'&#8482;', desc:'商标符号' },
+      { char:' ', name:'&nbsp;', num:'&#160;', desc:'不间断空格' },
+      { char:'–', name:'&ndash;', num:'&#8211;', desc:'短破折号' },
+      { char:'—', name:'&mdash;', num:'&#8212;', desc:'长破折号' },
+      { char:'…', name:'&hellip;', num:'&#8230;', desc:'省略号' },
+      { char:'«', name:'&laquo;', num:'&#171;', desc:'左双角引号' },
+      { char:'»', name:'&raquo;', num:'&#187;', desc:'右双角引号' },
+      { char:'¢', name:'&cent;', num:'&#162;', desc:'美分符号' },
+      { char:'£', name:'&pound;', num:'&#163;', desc:'英镑符号' },
+      { char:'¥', name:'&yen;', num:'&#165;', desc:'日元符号' },
+      { char:'€', name:'&euro;', num:'&#8364;', desc:'欧元符号' },
+      { char:'§', name:'&sect;', num:'&#167;', desc:'章节符号' },
+      { char:'¶', name:'&para;', num:'&#182;', desc:'段落符号' }
+    ],
+    数学: [
+      { char:'±', name:'&plusmn;', num:'&#177;', desc:'正负号' },
+      { char:'×', name:'&times;', num:'&#215;', desc:'乘号' },
+      { char:'÷', name:'&divide;', num:'&#247;', desc:'除号' },
+      { char:'∞', name:'&infin;', num:'&#8734;', desc:'无穷大' },
+      { char:'≠', name:'&ne;', num:'&#8800;', desc:'不等于' },
+      { char:'≤', name:'&le;', num:'&#8804;', desc:'小于等于' },
+      { char:'≥', name:'&ge;', num:'&#8805;', desc:'大于等于' },
+      { char:'√', name:'&radic;', num:'&#8730;', desc:'平方根' },
+      { char:'∑', name:'&sum;', num:'&#8721;', desc:'求和' },
+      { char:'∏', name:'&prod;', num:'&#8719;', desc:'求积' },
+      { char:'∫', name:'&int;', num:'&#8747;', desc:'积分' },
+      { char:'∂', name:'&part;', num:'&#8706;', desc:'偏微分' },
+      { char:'≈', name:'&asymp;', num:'&#8776;', desc:'约等于' },
+      { char:'≡', name:'&equiv;', num:'&#8801;', desc:'恒等于' },
+      { char:'π', name:'&pi;', num:'&#960;', desc:'圆周率' },
+      { char:'¼', name:'&frac14;', num:'&#188;', desc:'四分之一' },
+      { char:'½', name:'&frac12;', num:'&#189;', desc:'二分之一' },
+      { char:'¾', name:'&frac34;', num:'&#190;', desc:'四分之三' },
+      { char:'°', name:'&deg;', num:'&#176;', desc:'度' },
+      { char:'µ', name:'&micro;', num:'&#181;', desc:'微' }
+    ],
+    箭头: [
+      { char:'←', name:'&larr;', num:'&#8592;', desc:'左箭头' },
+      { char:'↑', name:'&uarr;', num:'&#8593;', desc:'上箭头' },
+      { char:'→', name:'&rarr;', num:'&#8594;', desc:'右箭头' },
+      { char:'↓', name:'&darr;', num:'&#8595;', desc:'下箭头' },
+      { char:'↔', name:'&harr;', num:'&#8596;', desc:'左右箭头' },
+      { char:'⇒', name:'&rArr;', num:'&#8658;', desc:'双右箭头' },
+      { char:'⇐', name:'&lArr;', num:'&#8656;', desc:'双左箭头' },
+      { char:'⇑', name:'&uArr;', num:'&#8657;', desc:'双上箭头' },
+      { char:'⇓', name:'&dArr;', num:'&#8659;', desc:'双下箭头' },
+      { char:'⇔', name:'&hArr;', num:'&#8660;', desc:'双左右箭头' }
+    ],
+    符号: [
+      { char:'♥', name:'&hearts;', num:'&#9829;', desc:'红心' },
+      { char:'♠', name:'&spades;', num:'&#9824;', desc:'黑桃' },
+      { char:'♣', name:'&clubs;', num:'&#9827;', desc:'梅花' },
+      { char:'♦', name:'&diams;', num:'&#9830;', desc:'方块' },
+      { char:'★', name:'&starf;', num:'&#9733;', desc:'实心星' },
+      { char:'☆', name:'&star;', num:'&#9734;', desc:'空心星' },
+      { char:'☀', name:'&sun;', num:'&#9728;', desc:'太阳' },
+      { char:'☁', name:'-', num:'&#9729;', desc:'云' },
+      { char:'☂', name:'-', num:'&#9730;', desc:'伞' },
+      { char:'☃', name:'-', num:'&#9731;', desc:'雪人' },
+      { char:'✓', name:'&check;', num:'&#10003;', desc:'勾号' },
+      { char:'✗', name:'&cross;', num:'&#10007;', desc:'叉号' },
+      { char:'※', name:'-', num:'&#8251;', desc:'参考标记' },
+      { char:'❖', name:'-', num:'&#10070;', desc:'菱形' },
+      { char:'♫', name:'-', num:'&#9835;', desc:'音符' },
+      { char:'♪', name:'-', num:'&#9834;', desc:'八分音符' },
+      { char:'●', name:'-', num:'&#9679;', desc:'实心圆' },
+      { char:'○', name:'-', num:'&#9675;', desc:'空心圆' },
+      { char:'■', name:'-', num:'&#9632;', desc:'实心方形' },
+      { char:'□', name:'-', num:'&#9633;', desc:'空心方形' }
+    ]
+  };
+
+  var categories = Object.keys(entities);
+
+  function render(search, activeCat) {
+    search = (search || '').toLowerCase();
+    activeCat = activeCat || '常用';
+
+    var tabsHtml = categories.map(function(c) {
+      return '<button class="tool-tab' + (c === activeCat ? ' active' : '') + '" data-cat="' + c + '" style="padding:6px 14px;border:1px solid ' + (c===activeCat?'#4a90d9':'#ddd') + ';background:' + (c===activeCat?'#e8f0fe':'#fff') + ';border-radius:4px;cursor:pointer;">' + c + '</button>';
+    }).join('');
+    document.getElementById('he-tabs').innerHTML = tabsHtml;
+
+    var list = search ? [] : entities[activeCat].slice();
+    if (search) {
+      for (var k = 0; k < categories.length; k++) {
+        var items = entities[categories[k]];
+        for (var j = 0; j < items.length; j++) {
+          if (items[j].desc.indexOf(search) >= 0 || items[j].name.indexOf(search) >= 0 || items[j].num.indexOf(search) >= 0) {
+            list.push(items[j]);
+          }
+        }
+      }
+    }
+
+    var html = '<div class="tool-output"><div class="tool-output-title">HTML 实体参考（共 ' + list.length + ' 条）</div>';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+    html += '<tr style="background:#f5f5f5;"><th style="padding:6px;text-align:center;">字符</th><th style="padding:6px;text-align:left;">实体名称</th><th style="padding:6px;text-align:left;">实体编号</th><th style="padding:6px;text-align:left;">描述</th><th style="padding:6px;text-align:center;">复制</th></tr>';
+
+    for (var i = 0; i < list.length; i++) {
+      html += '<tr style="border-bottom:1px solid #eee;"><td style="padding:6px;text-align:center;font-size:20px;">' + list[i].char + '</td><td style="padding:6px;font-family:monospace;font-size:12px;">' + list[i].name + '</td><td style="padding:6px;font-family:monospace;font-size:12px;">' + list[i].num + '</td><td style="padding:6px;font-size:12px;">' + list[i].desc + '</td><td style="padding:6px;text-align:center;"><button class="tool-copy-btn" data-val="' + list[i].name + '" style="padding:2px 8px;border:1px solid #ddd;background:#fff;cursor:pointer;border-radius:3px;font-size:11px;">名称</button><br><button class="tool-copy-btn" data-val="' + list[i].num + '" style="padding:2px 8px;border:1px solid #ddd;background:#fff;cursor:pointer;border-radius:3px;font-size:11px;margin-top:3px;">数字</button></td></tr>';
+    }
+    html += '</table></div>';
+    document.getElementById('he-result').innerHTML = html;
+
+    // Tab events
+    var tabBtns = document.querySelectorAll('#he-tabs .tool-tab');
+    for (var t = 0; t < tabBtns.length; t++) {
+      tabBtns[t].addEventListener('click', function() {
+        render(document.getElementById('he-search').value, this.dataset.cat);
+      });
+    }
+
+    // Copy events
+    var copyBtns = document.querySelectorAll('#he-result .tool-copy-btn');
+    for (var c = 0; c < copyBtns.length; c++) {
+      copyBtns[c].addEventListener('click', function() {
+        navigator.clipboard.writeText(this.dataset.val).then(function() {
+          this.textContent = 'OK';
+          var that = this;
+          setTimeout(function(){ that.textContent = that.dataset.val.indexOf('&')===0?'名称':'数字'; }, 1000);
+        }.bind(this));
+      });
+    }
+  }
+
+  document.getElementById('he-search').addEventListener('input', function(){ render(this.value); });
+  render('');
+})();
+</script>

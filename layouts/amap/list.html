@@ -1,0 +1,662 @@
+{{ define "main" }}
+{{ $trips := hugo.Data.amap.trip }}
+
+<div id="trip-page">
+  <div class="trip-page">
+    <!-- Banner -->
+    <div class="trip-page-header">
+      <h1 class="page-title"><span class="title-icon"><i class="fas fa-route"></i></span> 出行轨迹</h1>
+      <p class="page-subtitle">每一段旅程都值得被记录</p>
+    </div>
+
+    <!-- 轨迹选择器 -->
+    <div class="tp-selector" id="tripSelector"></div>
+
+    <!-- 数据面板 -->
+    <div class="tp-stats" id="statsPanel">
+      <div class="tp-stat">
+        <div class="tp-stat-icon si-blue"><i class="fas fa-road"></i></div>
+        <div class="tp-stat-val" id="sDistance">--</div>
+        <div class="tp-stat-lbl">总里程 (km)</div>
+      </div>
+      <div class="tp-stat">
+        <div class="tp-stat-icon si-green"><i class="fas fa-clock"></i></div>
+        <div class="tp-stat-val" id="sDuration">--</div>
+        <div class="tp-stat-lbl">行驶时间</div>
+      </div>
+      <div class="tp-stat">
+        <div class="tp-stat-icon si-orange"><i class="fas fa-tachometer-alt"></i></div>
+        <div class="tp-stat-val" id="sSpeed">--</div>
+        <div class="tp-stat-lbl">平均速度 (km/h)</div>
+      </div>
+      <div class="tp-stat">
+        <div class="tp-stat-icon si-purple"><i class="fas fa-flag-checkered"></i></div>
+        <div class="tp-stat-val" id="sStart">--</div>
+        <div class="tp-stat-lbl">起点</div>
+      </div>
+      <div class="tp-stat">
+        <div class="tp-stat-icon si-red"><i class="fas fa-map-pin"></i></div>
+        <div class="tp-stat-val" id="sEnd">--</div>
+        <div class="tp-stat-lbl">终点</div>
+      </div>
+      <div class="tp-stat">
+        <div class="tp-stat-icon si-teal"><i class="fas fa-calendar"></i></div>
+        <div class="tp-stat-val" id="sDate">--</div>
+        <div class="tp-stat-lbl">出行日期</div>
+      </div>
+    </div>
+
+    <!-- 地图卡片 -->
+    <div class="tp-map-card">
+      <div class="tp-map-bar">
+        <div class="tp-route-info" id="routeInfo"><i class="fas fa-play-circle"></i> <span>选择一条轨迹开始回放</span></div>
+        <div class="tp-controls">
+          <button class="tp-btn" id="btnStart" onclick="AMapTrip.start()"><i class="fas fa-play"></i> 开始</button>
+          <button class="tp-btn" id="btnPause" onclick="AMapTrip.pause()"><i class="fas fa-pause"></i> 暂停</button>
+          <button class="tp-btn" id="btnResume" onclick="AMapTrip.resume()"><i class="fas fa-redo"></i> 继续</button>
+          <button class="tp-btn" id="btnStop" onclick="AMapTrip.stop()"><i class="fas fa-stop"></i> 停止</button>
+          <div class="tp-speed">
+            <label><i class="fas fa-tachometer-alt"></i> 速度</label>
+            <input type="range" id="speedSlider" min="1" max="50" value="10" step="1" oninput="AMapTrip.setSpeed(this.value)" />
+            <span id="speedVal">10x</span>
+          </div>
+          <button class="tp-btn" id="btnFollow" onclick="AMapTrip.toggleFollow()" title="地图跟随小车"><i class="fas fa-crosshairs"></i> 跟随</button>
+          <button class="tp-btn tp-btn-share" id="btnShare" onclick="AMapTrip.showQR()"><i class="fas fa-qrcode"></i> 分享</button>
+        </div>
+      </div>
+      <div class="tp-roads" id="roadTags"></div>
+      <div id="amap-container"></div>
+    </div>
+
+    <!-- 二维码弹窗 -->
+    <div class="tp-qr-overlay" id="qrOverlay" onclick="AMapTrip.hideQR(event)">
+      <div class="tp-qr-modal">
+        <button class="tp-qr-close" onclick="AMapTrip.hideQR()"><i class="fas fa-times"></i></button>
+        <div class="tp-qr-header">
+          <i class="fas fa-qrcode"></i>
+          <span>扫码查看轨迹回放</span>
+        </div>
+        <div class="tp-qr-body">
+          <div id="qrcode-canvas"></div>
+          <p class="tp-qr-hint">扫码即可在手机上查看轨迹回放动画</p>
+          <div class="tp-qr-actions">
+            <button class="tp-qr-nav-btn" onclick="AMapTrip.copyGaodeLink()">
+              <i class="fas fa-map-marker-alt"></i> 复制高德导航链接
+            </button>
+          </div>
+        </div>
+        <div class="tp-qr-footer">
+          <span class="tp-qr-name" id="qrTripName"></span>
+          <span class="tp-qr-route" id="qrTripRoute"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="tp-footer">扫码即可查看轨迹回放 · <a href="javascript:void(0)" onclick="AMapTrip.copyGaodeLink()" style="color:#6366f1;text-decoration:none">复制高德导航链接</a></div>
+
+    {{ partial "comments.html" . }}
+  </div>
+</div>
+
+<script>
+// 安全密钥 — 必须在加载高德 API 之前设置
+window._AMapSecurityConfig = { securityJsCode: "921aeae967ef42959d9951b333211bb5" };
+</script>
+<!-- 高德 JS API v2.0：不在 URL 中带 plugin，改用 AMap.plugin() 按需加载 -->
+<script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=1a3b73333a7e07852f3446dee5bac9be" onerror="window._AMapLoadFailed=true"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script>
+var trips = {{ $trips | jsonify | safeJS }};
+
+// 为没有起终点经纬度或 roads 的数据自动补全
+for (var i = 0; i < trips.length; i++) {
+  var t = trips[i];
+  if (!t.roads) t.roads = [];
+  if ((!t.startLng || !t.startLat) && t.path && t.path.length > 0) {
+    t.startLng = t.path[0][0];
+    t.startLat = t.path[0][1];
+  }
+  if ((!t.endLng || !t.endLat) && t.path && t.path.length > 0) {
+    t.endLng = t.path[t.path.length - 1][0];
+    t.endLat = t.path[t.path.length - 1][1];
+  }
+}
+
+var AMapTrip = (function() {
+  var map, marker, polyline, passedPolyline, startMk, endMk, curIdx = 0, animating = false;
+  var qrcodeInstance = null;
+  var followMode = true;
+  var speedMultiplier = 10;
+
+  function showMapError(title, detail) {
+    var container = document.getElementById('amap-container');
+    if (!container) return;
+    container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;min-height:480px;color:#ef4444;font-size:14px;flex-direction:column;gap:12px;padding:40px;text-align:center">' +
+      '<i class="fas fa-exclamation-circle" style="font-size:40px;opacity:.7"></i>' +
+      '<span style="font-size:1.1rem;font-weight:700">' + title + '</span>' +
+      '<span style="color:#94a3b8;font-size:.85rem;line-height:1.6;max-width:500px">' + detail + '</span>' +
+      '</div>';
+  }
+
+  function init() {
+    // 检测高德 API 是否加载成功
+    if (typeof AMap === 'undefined' || window._AMapLoadFailed) {
+      showMapError(
+        '高德地图加载失败',
+        '可能原因：当前访问域名未添加到高德 Key 白名单。<br>请使用 <b>127.0.0.1:1313</b> 代替 localhost:1313 访问，<br>或在高德开放平台控制台将 Key 的域名白名单添加当前域名。'
+      );
+      buildSelector();
+      return;
+    }
+
+    // 官方推荐：JSAPI2.0 使用覆盖物动画必须先加载动画插件
+    AMap.plugin('AMap.MoveAnimation', function() {
+      var centerLng = trips.length > 0 ? (trips[0].startLng || (trips[0].path && trips[0].path.length > 0 ? trips[0].path[0][0] : 116.397428)) : 116.397428;
+      var centerLat = trips.length > 0 ? (trips[0].startLat || (trips[0].path && trips[0].path.length > 0 ? trips[0].path[0][1] : 39.90923)) : 39.90923;
+
+      // 严格参照官方示例创建地图
+      map = new AMap.Map('amap-container', {
+        resizeEnable: true,
+        center: [centerLng, centerLat],
+        zoom: 17
+      });
+
+      buildSelector();
+      document.getElementById('btnFollow').classList.add('playing');
+      if (trips.length > 0) {
+        var params = new URLSearchParams(window.location.search);
+        var tripIdx = parseInt(params.get('trip')) || 0;
+        if (tripIdx < 0 || tripIdx >= trips.length) tripIdx = 0;
+        selectTrip(tripIdx);
+      }
+    });
+  }
+
+  function buildSelector() {
+    var el = document.getElementById('tripSelector');
+    el.innerHTML = '';
+    for (var i = 0; i < trips.length; i++) {
+      var t = trips[i], d = document.createElement('div');
+      d.className = 'tp-tab' + (i === 0 ? ' active' : '');
+      d.innerHTML = '<i class="fas fa-map-marked-alt"></i> ' + t.name + ' <span class="tp-tab-date">' + t.date + '</span>';
+      d.setAttribute('data-idx', i);
+      d.onclick = function() { selectTrip(parseInt(this.getAttribute('data-idx'))); };
+      el.appendChild(d);
+    }
+  }
+
+  function selectTrip(idx) {
+    if (idx < 0 || idx >= trips.length) return;
+    if (marker) try { marker.stopMove(); } catch(e) {}
+    animating = false;
+    curIdx = idx;
+    updateBtns();
+    var t = trips[idx];
+
+    var tabs = document.querySelectorAll('.tp-tab');
+    for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle('active', i === idx);
+
+    // 如果没有路径数据，从起终点坐标创建2点路径
+    if (!t.path || t.path.length === 0) {
+      if (t.startLng && t.startLat && t.endLng && t.endLat) {
+        t.path = [[t.startLng, t.startLat], [t.endLng, t.endLat]];
+      }
+    }
+
+    // 没有起终点坐标时才提示缺少数据
+    if (!t.startLng || !t.startLat || !t.endLng || !t.endLat) {
+      document.getElementById('routeInfo').innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#f59e0b"></i> <span>该轨迹缺少起终点坐标</span>';
+      return;
+    }
+
+    updateInfoPanel(t);
+
+    // 路径点太少（仅起终点）时，调用 Driving 路径规划补全中间路径
+    if ((!t.path || t.path.length <= 2) && t.startLng && t.startLat && t.endLng && t.endLat) {
+      document.getElementById('routeInfo').innerHTML = '<i class="fas fa-spinner fa-spin" style="color:#6366f1"></i> <span>正在规划驾车路线...</span>';
+
+      // 超时保护：8秒内未完成则降级为直线
+      var drivingDone = false;
+      var drivingTimer = setTimeout(function() {
+        if (!drivingDone) {
+          drivingDone = true;
+          document.getElementById('routeInfo').innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#f59e0b"></i> <span>路径规划超时，显示直线连接</span>';
+          if (curIdx === idx) drawTrip(t);
+        }
+      }, 8000);
+
+      AMap.plugin('AMap.Driving', function() {
+        if (drivingDone) return; // 已超时，不再处理
+        var driving = new AMap.Driving({ policy: 0 });
+        driving.search(
+          new AMap.LngLat(t.startLng, t.startLat),
+          new AMap.LngLat(t.endLng, t.endLat),
+          function(status, result) {
+            if (drivingDone) return; // 已超时
+            drivingDone = true;
+            clearTimeout(drivingTimer);
+
+            if (status === 'complete' && result.routes && result.routes.length > 0) {
+              var route = result.routes[0];
+              var fullPath = [];
+              for (var s = 0; s < route.steps.length; s++) {
+                var stepPath = route.steps[s].path;
+                if (stepPath && stepPath.length) {
+                  for (var p = 0; p < stepPath.length; p++) {
+                    var pt = stepPath[p];
+                    // 高德 v2.0 返回的可能是 LngLat 对象或普通对象
+                    if (typeof pt.getLng === 'function') {
+                      fullPath.push([pt.getLng(), pt.getLat()]);
+                    } else if (pt.lng !== undefined && pt.lat !== undefined) {
+                      fullPath.push([pt.lng, pt.lat]);
+                    } else if (Array.isArray(pt)) {
+                      fullPath.push(pt);
+                    }
+                  }
+                }
+              }
+              if (fullPath.length > 2) t.path = fullPath;
+              // 提取途经道路
+              var roadNames = [];
+              for (var s = 0; s < route.steps.length; s++) {
+                var stepRoad = route.steps[s].road;
+                if (stepRoad && roadNames.indexOf(stepRoad) === -1) {
+                  roadNames.push(stepRoad);
+                }
+              }
+              if (roadNames.length > 0) t.roads = roadNames;
+              // 用规划结果更新数据面板
+              if (route.distance) {
+                t.distance = Math.round(route.distance / 100) / 10;
+              }
+              if (route.time) {
+                t.duration = Math.round(route.time / 60);
+                if (t.distance > 0) {
+                  t.avgSpeed = Math.round(t.distance / (t.duration / 60));
+                }
+              }
+              updateInfoPanel(t);
+            } else {
+              // 路径规划失败，提示原因
+              var failMsg = '路径规划失败';
+              if (status === 'no_data') {
+                failMsg = '未找到驾车路线（距离可能过远）';
+              } else if (status === 'error') {
+                failMsg = '路径规划出错，显示直线连接';
+              }
+              document.getElementById('routeInfo').innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#f59e0b"></i> <span>' + failMsg + '</span>';
+            }
+            if (curIdx === idx) drawTrip(t);
+          }
+        );
+      });
+    } else {
+      drawTrip(t);
+    }
+  }
+
+  function updateInfoPanel(t) {
+    var dist = typeof t.distance === 'number' ? t.distance.toFixed(1) : '0.0';
+    var dur = typeof t.duration === 'number' ? t.duration : 0;
+    var spd = typeof t.avgSpeed === 'number' ? t.avgSpeed : 0;
+
+    document.getElementById('sDistance').textContent = dist;
+    document.getElementById('sDuration').textContent = dur >= 60 ? Math.floor(dur/60) + 'h ' + (dur%60) + 'min' : dur + ' min';
+    document.getElementById('sSpeed').textContent = spd;
+    document.getElementById('sStart').textContent = t.startName || '--';
+    document.getElementById('sEnd').textContent = t.endName || '--';
+    document.getElementById('sDate').textContent = t.date || '--';
+
+    document.getElementById('routeInfo').innerHTML = '<i class="fas fa-route" style="color:#6366f1"></i> <span style="color:#1e293b;font-weight:600">' + (t.startName || '') + '</span> <span style="color:#94a3b8;margin:0 6px"><i class="fas fa-arrow-right"></i></span> <span style="color:#1e293b;font-weight:600">' + (t.endName || '') + '</span> <span style="color:#94a3b8;margin-left:6px">' + (t.distance || 0) + 'km</span>';
+
+    var roadsEl = document.getElementById('roadTags');
+    roadsEl.innerHTML = '';
+    for (var r = 0; r < t.roads.length; r++) {
+      roadsEl.innerHTML += '<span class="tp-road"><i class="fas fa-road" style="margin-right:4px"></i>' + t.roads[r] + '</span>';
+    }
+  }
+
+  // ── 绘制轨迹 — 严格参照官方示例模式 ──
+  function drawTrip(t) {
+    map.clearMap();
+
+    // 绘制轨迹 — 参照官方：showDir + strokeColor + strokeWeight
+    polyline = new AMap.Polyline({
+      map: map,
+      path: t.path,
+      showDir: true,
+      strokeColor: '#28F',
+      strokeWeight: 6
+    });
+
+    // 已走过轨迹 — 参照官方：仅设置 map + strokeColor + strokeWeight
+    passedPolyline = new AMap.Polyline({
+      map: map,
+      strokeColor: '#AF5',
+      strokeWeight: 6
+    });
+
+    // 起点标签
+    startMk = new AMap.Marker({
+      map: map,
+      position: t.path[0],
+      offset: new AMap.Pixel(-40, -30),
+      content: '<div style="background:#10b981;color:#fff;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap;box-shadow:0 2px 8px rgba(16,185,129,.4)"><i class="fas fa-play" style="margin-right:4px"></i>' + (t.startName || '起点') + '</div>'
+    });
+
+    // 终点标签
+    endMk = new AMap.Marker({
+      map: map,
+      position: t.path[t.path.length - 1],
+      offset: new AMap.Pixel(-40, -30),
+      content: '<div style="background:#ef4444;color:#fff;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap;box-shadow:0 2px 8px rgba(239,68,68,.4)"><i class="fas fa-flag-checkered" style="margin-right:4px"></i>' + (t.endName || '终点') + '</div>'
+    });
+
+    // 移动小车 — 参照官方：icon + offset
+    marker = new AMap.Marker({
+      map: map,
+      position: t.path[0],
+      icon: 'https://a.amap.com/jsapi_demos/static/demo-center-v2/car.png',
+      offset: new AMap.Pixel(-13, -26)
+    });
+
+    // 动画事件 — 参照官方
+    marker.on('moving', function(e) {
+      passedPolyline.setPath(e.passedPath);
+      if (followMode) map.setCenter(e.target.getPosition(), true);
+    });
+
+    marker.on('movealong', function() {
+      animating = false;
+      updateBtns();
+    });
+
+    // 自适应视野
+    map.setFitView();
+
+    // 用户拖拽地图时自动切换为自由模式
+    map.on('dragstart', function() {
+      if (animating && followMode) {
+        followMode = false;
+        var btn = document.getElementById('btnFollow');
+        btn.classList.remove('playing');
+        btn.innerHTML = '<i class="fas fa-hand-paper"></i> 自由';
+      }
+    });
+  }
+
+  function updateBtns() {
+    document.querySelectorAll('.tp-btn').forEach(function(b) { b.classList.remove('playing'); });
+    if (animating) document.getElementById('btnPause').classList.add('playing');
+    else document.getElementById('btnStart').classList.add('playing');
+  }
+
+  function buildGaodeNavUrl(idx) {
+    var t = trips[idx || curIdx];
+    if (!t) return '';
+    var fromStr = t.startLng + ',' + t.startLat + ',' + encodeURIComponent(t.startName || '');
+    var toStr = t.endLng + ',' + t.endLat + ',' + encodeURIComponent(t.endName || '');
+    return 'https://uri.amap.com/navigation?from=' + fromStr + '&to=' + toStr + '&mode=car&coordinate=gaode';
+  }
+
+  function showQR() {
+    if (!trips.length) return;
+    var t = trips[curIdx];
+    var pageUrl = window.location.protocol + '//' + window.location.host + '/amap/?trip=' + curIdx;
+    document.getElementById('qrTripName').textContent = t.name;
+    document.getElementById('qrTripRoute').textContent = (t.startName || '') + ' → ' + (t.endName || '') + ' (' + (t.distance || 0) + 'km)';
+    var canvas = document.getElementById('qrcode-canvas');
+    canvas.innerHTML = '';
+    qrcodeInstance = new QRCode(canvas, {
+      text: pageUrl,
+      width: 220,
+      height: 220,
+      colorDark: '#1e293b',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H
+    });
+    document.getElementById('qrOverlay').classList.add('active');
+  }
+
+  function hideQR(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('qrOverlay').classList.remove('active');
+  }
+
+  function copyGaodeLink() {
+    var url = buildGaodeNavUrl(curIdx);
+    if (!url) return;
+    copyText(url);
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(function() {
+        showToast('高德导航链接已复制 👆 可发送到手机打开');
+      });
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('高德导航链接已复制 👆 可发送到手机打开');
+    }
+  }
+
+  function showToast(msg) {
+    var existing = document.querySelector('.tp-toast');
+    if (existing) existing.remove();
+    var toast = document.createElement('div');
+    toast.className = 'tp-toast';
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(function() { toast.classList.add('tp-toast--show'); }, 10);
+    setTimeout(function() { toast.classList.remove('tp-toast--show'); setTimeout(function() { toast.remove(); }, 300); }, 2500);
+  }
+
+  return {
+    init: init,
+    start: function() {
+      if (!marker || !trips.length) return;
+      var t = trips[curIdx];
+      if (!t.path || t.path.length < 2) return;
+      // 速度倍率：基础每段 200ms，除以倍率加速
+      var baseDuration = Math.max(100, Math.min(500, Math.round(10000 / t.path.length)));
+      var segDuration = Math.max(20, Math.round(baseDuration / speedMultiplier));
+      marker.moveAlong(t.path, { duration: segDuration, autoRotation: true });
+      animating = true; updateBtns();
+    },
+    pause: function() { if (marker) marker.pauseMove(); animating = false; updateBtns(); },
+    resume: function() { if (marker) marker.resumeMove(); animating = true; updateBtns(); },
+    stop: function() { if (marker) marker.stopMove(); animating = false; updateBtns(); },
+    setSpeed: function(val) {
+      speedMultiplier = parseInt(val) || 1;
+      document.getElementById('speedVal').textContent = speedMultiplier + 'x';
+      // 动画运行中时，以新速度重新启动
+      if (animating && marker) {
+        marker.stopMove();
+        var t = trips[curIdx];
+        if (t.path && t.path.length >= 2) {
+          var baseDuration = Math.max(100, Math.min(500, Math.round(10000 / t.path.length)));
+          var segDuration = Math.max(20, Math.round(baseDuration / speedMultiplier));
+          marker.moveAlong(t.path, { duration: segDuration, autoRotation: true });
+        }
+      }
+    },
+    toggleFollow: function() {
+      followMode = !followMode;
+      var btn = document.getElementById('btnFollow');
+      if (followMode) {
+        btn.classList.add('playing');
+        btn.innerHTML = '<i class="fas fa-crosshairs"></i> 跟随';
+      } else {
+        btn.classList.remove('playing');
+        btn.innerHTML = '<i class="fas fa-hand-paper"></i> 自由';
+      }
+    },
+    showQR: showQR,
+    hideQR: hideQR,
+    copyGaodeLink: copyGaodeLink
+  };
+})();
+
+document.addEventListener('DOMContentLoaded', AMapTrip.init);
+</script>
+
+<style>
+/* ── 布局：全宽容器 ── */
+.main-wrapper:has(#trip-page) .container{max-width:100%!important;padding-left:40px!important;padding-right:40px!important}
+.main-wrapper:has(#trip-page) .site-footer{position:fixed!important;bottom:0!important;left:0!important;right:0!important;z-index:100!important;margin-top:0!important}
+
+/* ── Banner ── */
+.trip-page-header{text-align:center;min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 24px;background:linear-gradient(135deg,#eef2ff 0%,#e0e7ff 50%,#ede9fe 100%);border-radius:20px;margin-bottom:22px;box-shadow:0 4px 20px rgba(0,0,0,.08);position:relative;overflow:hidden;border:1px solid rgba(99,102,241,.12)}
+.trip-page-header::before{content:'';position:absolute;top:-60%;left:-30%;width:200%;height:200%;background:radial-gradient(circle at 30% 40%,rgba(99,102,241,.08) 0%,transparent 55%);pointer-events:none}
+.trip-page-header .page-title{font-size:2rem;font-weight:800;color:#1e293b;margin:0 0 10px;display:inline-flex;align-items:center;gap:12px;position:relative;z-index:1}
+.trip-page-header .title-icon{font-size:1.4em;color:#6366f1;animation:trip-icon-bounce 2.5s ease-in-out infinite;display:inline-block}
+@keyframes trip-icon-bounce{0%,100%{transform:scale(1) rotate(-5deg)}50%{transform:scale(1.08) rotate(5deg)}}
+.trip-page-header .page-subtitle{font-size:.95rem;color:#475569;margin:0;line-height:1.6;position:relative;z-index:1}
+[data-theme="dark"] .trip-page-header{background:linear-gradient(135deg,#0f172a 0%,#1a1f3a 50%,#1e1530 100%);border-color:rgba(99,102,241,.15)}
+[data-theme="dark"] .trip-page-header .page-title{color:#f1f5f9}
+[data-theme="dark"] .trip-page-header .page-subtitle{color:#94a3b8}
+
+/* ── 页面主体 ── */
+.trip-page{max-width:1480px;margin:0 auto 80px;padding:0}
+
+/* ── 轨迹选择器 ── */
+.tp-selector{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.tp-tab{padding:10px 20px;border-radius:12px;border:2px solid transparent;background:#fff;cursor:pointer;
+  font-size:.9rem;font-weight:600;color:#475569;transition:all .25s;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;gap:8px}
+.tp-tab:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.1)}
+.tp-tab.active{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border-color:transparent;box-shadow:0 4px 16px rgba(99,102,241,.35)}
+.tp-tab-date{font-size:.75rem;font-weight:400;opacity:.7}
+[data-theme="dark"] .tp-tab{background:#1e293b;color:#cbd5e1;border-color:#334155}
+[data-theme="dark"] .tp-tab:hover{border-color:#6366f1}
+[data-theme="dark"] .tp-tab.active{background:linear-gradient(135deg,#4338ca,#6d28d9);color:#fff}
+
+/* ── 数据面板 ── */
+.tp-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:20px}
+.tp-stat{background:#fff;border-radius:14px;padding:20px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.05);transition:all .3s;border:1px solid rgba(0,0,0,.04)}
+.tp-stat:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.08)}
+.tp-stat-icon{width:42px;height:42px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:18px;color:#fff;margin-bottom:10px}
+.tp-stat-val{font-size:1.5rem;font-weight:800;color:#1e293b;margin-bottom:2px}
+.tp-stat-lbl{font-size:.8rem;color:#94a3b8;font-weight:500}
+.si-blue{background:linear-gradient(135deg,#3b82f6,#60a5fa)}.si-green{background:linear-gradient(135deg,#10b981,#34d399)}
+.si-orange{background:linear-gradient(135deg,#f59e0b,#fbbf24)}.si-purple{background:linear-gradient(135deg,#8b5cf6,#a78bfa)}
+.si-red{background:linear-gradient(135deg,#ef4444,#f87171)}.si-teal{background:linear-gradient(135deg,#14b8a6,#5eead4)}
+[data-theme="dark"] .tp-stat{background:#1e293b;border-color:#334155}
+[data-theme="dark"] .tp-stat-val{color:#e2e8f0}
+[data-theme="dark"] .tp-stat-lbl{color:#64748b}
+
+/* ── 地图卡片 ── */
+.tp-map-card{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.04)}
+[data-theme="dark"] .tp-map-card{background:#1e293b;border-color:#334155}
+.tp-map-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:linear-gradient(135deg,#f8fafc,#f1f5f9);border-bottom:1px solid #e2e8f0;flex-wrap:wrap;gap:10px}
+[data-theme="dark"] .tp-map-bar{background:linear-gradient(135deg,#0f172a,#1e293b);border-color:#334155}
+.tp-route-info{display:flex;align-items:center;gap:8px;font-size:.9rem;color:#475569;font-weight:500}
+[data-theme="dark"] .tp-route-info{color:#cbd5e1}
+.tp-controls{display:flex;gap:8px}
+.tp-btn{padding:7px 16px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:.82rem;font-weight:500;color:#475569;transition:all .2s;display:flex;align-items:center;gap:5px}
+.tp-btn:hover{border-color:#6366f1;color:#6366f1;background:#f5f3ff}
+.tp-btn.playing{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border-color:transparent}
+.tp-btn i{font-size:.78rem}
+/* ── 速度控制 ── */
+.tp-speed{display:flex;align-items:center;gap:6px;font-size:.82rem;color:#475569;font-weight:500}
+.tp-speed label{display:flex;align-items:center;gap:4px;white-space:nowrap}
+.tp-speed input[type=range]{width:80px;height:4px;-webkit-appearance:none;appearance:none;background:#e2e8f0;border-radius:2px;outline:none;cursor:pointer}
+.tp-speed input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#6366f1;cursor:pointer;box-shadow:0 1px 4px rgba(99,102,241,.4)}
+.tp-speed input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#6366f1;cursor:pointer;border:none}
+.tp-speed span{min-width:24px;text-align:center;font-weight:700;color:#6366f1}
+[data-theme="dark"] .tp-speed{color:#cbd5e1}
+[data-theme="dark"] .tp-speed input[type=range]{background:#334155}
+[data-theme="dark"] .tp-btn{background:#1e293b;border-color:#334155;color:#cbd5e1}
+[data-theme="dark"] .tp-btn.playing{background:linear-gradient(135deg,#4338ca,#6d28d9);color:#fff;border-color:transparent}
+
+/* ── 分享按钮特殊样式 ── */
+.tp-btn-share{background:linear-gradient(135deg,#10b981,#34d399);color:#fff;border-color:transparent}
+.tp-btn-share:hover{background:linear-gradient(135deg,#059669,#10b981);color:#fff;border-color:transparent;box-shadow:0 2px 10px rgba(16,185,129,.4)}
+[data-theme="dark"] .tp-btn-share{background:linear-gradient(135deg,#047857,#059669);color:#fff}
+[data-theme="dark"] .tp-btn-share:hover{background:linear-gradient(135deg,#065f46,#047857)}
+
+#amap-container{width:100%;height:calc(100vh - 420px);min-height:480px;position:relative}
+/* 关键：覆盖主题全局 img { max-width:100%; height:auto; display:block } 规则，防止高德瓦片被破坏 */
+#amap-container img{max-width:none!important;max-height:none!important}
+#amap-container canvas{display:block!important}
+#amap-container .amap-logo,#amap-container .amap-copyright{display:block!important}
+
+/* ── 道路标签 ── */
+.tp-roads{display:flex;flex-wrap:wrap;gap:8px;padding:16px 20px;border-top:1px solid #f1f5f9}
+[data-theme="dark"] .tp-roads{border-color:#334155}
+.tp-road{padding:5px 12px;border-radius:8px;font-size:.78rem;font-weight:600;background:linear-gradient(135deg,#eff6ff,#dbeafe);color:#3b82f6;border:1px solid #bfdbfe}
+[data-theme="dark"] .tp-road{background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.2);color:#60a5fa}
+
+/* ── 二维码弹窗 ── */
+.tp-qr-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:10000;
+  background:rgba(0,0,0,.5);backdrop-filter:blur(6px);justify-content:center;align-items:center;
+  animation:tp-qr-fadeIn .2s ease}
+.tp-qr-overlay.active{display:flex}
+.tp-qr-modal{background:#fff;border-radius:20px;padding:0;width:340px;box-shadow:0 16px 60px rgba(0,0,0,.2);
+  position:relative;animation:tp-qr-scaleIn .3s cubic-bezier(.34,1.56,.64,1);overflow:hidden}
+.tp-qr-close{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;
+  border:none;background:#f1f5f9;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;color:#64748b;font-size:14px;transition:all .2s;z-index:2}
+.tp-qr-close:hover{background:#fee2e2;color:#ef4444}
+.tp-qr-header{background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:24px;text-align:center;color:#fff}
+.tp-qr-header i{font-size:2rem;display:block;margin-bottom:6px}
+.tp-qr-header span{font-size:1.05rem;font-weight:700}
+.tp-qr-body{padding:24px;text-align:center}
+#qrcode-canvas{display:inline-block;padding:12px;background:#fff;border-radius:12px;box-shadow:0 0 0 1px #e2e8f0}
+#qrcode-canvas img{display:block;margin:0 auto}
+.tp-qr-hint{font-size:.82rem;color:#94a3b8;margin:14px 0 0;line-height:1.5}
+/* ── 二维码弹窗按钮 ── */
+.tp-qr-actions{margin-top:14px;text-align:center}
+.tp-qr-nav-btn{padding:8px 18px;border-radius:10px;border:1px solid #e2e8f0;background:#f8fafc;cursor:pointer;
+  font-size:.8rem;font-weight:600;color:#6366f1;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.tp-qr-nav-btn:hover{border-color:#6366f1;background:#f5f3ff;transform:translateY(-1px)}
+[data-theme="dark"] .tp-qr-nav-btn{background:#1e293b;border-color:#334155;color:#a78bfa}
+[data-theme="dark"] .tp-qr-nav-btn:hover{border-color:#6366f1;background:rgba(99,102,241,.15)}
+
+/* ── Toast 提示 ── */
+.tp-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);z-index:99999;
+  background:rgba(30,41,59,.92);backdrop-filter:blur(8px);color:#fff;padding:12px 24px;
+  border-radius:12px;font-size:.85rem;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.2);
+  transition:all .3s cubic-bezier(.4,0,.2,1);opacity:0;pointer-events:none;white-space:nowrap}
+.tp-toast--show{opacity:1;transform:translateX(-50%) translateY(0)}
+.tp-qr-footer{background:#f8fafc;padding:14px 24px;text-align:center;border-top:1px solid #f1f5f9}
+.tp-qr-name{display:block;font-size:.9rem;font-weight:700;color:#1e293b;margin-bottom:3px}
+.tp-qr-route{display:block;font-size:.78rem;color:#94a3b8}
+@keyframes tp-qr-fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes tp-qr-scaleIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+[data-theme="dark"] .tp-qr-modal{background:#1e293b}
+[data-theme="dark"] .tp-qr-close{background:#334155;color:#94a3b8}
+[data-theme="dark"] .tp-qr-close:hover{background:#7f1d1d;color:#fca5a5}
+[data-theme="dark"] #qrcode-canvas{background:#1e293b;box-shadow:0 0 0 1px #334155}
+[data-theme="dark"] .tp-qr-footer{background:#0f172a;border-color:#334155}
+[data-theme="dark"] .tp-qr-name{color:#e2e8f0}
+
+/* ── 页脚 ── */
+.tp-footer{text-align:center;padding:20px;color:#94a3b8;font-size:.8rem}
+
+/* ── 响应式 ── */
+@media(max-width:900px){
+  .main-wrapper:has(#trip-page) .container{padding-left:16px!important;padding-right:16px!important}
+  .trip-page-header{padding:26px 16px 20px;min-height:160px}
+  .trip-page-header .page-title{font-size:1.65rem}
+  .trip-page{margin-bottom:60px}
+  .tp-stats{grid-template-columns:repeat(2,1fr);gap:10px}
+  .tp-stat{padding:14px}
+  .tp-stat-val{font-size:1.2rem}
+  #amap-container{height:50vh;min-height:360px}
+  .tp-map-bar{padding:10px 14px;flex-direction:column;align-items:flex-start}
+  .tp-selector{gap:8px}
+  .tp-tab{padding:8px 14px;font-size:.82rem}
+}
+@media(max-width:600px){
+  .main-wrapper:has(#trip-page) .container{padding-left:12px!important;padding-right:12px!important}
+  .trip-page-header{padding:22px 12px 16px;min-height:140px}
+  .trip-page-header .page-title{font-size:1.4rem}
+  #amap-container{min-height:320px}
+}
+</style>
+{{ end }}

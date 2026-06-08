@@ -1,0 +1,75 @@
+<div class="tool-input-group">
+  <label class="tool-label">折扣联动计算（输入任意2个自动算第3个）</label>
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">原价</label>
+  <input class="tool-input dc-input" type="number" id="dc-original" value="100" step="0.01" min="0" placeholder="原价">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">折扣率（%）</label>
+  <input class="tool-input dc-input" type="number" id="dc-percent" value="20" step="0.1" min="0" max="100" placeholder="折扣率">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">折后价</label>
+  <input class="tool-input dc-input" type="number" id="dc-discounted" value="" step="0.01" min="0" placeholder="折后价">
+</div>
+<div class="tool-result" id="dc-result"></div>
+
+<script>
+(function() {
+  var lastChanged = null;
+
+  function update(changed) {
+    var original = parseFloat(document.getElementById('dc-original').value);
+    var percent = parseFloat(document.getElementById('dc-percent').value);
+    var discounted = parseFloat(document.getElementById('dc-discounted').value);
+
+    if (changed === 'original' || changed === 'percent') {
+      if (!isNaN(original) && !isNaN(percent) && original >= 0 && percent >= 0 && percent <= 100) {
+        document.getElementById('dc-discounted').value = (original * (100 - percent) / 100).toFixed(2);
+      }
+    } else if (changed === 'original' && !isNaN(original) && !isNaN(discounted) && original > 0) {
+      document.getElementById('dc-percent').value = ((1 - discounted / original) * 100).toFixed(1);
+    } else if (changed === 'percent' && !isNaN(percent) && !isNaN(discounted) && percent < 100 && percent >= 0) {
+      document.getElementById('dc-original').value = (discounted / (1 - percent / 100)).toFixed(2);
+    } else if (changed === 'discounted') {
+      if (!isNaN(original) && !isNaN(discounted) && original > 0) {
+        document.getElementById('dc-percent').value = ((1 - discounted / original) * 100).toFixed(1);
+      } else if (!isNaN(percent) && !isNaN(discounted) && percent < 100 && percent >= 0) {
+        document.getElementById('dc-original').value = (discounted / (1 - percent / 100)).toFixed(2);
+      }
+    }
+
+    showResult();
+  }
+
+  function showResult() {
+    var original = parseFloat(document.getElementById('dc-original').value);
+    var percent = parseFloat(document.getElementById('dc-percent').value);
+    var discounted = parseFloat(document.getElementById('dc-discounted').value);
+    var result = document.getElementById('dc-result');
+
+    if (isNaN(original) || isNaN(percent) || isNaN(discounted)) {
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">提示</div><p>请输入任意两个数值，第三个将自动计算。</p></div>';
+      return;
+    }
+
+    var saved = original - discounted;
+    result.innerHTML = '<div class="tool-output"><div class="tool-output-title">折扣结果</div>' +
+      '<div class="tool-stats"><div class="tool-stat"><div class="tool-stat-value">' + percent.toFixed(1) + '%</div><div class="tool-stat-label">折扣率</div></div>' +
+      '<div class="tool-stat"><div class="tool-stat-value">¥' + saved.toFixed(2) + '</div><div class="tool-stat-label">节省金额</div></div>' +
+      '<div class="tool-stat"><div class="tool-stat-value">¥' + discounted.toFixed(2) + '</div><div class="tool-stat-label">折后价</div></div></div>' +
+      '<p style="margin-top:12px;font-size:13px;color:#666;">原价 ¥' + original.toFixed(2) + ' × (' + (100-percent).toFixed(1) + '%) = 折后价 ¥' + discounted.toFixed(2) + '</p></div>';
+  }
+
+  var inputs = document.querySelectorAll('.dc-input');
+  for (var i = 0; i < inputs.length; i++) {
+    inputs[i].addEventListener('input', function() {
+      var id = this.id.replace('dc-', '');
+      update(id);
+    });
+  }
+
+  update('original');
+})();
+</script>

@@ -1,0 +1,4 @@
+{{/* 文章底部广告 */}}
+{{ if .widgetEnabled }}
+{{ partial "ads/render-ad.html" (dict "positionId" "post_bottom" "Page" .Page) }}
+{{ end }}

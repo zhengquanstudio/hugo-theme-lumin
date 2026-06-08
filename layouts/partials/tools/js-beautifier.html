@@ -1,0 +1,285 @@
+<div class="tool-tabs" id="jb-tabs">
+  <button class="tool-tab active" data-tab="jb-beautify">美化</button>
+  <button class="tool-tab" data-tab="jb-minify">压缩</button>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">输入 JavaScript 代码</label>
+  <textarea class="tool-textarea" id="jb-input" rows="10" placeholder='请输入 JavaScript 代码，例如：function hello(){console.log("Hello World");}'>function fetchUser(id){return fetch('/api/users/'+id).then(function(res){if(!res.ok){throw new Error('HTTP '+res.status);}return res.json();}).then(function(data){console.log('用户信息:',data);return data;}).catch(function(err){console.error('请求失败:',err);});}const greet=(name,lang='zh')=>{const msgs={zh:'你好，'+name+'！',en:'Hello, '+name+'!'};return msgs[lang]||msgs.zh;};</textarea>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">缩进大小</label>
+  <select class="tool-select" id="jb-indent">
+    <option value="2" selected>2 空格</option>
+    <option value="4">4 空格</option>
+  </select>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="jb-beautify-btn">美化</button>
+  <button class="tool-btn tool-btn-primary" id="jb-minify-btn">压缩</button>
+  <button class="tool-btn" id="jb-clear-btn">清空</button>
+</div>
+
+<div id="jb-error" style="display:none;color:var(--color-error,#e53e3e);margin-top:8px;"></div>
+
+<div class="tool-output" id="jb-output-area" style="display:none;">
+  <div class="tool-result" id="jb-result"></div>
+  <button class="tool-copy-btn" id="jb-copy-btn">复制结果</button>
+</div>
+
+<div class="tool-stats" id="jb-stats" style="display:none;">
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="jb-stat-original">0</span>
+    <span class="tool-stat-label">原始大小</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="jb-stat-result">0</span>
+    <span class="tool-stat-label">结果大小</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="jb-stat-compression">0%</span>
+    <span class="tool-stat-label">压缩率</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  const input = document.getElementById('jb-input');
+  const result = document.getElementById('jb-result');
+  const outputArea = document.getElementById('jb-output-area');
+  const errorDiv = document.getElementById('jb-error');
+  const statsDiv = document.getElementById('jb-stats');
+  const indentSelect = document.getElementById('jb-indent');
+  const tabs = document.querySelectorAll('#jb-tabs .tool-tab');
+
+  let currentTab = 'jb-beautify';
+
+  function switchTab(tabId) {
+    currentTab = tabId;
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
+  }
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+  });
+
+  function showError(msg) {
+    errorDiv.textContent = msg;
+    errorDiv.style.display = 'block';
+    outputArea.style.display = 'none';
+    statsDiv.style.display = 'none';
+  }
+
+  function hideError() {
+    errorDiv.style.display = 'none';
+  }
+
+  function showResult(text, origSize) {
+    result.textContent = text;
+    outputArea.style.display = 'block';
+    statsDiv.style.display = 'flex';
+    document.getElementById('jb-stat-original').textContent = formatSize(origSize);
+    const resultSize = new Blob([text]).size;
+    document.getElementById('jb-stat-result').textContent = formatSize(resultSize);
+    const ratio = origSize > 0 ? Math.round((1 - resultSize / origSize) * 100) : 0;
+    document.getElementById('jb-stat-compression').textContent = (ratio >= 0 ? '-' : '+') + Math.abs(ratio) + '%';
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    return (bytes / 1024).toFixed(1) + ' KB';
+  }
+
+  function beautifyJS(code, indentSize) {
+    const indent = ' '.repeat(indentSize);
+    let result = '';
+    let depth = 0;
+    let i = 0;
+    const len = code.length;
+    let inString = false;
+    let stringChar = '';
+    let inComment = false;
+    let inBlockComment = false;
+
+    // 简单美化: 在 { ( [ 后增加缩进, 在 } ) ] 前减少缩进, 在 ; 后换行
+    const pushChar = (ch) => {
+      if (inString) {
+        result += ch;
+        if (ch === stringChar && code[i - 1] !== '\\') inString = false;
+        return;
+      }
+      if (inBlockComment) {
+        result += ch;
+        if (ch === '/' && code[i - 1] === '*') inBlockComment = false;
+        return;
+      }
+      if (inComment) {
+        result += ch;
+        if (ch === '\n') inComment = false;
+        return;
+      }
+
+      // 检测注释开始
+      if (ch === '/' && i + 1 < len) {
+        const next = code[i + 1];
+        if (next === '/') {
+          inComment = true;
+          result += '//';
+          i++;
+          return;
+        }
+        if (next === '*') {
+          inBlockComment = true;
+          result += '/*';
+          i++;
+          return;
+        }
+      }
+
+      // 检测字符串
+      if (ch === '"' || ch === "'" || ch === '`') {
+        inString = true;
+        stringChar = ch;
+        result += ch;
+        return;
+      }
+
+      if (ch === ';') {
+        result += ';\n' + indent.repeat(depth);
+        // 跳过后续空白
+        while (i + 1 < len && /\s/.test(code[i + 1])) i++;
+        return;
+      }
+
+      if (ch === '{') {
+        result += ' {\n' + indent.repeat(++depth);
+        while (i + 1 < len && /\s/.test(code[i + 1])) i++;
+        return;
+      }
+
+      if (ch === '}') {
+        depth = Math.max(0, depth - 1);
+        result = result.trimEnd();
+        result += '\n' + indent.repeat(depth) + '}';
+        if (i + 1 < len && code[i + 1] !== ',' && code[i + 1] !== ';' && code[i + 1] !== ')' && code[i + 1] !== ']') {
+          result += '\n' + indent.repeat(depth);
+        }
+        return;
+      }
+
+      if (ch === '(' || ch === '[') {
+        // 简单处理，不在括号内换行
+        result += ch;
+        return;
+      }
+
+      if (ch === '\n') {
+        result += '\n' + indent.repeat(depth);
+        while (i + 1 < len && /\s/.test(code[i + 1]) && code[i + 1] !== '\n') i++;
+        return;
+      }
+
+      result += ch;
+    };
+
+    // 先移除多余空白，再逐字符处理
+    for (i = 0; i < len; i++) {
+      pushChar(code[i]);
+    }
+
+    // 清理多余空行
+    return result.replace(/\n{3,}/g, '\n\n').replace(/^\n+/, '');
+  }
+
+  function minifyJS(code) {
+    // 移除单行注释
+    let result = code.replace(/\/\/.*$/gm, '');
+    // 移除块注释
+    result = result.replace(/\/\*[\s\S]*?\*\//g, '');
+    // 压缩字符串外的空白
+    let inString = false;
+    let stringChar = '';
+    let out = '';
+    for (let i = 0; i < result.length; i++) {
+      const ch = result[i];
+      if (inString) {
+        out += ch;
+        if (ch === stringChar && result[i - 1] !== '\\') inString = false;
+        continue;
+      }
+      if (ch === '"' || ch === "'" || ch === '`') {
+        inString = true;
+        stringChar = ch;
+        out += ch;
+        continue;
+      }
+      if (/\s/.test(ch)) {
+        const prev = out[out.length - 1];
+        if (prev && /[a-zA-Z0-9_$)\]'"`]/.test(prev) && i + 1 < result.length && /[a-zA-Z0-9_$(\[\]'"`]/.test(result[i + 1])) {
+          out += ' ';
+        }
+        continue;
+      }
+      out += ch;
+    }
+    return out.trim();
+  }
+
+  document.getElementById('jb-beautify-btn').addEventListener('click', () => {
+    hideError();
+    const raw = input.value;
+    if (!raw.trim()) { showError('请输入 JavaScript 代码'); return; }
+    try {
+      const indent = parseInt(indentSelect.value, 10);
+      const formatted = beautifyJS(raw, indent);
+      showResult(formatted, new Blob([raw]).size);
+      switchTab('jb-beautify');
+    } catch(e) {
+      showError('美化失败：' + e.message);
+    }
+  });
+
+  document.getElementById('jb-minify-btn').addEventListener('click', () => {
+    hideError();
+    const raw = input.value;
+    if (!raw.trim()) { showError('请输入 JavaScript 代码'); return; }
+    try {
+      const minified = minifyJS(raw);
+      showResult(minified, new Blob([raw]).size);
+      switchTab('jb-minify');
+    } catch(e) {
+      showError('压缩失败：' + e.message);
+    }
+  });
+
+  document.getElementById('jb-clear-btn').addEventListener('click', () => {
+    input.value = '';
+    result.textContent = '';
+    outputArea.style.display = 'none';
+    statsDiv.style.display = 'none';
+    hideError();
+  });
+
+  document.getElementById('jb-copy-btn').addEventListener('click', () => {
+    const text = result.textContent;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('jb-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const btn = document.getElementById('jb-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    });
+  });
+})();
+</script>

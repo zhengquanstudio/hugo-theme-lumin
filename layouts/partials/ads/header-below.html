@@ -1,0 +1,23 @@
+{{/* Header 下方全局横幅 - 窄幅，可关闭 */}}
+{{ $adsData := hugo.Data.ads }}
+{{ if and $adsData $adsData.global.enable $adsData.positions }}
+  {{ range $pos := $adsData.positions }}
+    {{ if and (eq $pos.id "header_below") $pos.enable }}
+      {{ $filtered := slice }}
+      {{ range $ad := $pos.ads }}
+        {{ if $ad.enable }}{{ $filtered = $filtered | append $ad }}{{ end }}
+      {{ end }}
+      {{ if $filtered }}
+      {{ $ad := index $filtered 0 }}
+      <div class="ad-global-banner" id="ad-global-banner" data-ad-provider="{{ $ad.provider }}">
+        <div class="ad-global-inner">
+          {{ $ad.code | safeHTML }}
+        </div>
+        <button class="ad-global-close" onclick="this.parentElement.style.display='none'" title="关闭">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      {{ end }}
+    {{ end }}
+  {{ end }}
+{{ end }}

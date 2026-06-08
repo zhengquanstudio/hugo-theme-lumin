@@ -1,0 +1,22 @@
+{{/* nav-dropdown.html — 通用的桌面端下拉菜单项 */}}
+{{ $menu := .menu }}
+{{ $icon := .icon | default $menu.Params.icon | default "" }}
+{{ $useCategoryInfo := .useCategoryInfo | default false }}
+<li class="nav-item nav-item-dropdown">
+  <a href="javascript:void(0)" class="nav-link nav-link-dropdown">
+    {{- if $icon }}<i class="nav-icon {{ $icon }}"></i> {{ end }}{{ $menu.Name }}
+    <svg class="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+  </a>
+  <ul class="dropdown-menu">
+    {{ range $menu.Children }}
+    {{ $childIcon := .Params.icon | default "" }}
+    {{ $catInfo := "" }}
+    {{ if $useCategoryInfo }}{{ $catInfo = partial "category-info.html" .Identifier }}{{ end }}
+    <li class="dropdown-item">
+      <a href="{{ .URL }}" class="dropdown-link">
+        {{- if $childIcon }}<i style="font-size:0.85rem;margin-right:4px;" class="{{ $childIcon }}"></i>{{ else if $catInfo }}{{ with $catInfo.icon }}<i style="font-size:0.85rem;margin-right:4px;" class="{{ . }}"></i>{{ end }}{{ end }}{{ .Name }}
+      </a>
+    </li>
+    {{ end }}
+  </ul>
+</li>

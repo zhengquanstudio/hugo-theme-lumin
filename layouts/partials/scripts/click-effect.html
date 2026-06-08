@@ -1,0 +1,264 @@
+{{/*
+  鼠标点击特效 - ESM 正确实现版
+  
+  解决方案: 
+  - 不使用 import (避免Hugo路径问题)
+  - 改为: 内联ESM代码 + 动态导入 + 配置参数化
+  
+  支持6种效果: fireworks/text/heart/star/bubble/snow
+  配置来源: hugo.toml [params.clickEffect]
+  
+  使用方式: 在 baseof.html 中调用
+  {{ partial "scripts/click-effect.html" . }}
+*/}}
+
+{{ if site.Params.clickEffect.enable }}
+{{/* ===== 配置注入 ===== */}}
+<script>
+  window.__CLICK_EFFECT_CONFIG__ = {
+    enable: {{ site.Params.clickEffect.enable }},
+    type: "{{ site.Params.clickEffect.type | default "fireworks" }}",
+    {{ with site.Params.clickEffect.fireworks }}
+    fireworks: {
+      particleCount: {{ .particleCount | default 30 }},
+      spread: {{ .spread | default 60 }},
+      colors: {{ .colors | jsonify | safeJS | default `["#ff3366","#ff6b35","#f7c948","#2ed573","#1e90ff","#a55eea"]` }}
+    },
+    {{ end }}
+    {{ with site.Params.clickEffect.text }}
+    text: {
+      messages: {{ .messages | jsonify | safeJS | default `["✨"]` }},
+      fontSize: "{{ .fontSize | default "16px" }}",
+      color: "{{ .color | default "#ff6b6b" }}",
+      duration: {{ .duration | default 1000 }}
+    },
+    {{ end }}
+    {{ with site.Params.clickEffect.heart }}
+    heart: {
+      color: "{{ .color | default "#ff4757" }}",
+      size: {{ .size | default 20 }},
+      count: {{ .count | default 5 }}
+    },
+    {{ end }}
+    {{ with site.Params.clickEffect.star }}
+    star: {
+      color: "{{ .color | default "#ffd700" }}",
+      size: {{ .size | default 15 }},
+      count: {{ .count | default 8 }}
+    },
+    {{ end }}
+    {{ with site.Params.clickEffect.bubble }}
+    bubble: {
+      colors: {{ .colors | jsonify | safeJS | default `["#ff6b81","#70a1ff","#7bed9f","#ffa502","#a55eea"]` }},
+      sizeRange: [{{ index .sizeRange 0 | default 8 }}, {{ index .sizeRange 1 | default 25 }}],
+      count: {{ .count | default 12 }}
+    },
+    {{ end }}
+    {{ with site.Params.clickEffect.snow }}
+    snow: {
+      color: "{{ .color | default "#ffffff" }}",
+      sizeRange: [{{ index .sizeRange 0 | default 5 }}, {{ index .sizeRange 1 | default 15 }}],
+      count: {{ .count | default 20 }}
+    }
+    {{ end }}
+  };
+</script>
+
+{{/* ===== ESM 模块 (内联方式 - 避免Hugo路径问题) ===== */}}
+<script type="module">
+/**
+ * ClickEffects - ESM Module (Inline Version)
+ * 完整的ESM类实现，内联以解决Hugo资源路径兼容性问题
+ */
+
+class ClickEffects {
+  #config;
+  #effectType;
+  #settings;
+  #lastTime = 0;
+  #throttle = 120;
+
+  constructor(config) {
+    this.#config = {
+      enable: true,
+      type: 'fireworks',
+      ...(window.__CLICK_EFFECT_CONFIG__ || {}),
+      ...config
+    };
+
+    if (!this.#config.enable) {
+      // 特效已禁用
+      return;
+    }
+
+    this.#effectType = this.#config.type || 'fireworks';
+    this.#settings = this.#config[this.#effectType] || {};
+
+    this.#initStyles();
+    this.#bindEvents();
+
+    // ESM初始化成功
+  }
+
+  #initStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+      .ce-canvas { mix-blend-mode: normal !important; }
+      .ce-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Roboto, sans-serif; }
+      .ce-heart, .ce-star { font-family: "Apple Color Emoji", "Segoe UI Emoji", sans-serif; }
+      .ce-bubble, .ce-snow { will-change: transform, opacity; }
+    `;
+    document.head.appendChild(style);
+  }
+
+  #bindEvents() {
+    document.addEventListener('click', (e) => this.#handleClick(e));
+  }
+
+  #handleClick(e) {
+    const now = Date.now();
+    if (now - this.#lastTime < this.#throttle) return;
+    this.#lastTime = now;
+
+    if (this.#shouldExclude(e.target)) return;
+    this.#createEffect(e.clientX, e.clientY);
+  }
+
+  #shouldExclude(target) {
+    if (!target || !(target instanceof HTMLElement)) return false;
+    const excludeTags = ['A', 'BUTTON', 'INPUT', 'TEXTAREA', 'SELECT'];
+    if (excludeTags.includes(target.tagName)) return true;
+
+    let parent = target.parentElement;
+    let depth = 0;
+    while (parent && depth < 5) {
+      if (excludeTags.includes(parent.tagName)) return true;
+      parent = parent.parentElement;
+      depth++;
+    }
+    return false;
+  }
+
+  #createEffect(x, y) {
+    switch (this.#effectType) {
+      case 'fireworks': this.#createFirework(x, y); break;
+      case 'text': this.#createText(x, y); break;
+      case 'heart': this.#createHeart(x, y); break;
+      case 'star': this.#createStar(x, y); break;
+      case 'bubble': this.#createBubble(x, y); break;
+      case 'snow': this.#createSnow(x, y); break;
+    }
+  }
+
+  // ========== 工具函数 ==========
+  #random(min, max) { return Math.random() * (max - min) + min; }
+  #randomInt(min, max) { return Math.floor(this.#random(min, max + 1)); }
+  #randomFromArray(arr) { if (!arr?.length) return null; return arr[this.#randomInt(0, arr.length - 1)]; }
+
+  #createEl(tag, className, styles) {
+    const el = document.createElement(tag);
+    if (className) el.className = className;
+    if (styles) Object.entries(styles).forEach(([k, v]) => { el.style[k] = v; });
+    return el;
+  }
+
+  // ========== 特效实现 ==========
+
+  #createFirework(x, y) {
+    const particles = [];
+    const count = Math.min(this.#settings.particleCount || 20, 25);
+    const spread = (this.#settings.spread || 60) * Math.PI / 180;
+    const colors = this.#settings.colors || ['#ff3366','#ff6b35','#f7c948','#2ed573','#1e90ff','#a55eea'];
+
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * Math.PI * 2 + this.#random(-spread/2, spread/2);
+      const velocity = this.#random(4, 10);
+      particles.push({ x, y, vx: Math.cos(angle)*velocity, vy: Math.sin(angle)*velocity, life: 1, decay: this.#random(0.018,0.035), size: this.#randomInt(3,7), color: this.#randomFromArray(colors) });
+    }
+
+    const canvas = this.#createEl('canvas', 'ce-canvas', { position:'fixed',top:'0',left:'0',width:'100%',height:'100%',pointerEvents:'none',zIndex:'99999' });
+    canvas.width = innerWidth; canvas.height = innerHeight;
+    const ctx = canvas.getContext('2d');
+    document.body.appendChild(canvas);
+
+    let animId;
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let alive = false;
+      particles.forEach(p => {
+        if (p.life <= 0) return;
+        alive = true;
+        p.x += p.vx; p.y += p.vy; p.vy += 0.12; p.life -= p.decay;
+        const alpha = Math.max(0, p.life), radius = Math.max(0.5, p.size * p.life);
+        ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = p.color; ctx.shadowColor = p.color; ctx.shadowBlur = radius*2;
+        ctx.beginPath(); ctx.arc(p.x, p.y, radius, 0, Math.PI*2); ctx.fill(); ctx.restore();
+      });
+      if (alive) { animId = requestAnimationFrame(animate); } else { cancelAnimationFrame(animId); canvas.remove(); }
+    };
+    animate();
+  }
+
+  #createText(x, y) {
+    const msgs = this.#settings.messages || ['✨'];
+    const fontSize = parseInt(this.#settings.fontSize || '18');
+    const color = this.#settings.color || '#ff3366';
+    const el = this.#createEl('span', 'ce-text', { position:'fixed',left:x+'px',top:y+'px',fontSize:(fontSize+4)+'px',color,fontWeight:'900',pointerEvents:'none',zIndex:'99999',whiteSpace:'nowrap',userSelect:'none',textShadow:`0 0 8px ${color}, 0 2px 4px rgba(0,0,0,0.3), 0 0 20px ${color}40`,transform:'translate(-50%,-50%) scale(0)',opacity:'0',letterSpacing:'2px' });
+    el.textContent = this.#randomFromArray(msgs) || '✨';
+    document.body.appendChild(el);
+    const dur = this.#settings.duration || 900;
+    requestAnimationFrame(() => { el.style.transition = `all ${dur}ms cubic-bezier(.34,1.56,.64,1)`; el.style.transform = 'translate(-50%,-50%) scale(1.2)'; el.style.opacity = '1'; });
+    setTimeout(() => { el.style.transition = `all ${dur*0.6}ms cubic-bezier(.55,0,.85,.36)`; el.style.transform = 'translate(-50%,-180%) scale(0.5)'; el.style.opacity = '0'; setTimeout(() => el.remove(), dur*0.6); }, dur*0.65);
+  }
+
+  #createHeart(x, y) {
+    const count = Math.min(this.#settings.count || 4, 6), color = this.#settings.color || '#ff4757', size = (this.#settings.size || 22) + 4;
+    for (let i = 0; i < count; i++) setTimeout(() => {
+      const h = this.#createEl('span', 'ce-heart', { position:'fixed',left:x+'px',top:y+'px',fontSize:size+'px',pointerEvents:'none',zIndex:'99999',transform:'translate(-50%,-50%) scale(0)',opacity:'0',filter:`drop-shadow(0 0 6px ${color}) drop-shadow(0 2px 4px rgba(0,0,0,0.25))` });
+      h.innerHTML = '❤️'; document.body.appendChild(h);
+      requestAnimationFrame(() => { h.style.transition = 'all 900ms cubic-bezier(.34,1.56,.64,1)'; h.style.transform = `translate(-50%,-50%) scale(1.1) translate(${this.#random(-40,40)}px,${-this.#random(60,120)}px)`; h.style.opacity = '1'; });
+      setTimeout(() => { h.style.transition = 'all 700ms cubic-bezier(.55,0,.85,.36)'; h.style.transform = `translate(-50%,-50%) scale(0) translate(${this.#random(-80,80)}px,${-this.#random(150,250)}px)`; h.style.opacity = '0'; setTimeout(() => h.remove(), 700); }, 750);
+    }, i * 45);
+  }
+
+  #createStar(x, y) {
+    const count = Math.min(this.#settings.count || 6, 8), color = this.#settings.color || '#ffc107', size = (this.#settings.size || 16) + 4;
+    for (let i = 0; i < count; i++) setTimeout(() => {
+      const s = this.#createEl('span', 'ce-star', { position:'fixed',left:x+'px',top:y+'px',fontSize:size+'px',pointerEvents:'none',zIndex:'99999',transform:'translate(-50%,-50%) scale(0) rotate(0deg)',opacity:'0',filter:`drop-shadow(0 0 8px ${color}) drop-shadow(0 2px 4px rgba(0,0,0,0.2))` });
+      s.innerHTML = '⭐'; document.body.appendChild(s);
+      const ang = this.#random(0, Math.PI*2), dist = this.#random(50,100), rot = this.#random(-180,180);
+      requestAnimationFrame(() => { s.style.transition = 'all 750ms cubic-bezier(.34,1.56,.64,1)'; s.style.transform = `translate(-50%,-50%) scale(1.15) rotate(${rot}deg) translate(${Math.cos(ang)*dist}px,${Math.sin(ang)*dist}px)`; s.style.opacity = '1'; });
+      setTimeout(() => { s.style.transition = 'all 550ms cubic-bezier(.55,0,.85,.36)'; s.style.transform = `translate(-50%,-50%) scale(0) rotate(${rot*2}deg) translate(${Math.cos(ang)*dist*1.8}px,${Math.sin(ang)*dist*1.8}px)`; s.style.opacity = '0'; setTimeout(() => s.remove(), 550); }, 550);
+    }, i * 25);
+  }
+
+  #createBubble(x, y) {
+    const colors = this.#settings.colors || ['#ff6b81','#70a1ff','#7bed9f','#ffa502','#a55eea'], range = this.#settings.sizeRange || [10,28], count = Math.min(this.#settings.count || 8, 10);
+    for (let i = 0; i < count; i++) setTimeout(() => {
+      const sz = this.#random(range[0], range[1]), bColor = this.#randomFromArray(colors);
+      const b = this.#createEl('div', 'ce-bubble', { position:'fixed',left:x+'px',top:y+'px',width:sz+'px',height:sz+'px',borderRadius:'50%',background:`radial-gradient(circle at 35% 35%, rgba(255,255,255,0.9), ${bColor} 60%, ${bColor})`,boxShadow:`0 0 ${sz*.6}px ${bColor}80, inset -${sz*.15}px -${sz*.15}px ${sz*.25}px rgba(255,255,255,0.5), 0 4px 12px rgba(0,0,0,0.15)`,pointerEvents:'none',zIndex:'99999',transform:'translate(-50%,-50%) scale(0)',opacity:'0' });
+      document.body.appendChild(b);
+      const ox = this.#random(-50,50), oy = this.#random(-80,-35);
+      requestAnimationFrame(() => { b.style.transition = 'all 800ms cubic-bezier(.34,1.56,.64,1)'; b.style.transform = `translate(-50%,-50%) scale(1) translate(${ox}px,${oy}px)`; b.style.opacity = '0.85'; });
+      setTimeout(() => { b.style.transition = 'all 600ms cubic-bezier(.55,0,.85,.36)'; b.style.transform = `translate(-50%,-50%) scale(0) translate(${ox*1.4}px,${oy*1.4})`; b.style.opacity = '0'; setTimeout(() => b.remove(), 600); }, 650);
+    }, i * 18);
+  }
+
+  #createSnow(x, y) {
+    const snowColors = ['#ffffff','#e8f4fd','#d4ecfa','#c0e4f8','#a8daf4'], range = this.#settings.sizeRange || [6,16], count = Math.min(this.#settings.count || 14, 18);
+    for (let i = 0; i < count; i++) setTimeout(() => {
+      const sz = this.#random(range[0], range[1]), sfColor = this.#randomFromArray(snowColors);
+      const sf = this.#createEl('div', 'ce-snow', { position:'fixed',left:x+'px',top:y+'px',width:sz+'px',height:sz+'px',backgroundColor:sfColor,borderRadius:'50%',boxShadow:`0 0 ${sz*.8}px ${sfColor}90, 0 0 ${sz*1.5}px ${sfColor}40, 0 2px 6px rgba(0,0,0,0.1)`,pointerEvents:'none',zIndex:'99999',transform:'translate(-50%,-50%) scale(0) rotate(0deg)',opacity:'0' });
+      document.body.appendChild(sf);
+      const ox = this.#random(-70,70), drift = this.#random(-25,25), fallDist = this.#random(80,160), rot1 = this.#random(0,360), rot2 = this.#random(360,720);
+      requestAnimationFrame(() => { sf.style.transition = 'all 1000ms cubic-bezier(.34,1.56,.64,1)'; sf.style.transform = `translate(-50%,-50%) scale(1) translateX(${ox+drift}px) translateY(${fallDist}px) rotate(${rot1}deg)`; sf.style.opacity = '0.9'; });
+      setTimeout(() => { sf.style.transition = 'all 800ms cubic-bezier(.55,0,.85,.36)'; sf.style.transform = `translate(-50%,-50%) scale(0) translateX(${ox+drift*2}px) translateY(${fallDist*1.4}px) rotate(${rot2}deg)`; sf.style.opacity = '0'; setTimeout(() => sf.remove(), 800); }, 850);
+    }, i * 14);
+  }
+}
+
+// 初始化实例（从window读取配置）
+new ClickEffects();
+
+// ESM模块加载完成 (内联模式)
+</script>
+{{ end }}

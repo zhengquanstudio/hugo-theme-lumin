@@ -1,0 +1,270 @@
+{{ define "main" }}
+<div class="moments-page" id="moments-page">
+  <!-- 页面头部 -->
+  <header class="moments-header">
+    <div class="mh-bg">
+      <div class="mh-circle mh-circle--1"></div>
+      <div class="mh-circle mh-circle--2"></div>
+      <div class="mh-circle mh-circle--3"></div>
+    </div>
+    <h1 class="mh-title"><i class="fas fa-bolt"></i> 说说</h1>
+    <p class="mh-subtitle">生活碎片，随手记录 ✨</p>
+  </header>
+
+  {{ $pages := where site.RegularPages "Section" "moments" }}
+  {{ $allMoments := $pages.ByDate.Reverse }}
+  {{ $weekdays := slice "日" "一" "二" "三" "四" "五" "六" }}
+
+  <!-- 时间线容器 -->
+  <div class="moments-timeline" id="moments-timeline">
+
+    {{ if not $allMoments }}
+    <div class="moments-empty">
+      <i class="far fa-comment-dots"></i>
+      <p>还没有发布说说哦~</p>
+    </div>
+    {{ else }}
+      {{ range $idx, $m := $allMoments }}
+        {{ $cnWday := index $weekdays ($m.Date.Weekday) }}
+
+        <!-- 单条说说卡片 -->
+        <article class="moment-card" data-id="{{ $idx }}">
+          <div class="mt-dot"></div>
+          <div class="mc-body">
+            {{ $mcLink := "" }}
+            {{ with $m.Params.link }}{{ $mcLink = . | replaceRE "^https?//" "${0}://" }}{{ end }}
+              <!-- 内容区 -->
+              {{ if $mcLink }}
+              <a href="{{ $mcLink }}" target="_blank" rel="noopener noreferrer" class="mc-content-link">
+              {{ else }}
+              <a href="{{ $m.Permalink }}" class="mc-content-link">
+              {{ end }}
+              <div class="mc-content">
+                {{- if $m.Params.content -}}
+                  {{ $m.Params.content | safeHTML }}
+                {{- else -}}
+                  {{ $m.Content | safeHTML }}
+                {{- end -}}
+              </div>
+              </a>
+
+              <!-- 图片网格（始终链接到说说详情页） -->
+              {{ $momentPictures := $m.Params.pictures }}
+              {{ if not $momentPictures }}{{ $momentPictures = $m.Params.images }}{{ end }}
+              {{ with $momentPictures }}
+                {{ $imgCount := len . }}
+                {{ if gt $imgCount 0 }}
+                <a href="{{ $m.Permalink }}" class="mc-images-link">
+                <div class="mc-images mc-images--count{{ $imgCount }}">
+                  {{ range . }}
+                  <div class="mc-img-wrap">
+                    <img src="{{ . }}" alt="说说图片" onerror="this.style.display='none'" loading="lazy">
+                  </div>
+                  {{ end }}
+                </div>
+                </a>
+                {{ end }}
+              {{ end }}
+
+            <!-- 时间 & 元数据 -->
+            <div class="mc-meta">
+              <span class="mc-time"><i class="far fa-clock"></i> {{ $m.Date.Format "01月02日" }} 星期{{ $cnWday }} {{ $m.Date.Format "15:04" }}</span>
+              
+              <div class="mc-meta-tags">
+                {{ with $m.Params.mood }}
+                <span class="mc-mood" title="心情">
+                  {{ if eq . "happy" }}😊 开心{{ end }}
+                  {{ if eq . "sad" }}😢 难过{{ end }}
+                  {{ if eq . "angry" }}😠 生气{{ end }}
+                  {{ if eq . "surprised" }}😮 惊讶{{ end }}
+                  {{ if eq . "love" }}😍 喜爱{{ end }}
+                  {{ if eq . "thinking" }}🤔 思考{{ end }}
+                  {{ if eq . "tired" }}😴 疲惫{{ end }}
+                  {{ if eq . "excited" }}🎉 兴奋{{ end }}
+                </span>
+                {{ end }}
+
+                {{ with $m.Params.location }}
+                <span class="mc-location" title="位置">📍 <span>{{ . }}</span></span>
+                {{ end }}
+
+                {{ with $m.Params.tags }}
+                <span class="mc-tags" title="标签">🏷️
+                  {{ range . }}<span class="mc-tag">{{ . }}</span>{{ end }}
+                </span>
+                {{ end }}
+
+                {{ with $m.Params.link }}
+                <a href="{{ . | replaceRE "^https?//" "${0}://" }}" target="_blank" rel="noopener noreferrer" class="mc-link" title="分享链接">🔗 {{ if $m.Params.linkText }}{{ $m.Params.linkText }}{{ else }}查看链接{{ end }}</a>
+                {{ end }}
+              </div>
+            </div>
+
+          </div>
+        </article>
+      {{ end }}
+    {{ end }}
+  </div>
+
+  <!-- 底部装饰 -->
+  <div class="moments-bottom"><i class="fas fa-heart"></i> 记录每一个瞬间</div>
+</div>
+
+<style>
+/* ====== 说说页面 - 全局布局 ====== */
+.main-wrapper:has(#moments-page) .container{max-width:100%!important;padding-left:40px!important;padding-right:40px!important;}
+
+.moments-page{
+  max-width:1480px;margin:0 auto 24px;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  min-height:100vh;background:linear-gradient(180deg,#f8fafc 0%,#f1f5f9 50%,#e2e8f0 100%);
+}
+[data-theme="dark"] .moments-page{background:linear-gradient(180deg,rgba(15,23,42,.95) 0%,rgba(30,41,59,.9) 50%,rgba(15,23,42,.95) 100%);}
+
+/* 头部 */
+.moments-header{position:relative;padding:40px 24px 32px;text-align:center;overflow:hidden;min-height:160px;
+  background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:20px;margin-bottom:22px;
+  box-shadow:0 8px 40px rgba(102,126,234,.25),0 4px 12px rgba(118,75,162,.18),0 0 0 1px rgba(139,92,246,.1);
+  border:1px solid rgba(139,92,246,.15);}
+.moments-header::before{content:'';position:absolute;top:-60%;left:-30%;width:200%;height:200%;
+  background:radial-gradient(circle at 30% 40%,rgba(255,255,255,.08) 0%,transparent 55%);pointer-events:none;}
+.mh-bg{position:absolute;inset:0;pointer-events:none;}
+.mh-circle{position:absolute;border-radius:50%;opacity:.12;background:#fff;animation:float 6s ease-in-out infinite alternate;}
+.mh-circle--1{width:120px;height:120px;top:-20px;left:10%;animation-delay:0s;}
+.mh-circle--2{width:80px;height:80px;top:40%;right:15%;animation-delay:-2s;}
+.mh-circle--3{width:160px;height:160px;bottom:-40px;right:25%;animation-delay:-4s;}
+@keyframes float{from{transform:translateY(0) scale(1);}to{transform:translateY(-16px) scale(1.06);}}
+.mh-title{font-size:2rem;font-weight:800;color:#fff;margin:0 0 10px;letter-spacing:-.02em;position:relative;z-index:1;text-shadow:0 2px 12px rgba(0,0,0,.18);}
+.mh-title i{margin-right:10px;font-size:1.75rem;}
+.mh-subtitle{color:rgba(255,255,255,.82);font-size:1rem;margin:0;position:relative;z-index:1;}
+[data-theme="dark"] .moments-header{background:linear-gradient(135deg,#4c1d95 0%,#7c3aed 100%);
+  border-color:rgba(139,92,246,.2);box-shadow:0 8px 40px rgba(0,0,0,.4),0 4px 12px rgba(124,58,237,.25),0 0 0 1px rgba(139,92,246,.12);}
+
+/* 时间线 */
+.moments-timeline{max-width:900px;margin:0 auto;padding:32px 20px 48px;position:relative;}
+.moments-timeline::before{content:'';position:absolute;left:22px;top:56px;bottom:80px;width:2px;
+  background:linear-gradient(180deg,#c084fc,#e879f9,#38bdf8);border-radius:2px;opacity:.45;}
+
+/* ===== 卡片样式（Sakurairo 风格优化） ===== */
+.moment-card{display:flex;gap:20px;margin-bottom:24px;position:relative;padding-left:44px;}
+.mt-dot{flex-shrink:0;position:absolute;left:14px;top:22px;width:18px;height:18px;border-radius:50%;
+  background:linear-gradient(135deg,#a78bfa,#ec4899);box-shadow:0 0 0 4px rgba(168,139,250,.18),0 2px 8px rgba(168,139,250,.3);z-index:2;
+  transition:transform .25s ease;}
+.moment-card:hover .mt-dot{transform:scale(1.25);box-shadow:0 0 0 5px rgba(168,139,250,.22),0 4px 12px rgba(168,139,250,.4);}
+
+.mc-body{
+  flex:1;min-width:0;background:#fff;border-radius:14px;padding:0;
+  box-shadow:0 2px 12px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.04);
+  border:1px solid rgba(226,232,240,.7);
+  transition:all .35s cubic-bezier(.4,0,.2,1);
+  overflow:hidden;
+}
+.mc-body:hover{
+  box-shadow:0 8px 30px rgba(168,139,250,.13),0 2px 8px rgba(0,0,0,.06);
+  border-color:rgba(167,139,250,.3);transform:translateY(-3px);
+}
+[data-theme="dark"] .mc-body{background:rgba(51,65,85,.55);border-color:rgba(71,85,105,.35);}
+[data-theme="dark"] .mc-body:hover{background:rgba(51,65,85,.72);border-color:rgba(167,139,250,.2);box-shadow:0 8px 30px rgba(0,0,0,.3);}
+
+/* 内容链接区域 */
+.mc-content-link{
+  display:block;padding:24px 26px 0;text-decoration:none;color:inherit;
+  cursor:pointer;outline:none;
+}
+
+/* 图片链接区域（始终指向说说详情页） */
+.mc-images-link{
+  display:block;padding:0 26px;text-decoration:none;color:inherit;cursor:pointer;outline:none;
+}
+
+/* 内容 */
+.mc-content{font-size:.96rem;line-height:1.75;color:#334155;word-break:break-word;margin-bottom:14px;}
+.mc-content p{margin:0 0 8px;}
+.mc-content p:last-child{margin-bottom:0;}
+.mc-content-link:hover .mc-content{color:#6d28d9;}
+[data-theme="dark"] .mc-content{color:#cbd5e1;}
+[data-theme="dark"] .mc-content-link:hover .mc-content{color:#a78bfa;}
+
+/* 图片网格 */
+.mc-images{display:grid;gap:8px;margin-bottom:14px;}
+.mc-images--count1{grid-template-columns:1fr;}
+.mc-images--count2{grid-template-columns:1fr 1fr;}
+.mc-images--count3{grid-template-columns:1fr 1fr 1fr;}
+.mc-images--count4{grid-template-columns:1fr 1fr;grid-template-rows:repeat(2,auto);}
+.mc-images--count5{grid-template-columns:repeat(3,1fr);}
+.mc-images--count6,.mc-images--count7,.mc-images--count8,.mc-images--count9{grid-template-columns:repeat(3,1fr);}
+
+.mc-img-wrap{position:relative;overflow:hidden;border-radius:12px;aspect-ratio:4/3;background:#f1f5f9;}
+[data-theme="dark"] .mc-img-wrap{background:#334155;}
+.mc-img-wrap img{width:100%;height:100%;object-fit:cover;transition:transform .4s;display:block;}
+.mc-content-link:hover .mc-img-wrap img{transform:scale(1.04);}
+.mc-images-link:hover .mc-img-wrap img{transform:scale(1.04);}
+
+/* 底部元数据行（时间 + 标签行） */
+.mc-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:12px 26px 18px;border-top:1px solid #f1f5f9;}
+[data-theme="dark"] .mc-meta{border-top-color:rgba(71,85,105,.3);}
+
+.mc-time{display:inline-flex;align-items:center;gap:3px;font-size:.76rem;color:#64748b;
+  background:linear-gradient(135deg,#f1f5f9,#e2e8f0);padding:3px 9px;border-radius:16px;white-space:nowrap;flex-shrink:0;}
+.mc-time i{font-size:11px;}
+[data-theme="dark"] .mc-time{color:#94a3b8;background:linear-gradient(135deg,rgba(71,85,105,.3),rgba(100,116,139,.2));}
+
+.mc-meta-tags{display:flex;flex-wrap:wrap;align-items:center;gap:6px;flex:1;}
+
+/* 心情/位置/标签/链接 */
+.mc-mood{display:inline-flex;align-items:center;gap:3px;font-size:.78rem;color:#6366f1;
+  background:linear-gradient(135deg,#eef2ff,#e0e7ff);padding:3px 9px;border-radius:16px;font-weight:500;white-space:nowrap;pointer-events:none;}
+[data-theme="dark"] .mc-mood{color:#a5b4fc;background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(139,92,246,.1));}
+
+.mc-location{display:inline-flex;align-items:center;gap:3px;font-size:.76rem;color:#0891b2;
+  background:linear-gradient(135deg,#ecfeff,#cffafe);padding:3px 9px;border-radius:16px;white-space:nowrap;pointer-events:none;}
+.mc-location span{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+[data-theme="dark"] .mc-location{color:#67e8f9;background:linear-gradient(135deg,rgba(8,145,178,.15),rgba(6,182,212,.1));}
+
+.mc-tags{display:inline-flex;align-items:center;gap:5px;font-size:.76rem;color:#059669;flex-wrap:wrap;pointer-events:none;}
+.mc-tag{display:inline-block;background:linear-gradient(135deg,#ecfdf5,#d1fae5);color:#059669;
+  padding:2px 9px;border-radius:10px;font-size:.72rem;text-decoration:none;white-space:nowrap;font-weight:500;}
+[data-theme="dark"] .mc-tags{color:#34d399;}
+[data-theme="dark"] .mc-tag{background:linear-gradient(135deg,rgba(5,150,105,.15),rgba(16,185,129,.1));color:#34d399;}
+
+.mc-link{display:inline-flex;align-items:center;gap:3px;font-size:.76rem;color:#dc2626;
+  background:linear-gradient(135deg,#fef2f2,#fee2e2);padding:3px 10px;border-radius:16px;text-decoration:none;font-weight:500;
+  transition:all .2s;white-space:nowrap;position:relative;z-index:3;}
+.mc-link:hover{background:linear-gradient(135deg,#fee2e2,#fecaca);transform:scale(1.05);color:#b91c1c;}
+[data-theme="dark"] .mc-link{color:#fca5a5;background:linear-gradient(135deg,rgba(220,38,38,.12),rgba(248,113,113,.08));}
+[data-theme="dark"] .mc-link:hover{color:#f87171;background:linear-gradient(135deg,rgba(248,113,113,.18),rgba(251,146,146,.12));}
+
+/* 空状态 */
+.moments-empty{text-align:center;padding:80px 20px;color:#94a3b8;}
+.moments-empty i{font-size:3rem;display:block;margin-bottom:16px;opacity:.35;}
+.moments-empty p{font-size:1rem;}
+
+/* 底部装饰 */
+.moments-bottom{text-align:center;padding:32px 20px 48px;color:#94a3b8;font-size:.88rem;}
+.moments-bottom i{color:#f472b6;margin-right:4px;}
+[data-theme="dark"] .moments-bottom{color:#475569;}
+
+/* 响应式 */
+@media(max-width:900px){
+  .main-wrapper:has(#moments-page) .container{padding-left:16px!important;padding-right:16px!important}
+  .moments-page{margin:12px auto;padding:0 12px;}
+  .moments-header{padding:36px 16px 32px;border-radius:16px;margin-bottom:16px;min-height:160px;}
+  .mh-title{font-size:1.5rem;}
+  .moments-timeline{padding:20px 12px 32px;}
+  .moments-timeline::before{left:14px;}
+  .moment-card{padding-left:34px;gap:14px;margin-bottom:18px;}
+  .mt-dot{left:8px;top:18px;width:14px;height:14px;}
+  .mc-content-link{padding:16px 16px 0;}
+  .mc-images-link{padding:0 16px;}
+  .mc-meta{padding:10px 16px 14px;}
+  .mc-content{font-size:.9rem;}
+  .mc-images--count4,.mc-images--count5,.mc-images--count6{grid-template-columns:1fr 1fr!important;}
+  .mc-meta-tags{gap:4px;}
+  .mc-mood,.mc-location,.mc-tag,.mc-link{font-size:.72rem;padding:2px 8px;}
+}
+@media(max-width:600px){
+  .main-wrapper:has(#moments-page) .container{padding-left:12px!important;padding-right:12px!important}
+  .moments-header{padding:28px 12px 24px;min-height:140px;}
+  .mh-title{font-size:1.3rem;}
+}
+</style>
+{{ end }}

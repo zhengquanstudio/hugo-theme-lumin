@@ -1,0 +1,21 @@
+{{ if or .widgetEnabled (and site.Params.widgets.qrcode site.Params.qrcode.enable site.Params.qrcode.image) }}
+<div class="widget widget-qrcode">
+  <h4 class="widget-title">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="7" height="7"></rect>
+      <rect x="14" y="3" width="7" height="7"></rect>
+      <rect x="14" y="14" width="7" height="7"></rect>
+      <rect x="3" y="14" width="7" height="7"></rect>
+    </svg>
+    {{ site.Params.qrcode.title | default "公众号" }}
+  </h4>
+  <div class="qrcode-card">
+    <div class="qrcode-img-wrap">
+      <img src="{{ site.Params.qrcode.image }}" alt="公众号二维码">
+    </div>
+    {{ with site.Params.qrcode.desc }}
+    <p class="qrcode-desc">{{ . }}</p>
+    {{ end }}
+  </div>
+</div>
+{{ end }}

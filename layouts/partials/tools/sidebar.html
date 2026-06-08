@@ -1,0 +1,126 @@
+{{/* 工具页面左侧菜单栏 - 用 JS 前端渲染 */}}
+{{ $tools := hugo.Data.tools.tools | default slice }}
+{{ $currentUrl := .RelPermalink }}
+{{ $toolsJson := $tools | jsonify | safeJS }}
+
+<div class="tools-sidebar" id="tools-sidebar">
+  <div class="tools-sidebar-header">
+    <span class="tools-sidebar-logo"><i class="fa-solid fa-screwdriver-wrench"></i></span>
+    <span class="tools-sidebar-title">工具分类</span>
+    <button class="tools-sidebar-collapse" id="tools-sidebar-collapse" title="收起菜单">
+      <i class="fa-solid fa-angles-left"></i>
+    </button>
+  </div>
+
+  <div class="tools-sidebar-body">
+    <a href="/tools/" class="tools-sidebar-item{{ if eq $currentUrl "/tools/" }} active{{ end }}">
+      <span class="tools-sidebar-item-icon" style="background:linear-gradient(135deg,#667eea,#764ba2)"><i class="fa-solid fa-border-all"></i></span>
+      <span class="tools-sidebar-item-text">全部工具</span>
+    </a>
+    <div id="tools-sidebar-groups"></div>
+  </div>
+</div>
+
+{{/* 移动端工具选择器 */}}
+<div class="tools-mobile-selector" id="tools-mobile-selector">
+  <button class="tools-mobile-selector-btn" id="tools-mobile-selector-btn">
+    <i class="fa-solid fa-screwdriver-wrench"></i>
+    <span id="tools-mobile-current-name">选择工具</span>
+    <i class="fa-solid fa-chevron-down"></i>
+  </button>
+  <div class="tools-mobile-dropdown" id="tools-mobile-dropdown">
+    <a href="/tools/" class="tools-mobile-dropdown-item{{ if eq $currentUrl "/tools/" }} active{{ end }}">
+      <i class="fa-solid fa-border-all"></i> 全部工具
+    </a>
+    <div id="tools-mobile-dropdown-groups"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var toolsData = {{ $toolsJson }};
+  var currentUrl = {{ $currentUrl }};
+
+  // 按分类分组
+  var catMap = {};
+  var catIcons = {};
+  var catColors = {};
+  toolsData.forEach(function(t){
+    var cat = t.category || '其他';
+    if(!catMap[cat]) catMap[cat] = [];
+    catMap[cat].push(t);
+    if(!catIcons[cat]) catIcons[cat] = t.categoryIcon || 'fa-solid fa-folder';
+    if(!catColors[cat]) catColors[cat] = t.color || '#667eea';
+  });
+
+  var cats = Object.keys(catMap).sort();
+
+  // 渲染侧边栏分组
+  var groupsEl = document.getElementById('tools-sidebar-groups');
+  if(groupsEl){
+    cats.forEach(function(cat){
+      var items = catMap[cat];
+      var hasActive = items.some(function(t){ return t.url === currentUrl; });
+      var group = document.createElement('div');
+      group.className = 'tools-sidebar-group';
+      group.innerHTML =
+        '<div class="tools-sidebar-group-header' + (hasActive ? '' : ' collapsed') + '" data-cat="' + cat + '">' +
+          '<span class="tools-sidebar-group-icon" style="color:' + catColors[cat] + '"><i class="' + catIcons[cat] + '"></i></span>' +
+          '<span class="tools-sidebar-group-name">' + cat + '</span>' +
+          '<span class="tools-sidebar-group-arrow"><i class="fa-solid fa-chevron-down"></i></span>' +
+        '</div>' +
+        '<div class="tools-sidebar-group-items' + (hasActive ? '' : ' collapsed') + '">' +
+          items.map(function(t){
+            return '<a href="' + t.url + '" class="tools-sidebar-item' + (t.url === currentUrl ? ' active' : '') + '" data-tool-id="' + t.id + '">' +
+              '<span class="tools-sidebar-item-icon" style="background:linear-gradient(135deg,' + t.color + ',' + t.color + 'cc)"><i class="' + t.icon + '"></i></span>' +
+              '<span class="tools-sidebar-item-text">' + t.name + '</span>' +
+            '</a>';
+          }).join('') +
+        '</div>';
+      groupsEl.appendChild(group);
+    });
+  }
+
+  // 渲染移动端下拉
+  var mobileGroups = document.getElementById('tools-mobile-dropdown-groups');
+  if(mobileGroups){
+    cats.forEach(function(cat){
+      var divider = document.createElement('div');
+      divider.className = 'tools-mobile-dropdown-divider';
+      divider.textContent = cat;
+      mobileGroups.appendChild(divider);
+      catMap[cat].forEach(function(t){
+        var a = document.createElement('a');
+        a.href = t.url;
+        a.className = 'tools-mobile-dropdown-item' + (t.url === currentUrl ? ' active' : '');
+        a.innerHTML = '<i class="' + t.icon + '"></i> ' + t.name;
+        mobileGroups.appendChild(a);
+      });
+    });
+  }
+
+  // 更新移动端当前工具名
+  var currentTool = toolsData.find(function(t){ return t.url === currentUrl; });
+  if(currentTool){
+    var nameEl = document.getElementById('tools-mobile-current-name');
+    if(nameEl) nameEl.textContent = currentTool.name;
+  }
+
+  // 滚动侧边栏使当前激活菜单项居中可见
+  var activeItem = document.querySelector('.tools-sidebar-item.active');
+  if (activeItem) {
+    var sidebarEl = document.getElementById('tools-sidebar');
+    if (sidebarEl) {
+      // 等待浏览器布局完成后计算位置
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
+          var sidebarRect = sidebarEl.getBoundingClientRect();
+          var itemRect = activeItem.getBoundingClientRect();
+          var offset = itemRect.top - sidebarRect.top - sidebarRect.height / 2 + itemRect.height / 2;
+          sidebarEl.scrollTop = sidebarEl.scrollTop + offset;
+        });
+      });
+    }
+  }
+})();
+</script>

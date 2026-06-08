@@ -1,0 +1,154 @@
+<div class="tool-input-group">
+  <label class="tool-label">输入表格数据</label>
+  <textarea class="tool-textarea" id="ct-input" rows="8" placeholder="请输入表格数据，每行一条记录，列之间用分隔符隔开。例如：
+姓名,年龄,城市
+张三,25,北京
+李四,30,上海"></textarea>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">分隔符</label>
+  <select class="tool-select" id="ct-separator">
+    <option value="," selected>逗号 (,)</option>
+    <option value="&#9;">制表符 (Tab)</option>
+    <option value="|">竖线 (|)</option>
+    <option value="custom">自定义</option>
+  </select>
+  <input class="tool-input" id="ct-custom-sep" placeholder="自定义分隔符" style="width:100px;margin-top:8px;display:none;">
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="ct-transpose-btn">转置</button>
+  <button class="tool-btn" id="ct-clear-btn">清空</button>
+</div>
+
+<div id="ct-error" style="display:none;color:var(--color-error,#e53e3e);margin-top:8px;"></div>
+
+<div class="tool-output" id="ct-output-area" style="display:none;">
+  <div class="tool-result" id="ct-result"></div>
+  <button class="tool-copy-btn" id="ct-copy-btn">复制结果</button>
+</div>
+
+<div class="tool-stats" id="ct-stats" style="display:none;">
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="ct-stat-rows">0</span>
+    <span class="tool-stat-label">原始行数</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="ct-stat-cols">0</span>
+    <span class="tool-stat-label">原始列数</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="ct-stat-transposed">-</span>
+    <span class="tool-stat-label">转置后维度</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  const input = document.getElementById('ct-input');
+  const result = document.getElementById('ct-result');
+  const outputArea = document.getElementById('ct-output-area');
+  const errorDiv = document.getElementById('ct-error');
+  const statsDiv = document.getElementById('ct-stats');
+  const sepSelect = document.getElementById('ct-separator');
+  const customSep = document.getElementById('ct-custom-sep');
+
+  sepSelect.addEventListener('change', () => {
+    customSep.style.display = sepSelect.value === 'custom' ? 'inline-block' : 'none';
+  });
+
+  function showError(msg) {
+    errorDiv.textContent = msg;
+    errorDiv.style.display = 'block';
+    outputArea.style.display = 'none';
+    statsDiv.style.display = 'none';
+  }
+
+  function hideError() {
+    errorDiv.style.display = 'none';
+  }
+
+  function getSeparator() {
+    if (sepSelect.value === 'custom') {
+      return customSep.value || ',';
+    }
+    // Tab 字符特殊处理
+    if (sepSelect.value === '&#9;') return '\t';
+    return sepSelect.value;
+  }
+
+  document.getElementById('ct-transpose-btn').addEventListener('click', () => {
+    hideError();
+    const raw = input.value.trim();
+    if (!raw) { showError('请输入表格数据'); return; }
+
+    const sep = getSeparator();
+    const lines = raw.split('\n').filter(l => l.trim() !== '');
+    if (lines.length === 0) { showError('无有效数据行'); return; }
+
+    // 解析每行为列数组
+    const rows = lines.map(line => {
+      return line.split(sep).map(cell => cell.trim());
+    });
+
+    // 检查列数一致性
+    const maxCols = Math.max(...rows.map(r => r.length));
+    // 补齐不足的列
+    const normalized = rows.map(r => {
+      while (r.length < maxCols) r.push('');
+      return r;
+    });
+
+    const rowCount = normalized.length;
+    const colCount = maxCols;
+
+    // 转置
+    const transposed = [];
+    for (let c = 0; c < colCount; c++) {
+      const newRow = [];
+      for (let r = 0; r < rowCount; r++) {
+        newRow.push(normalized[r][c]);
+      }
+      transposed.push(newRow.join(sep));
+    }
+
+    const output = transposed.join('\n');
+
+    result.textContent = output;
+    outputArea.style.display = 'block';
+    statsDiv.style.display = 'flex';
+    document.getElementById('ct-stat-rows').textContent = rowCount;
+    document.getElementById('ct-stat-cols').textContent = colCount;
+    document.getElementById('ct-stat-transposed').textContent = colCount + ' x ' + rowCount;
+  });
+
+  document.getElementById('ct-clear-btn').addEventListener('click', () => {
+    input.value = '';
+    result.textContent = '';
+    outputArea.style.display = 'none';
+    statsDiv.style.display = 'none';
+    hideError();
+  });
+
+  document.getElementById('ct-copy-btn').addEventListener('click', () => {
+    const text = result.textContent;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('ct-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const btn = document.getElementById('ct-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    });
+  });
+})();
+</script>

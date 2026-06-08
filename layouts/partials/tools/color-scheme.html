@@ -1,0 +1,185 @@
+<style>
+.cs-swatch{width:60px;height:60px;border-radius:12px;cursor:pointer;border:2px solid transparent;transition:all .2s;position:relative;flex-shrink:0;}
+.cs-swatch:hover{transform:scale(1.1);border-color:#667eea;}
+.cs-swatch-label{font-size:.7rem;text-align:center;margin-top:4px;color:var(--text-muted,#9ca3af);}
+.cs-scheme-block{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;margin-top:10px;}
+.cs-scheme-item{display:flex;flex-direction:column;align-items:center;}
+.cs-palette-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+</style>
+
+<div class="tool-input-group">
+  <label class="tool-label">选择基础颜色</label>
+  <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+    <input type="color" id="cs-base-color" value="#667eea" style="width:56px;height:42px;border-radius:10px;border:1.5px solid var(--border-color,#e5e7eb);cursor:pointer;padding:2px;">
+    <input type="text" class="tool-input" id="cs-hex-input" value="#667eea" placeholder="#RRGGBB" style="max-width:140px;">
+    <button class="tool-btn tool-btn-primary" id="cs-generate-btn"><i class="fas fa-magic"></i> 生成配色</button>
+  </div>
+</div>
+
+<div id="cs-output" style="display:none;">
+  <div class="tool-tabs" style="margin-top:18px;">
+    <button class="tool-tab active" data-cs-scheme="complementary">互补色</button>
+    <button class="tool-tab" data-cs-scheme="analogous">类似色</button>
+    <button class="tool-tab" data-cs-scheme="triadic">三角色</button>
+    <button class="tool-tab" data-cs-scheme="split">分裂互补</button>
+    <button class="tool-tab" data-cs-scheme="tetradic">四方色</button>
+    <button class="tool-tab" data-cs-scheme="monochromatic">单色渐变</button>
+  </div>
+
+  <div id="cs-scheme-display"></div>
+
+  <div style="margin-top:20px;">
+    <div class="tool-output-label" style="margin-bottom:10px;">
+      <span class="tool-output-title">颜色代码</span>
+      <button class="tool-copy-btn" id="cs-copy-all"><i class="far fa-copy"></i> 复制全部</button>
+    </div>
+    <div id="cs-code-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const baseColorInput = document.getElementById('cs-base-color');
+  const hexInput = document.getElementById('cs-hex-input');
+  const output = document.getElementById('cs-output');
+  const schemeDisplay = document.getElementById('cs-scheme-display');
+  const codeList = document.getElementById('cs-code-list');
+  let currentScheme = 'complementary';
+  let currentColors = [];
+
+  function hexToHsl(hex) {
+    hex = hex.replace('#','');
+    if(hex.length===3) hex=hex.split('').map(c=>c+c).join('');
+    const r=parseInt(hex.slice(0,2),16)/255, g=parseInt(hex.slice(2,4),16)/255, b=parseInt(hex.slice(4,6),16)/255;
+    const max=Math.max(r,g,b), min=Math.min(r,g,b);
+    let h,s,l=(max+min)/2;
+    if(max===min){h=s=0;}
+    else{
+      const d=max-min; s=l>0.5?d/(2-max-min):d/(max+min);
+      switch(max){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break;}
+      h/=6;
+    }
+    return [h*360, s*100, l*100];
+  }
+
+  function hslToHex(h, s, l) {
+    h=((h%360)+360)%360; s/=100; l/=100;
+    const a=s*Math.min(l,1-l);
+    const f=n=>{const k=(n+h/30)%12; return l-a*Math.max(Math.min(k-3,9-k,1),-1);};
+    const toHex=v=>Math.round(v*255).toString(16).padStart(2,'0');
+    return '#'+toHex(f(0))+toHex(f(8))+toHex(f(4));
+  }
+
+  function hslToRgb(h, s, l) {
+    const hex = hslToHex(h,s,l).replace('#','');
+    return [parseInt(hex.slice(0,2),16),parseInt(hex.slice(2,4),16),parseInt(hex.slice(4,6),16)];
+  }
+
+  function hslToCmyk(h, s, l) {
+    const [r,g,b]=hslToRgb(h,s,l);
+    const rv=r/255,gv=g/255,bv=b/255;
+    const k=1-Math.max(rv,gv,bv);
+    if(k===1) return [0,0,0,100];
+    return [Math.round((1-rv-k)/(1-k)*100),Math.round((1-gv-k)/(1-k)*100),Math.round((1-bv-k)/(1-k)*100),Math.round(k*100)];
+  }
+
+  function getSchemeColors(hex, scheme) {
+    const [h,s,l] = hexToHsl(hex);
+    switch(scheme) {
+      case 'complementary': return [hex, hslToHex(h+180,s,l)];
+      case 'analogous': return [hslToHex(h-30,s,l), hex, hslToHex(h+30,s,l)];
+      case 'triadic': return [hex, hslToHex(h+120,s,l), hslToHex(h+240,s,l)];
+      case 'split': return [hex, hslToHex(h+150,s,l), hslToHex(h+210,s,l)];
+      case 'tetradic': return [hex, hslToHex(h+90,s,l), hslToHex(h+180,s,l), hslToHex(h+270,s,l)];
+      case 'monochromatic': return [
+        hslToHex(h,s,Math.max(10,l-30)),
+        hslToHex(h,s,Math.max(10,l-15)),
+        hex,
+        hslToHex(h,s,Math.min(90,l+15)),
+        hslToHex(h,s,Math.min(90,l+30))
+      ];
+      default: return [hex];
+    }
+  }
+
+  function renderScheme(colors) {
+    currentColors = colors;
+    schemeDisplay.innerHTML = '';
+    codeList.innerHTML = '';
+    const row = document.createElement('div');
+    row.className = 'cs-scheme-block';
+    colors.forEach((c,i) => {
+      const item = document.createElement('div');
+      item.className = 'cs-scheme-item';
+      const swatch = document.createElement('div');
+      swatch.className = 'cs-swatch';
+      swatch.style.background = c;
+      swatch.title = '点击复制 ' + c;
+      swatch.addEventListener('click', () => {
+        navigator.clipboard.writeText(c).catch(()=>{});
+      });
+      const lbl = document.createElement('div');
+      lbl.className = 'cs-swatch-label';
+      lbl.textContent = c;
+      item.appendChild(swatch);
+      item.appendChild(lbl);
+      row.appendChild(item);
+
+      // code row
+      const [hh,ss,ll] = hexToHsl(c);
+      const [rr,gg,bb] = hslToRgb(hh,ss,ll);
+      const [cc,m,yy,kk] = hslToCmyk(hh,ss,ll);
+      const codeRow = document.createElement('div');
+      codeRow.style.cssText='padding:10px 14px;border:1px solid var(--border-color,#e5e7eb);border-radius:10px;background:var(--bg-secondary,#f9fafb);';
+      codeRow.innerHTML = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;"><span style="width:28px;height:28px;border-radius:6px;background:${c};display:inline-block;flex-shrink:0;border:1px solid rgba(0,0,0,.1);"></span><strong style="font-size:.9rem;">颜色 ${i+1}</strong></div>
+        <div style="font-family:monospace;font-size:.82rem;color:var(--text-muted,#6b7280);line-height:2;">
+          HEX: <b style="color:var(--text-primary,#1f2937);">${c}</b> &nbsp;
+          RGB: <b style="color:var(--text-primary,#1f2937);">rgb(${rr},${gg},${bb})</b> &nbsp;
+          HSL: <b style="color:var(--text-primary,#1f2937);">hsl(${Math.round(hh)},${Math.round(ss)}%,${Math.round(ll)}%)</b>
+        </div>`;
+      codeList.appendChild(codeRow);
+    });
+    schemeDisplay.appendChild(row);
+  }
+
+  function generate() {
+    const hex = hexInput.value.trim();
+    if(!/^#[0-9a-fA-F]{6}$/.test(hex)) { alert('请输入有效的 HEX 颜色，如 #667eea'); return; }
+    const colors = getSchemeColors(hex, currentScheme);
+    renderScheme(colors);
+    output.style.display = '';
+  }
+
+  document.getElementById('cs-generate-btn').addEventListener('click', generate);
+
+  baseColorInput.addEventListener('input', () => {
+    hexInput.value = baseColorInput.value;
+  });
+  hexInput.addEventListener('change', () => {
+    let v = hexInput.value.trim();
+    if(!v.startsWith('#')) v='#'+v;
+    if(/^#[0-9a-fA-F]{6}$/.test(v)) { baseColorInput.value=v; hexInput.value=v; }
+  });
+
+  document.querySelectorAll('[data-cs-scheme]').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('[data-cs-scheme]').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      currentScheme = tab.getAttribute('data-cs-scheme');
+      if(output.style.display!=='none') generate();
+    });
+  });
+
+  document.getElementById('cs-copy-all').addEventListener('click', () => {
+    const text = currentColors.join('\n');
+    navigator.clipboard.writeText(text).then(()=>{
+      const btn=document.getElementById('cs-copy-all');
+      const orig=btn.innerHTML; btn.innerHTML='✅ 已复制'; btn.classList.add('copied');
+      setTimeout(()=>{btn.innerHTML=orig; btn.classList.remove('copied');},1500);
+    }).catch(()=>{});
+  });
+
+  // Auto-generate on load
+  generate();
+})();
+</script>

@@ -1,0 +1,89 @@
+<div class="tool-input-group">
+  <label class="tool-label">求解目标</label>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;">
+    <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
+      <input type="radio" name="pyth-target" value="c" checked> 求斜边 c
+    </label>
+    <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
+      <input type="radio" name="pyth-target" value="a"> 求直角边 a
+    </label>
+    <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
+      <input type="radio" name="pyth-target" value="b"> 求直角边 b
+    </label>
+  </div>
+</div>
+<div class="tool-input-group" id="pyth-in-a">
+  <label class="tool-label">直角边 a</label>
+  <input class="tool-input" type="number" id="pyth-a" value="3" step="any" min="0">
+</div>
+<div class="tool-input-group" id="pyth-in-b">
+  <label class="tool-label">直角边 b</label>
+  <input class="tool-input" type="number" id="pyth-b" value="4" step="any" min="0">
+</div>
+<div class="tool-input-group" id="pyth-in-c" style="display:none;">
+  <label class="tool-label">斜边 c</label>
+  <input class="tool-input" type="number" id="pyth-c" value="5" step="any" min="0">
+</div>
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="pyth-calc">计算</button>
+</div>
+<div class="tool-result" id="pyth-result"></div>
+
+<script>
+(function() {
+  var radios = document.querySelectorAll('input[name="pyth-target"]');
+  for (var i = 0; i < radios.length; i++) {
+    radios[i].addEventListener('change', updateInputs);
+  }
+
+  function updateInputs() {
+    var target = document.querySelector('input[name="pyth-target"]:checked').value;
+    document.getElementById('pyth-in-a').style.display = target === 'a' ? 'none' : '';
+    document.getElementById('pyth-in-b').style.display = target === 'b' ? 'none' : '';
+    document.getElementById('pyth-in-c').style.display = target === 'c' ? 'none' : '';
+  }
+
+  updateInputs();
+
+  document.getElementById('pyth-calc').addEventListener('click', function() {
+    var target = document.querySelector('input[name="pyth-target"]:checked').value;
+    var result = document.getElementById('pyth-result');
+    var a = parseFloat(document.getElementById('pyth-a').value);
+    var b = parseFloat(document.getElementById('pyth-b').value);
+    var c = parseFloat(document.getElementById('pyth-c').value);
+
+    try {
+      var formula, calc, known;
+      if (target === 'c') {
+        if (isNaN(a) || isNaN(b) || a < 0 || b < 0) throw '请输入有效的直角边长度。';
+        c = Math.sqrt(a * a + b * b);
+        formula = 'c = √(a² + b²) = √(' + a + '² + ' + b + '²) = √' + (a*a+b*b).toFixed(2) + ' = ';
+        known = {a:a, b:b};
+      } else if (target === 'a') {
+        c = parseFloat(document.getElementById('pyth-c').value);
+        if (isNaN(b) || isNaN(c) || b < 0 || c < 0 || c <= b) throw '斜边必须大于直角边。';
+        a = Math.sqrt(c * c - b * b);
+        formula = 'a = √(c² - b²) = √(' + c + '² - ' + b + '²) = √' + (c*c-b*b).toFixed(2) + ' = ';
+        known = {c:c, b:b};
+      } else {
+        c = parseFloat(document.getElementById('pyth-c').value);
+        if (isNaN(a) || isNaN(c) || a < 0 || c < 0 || c <= a) throw '斜边必须大于直角边。';
+        b = Math.sqrt(c * c - a * a);
+        formula = 'b = √(c² - a²) = √(' + c + '² - ' + a + '²) = √' + (c*c-a*a).toFixed(2) + ' = ';
+        known = {c:c, a:a};
+      }
+
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">计算结果</div>' +
+        '<div class="tool-stats"><div class="tool-stat"><div class="tool-stat-value">' + (a||0).toFixed(4) + '</div><div class="tool-stat-label">边 a</div></div>' +
+        '<div class="tool-stat"><div class="tool-stat-value">' + (b||0).toFixed(4) + '</div><div class="tool-stat-label">边 b</div></div>' +
+        '<div class="tool-stat"><div class="tool-stat-value">' + (c||0).toFixed(4) + '</div><div class="tool-stat-label">边 c</div></div></div>' +
+        '<p style="margin-top:10px;">' + formula + '<strong>' + (target === 'c' ? c : target === 'a' ? a : b).toFixed(6) + '</strong></p>' +
+        '<p>验证：a² + b² = ' + ((a*a)+(b*b)).toFixed(4) + ' ≈ c² = ' + (c*c).toFixed(4) + '</p></div>';
+    } catch(e) {
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">错误</div><p>' + e + '</p></div>';
+    }
+  });
+
+  document.getElementById('pyth-calc').click();
+})();
+</script>

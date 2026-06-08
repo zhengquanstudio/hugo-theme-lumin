@@ -1,0 +1,8 @@
+{{ define "main" }}
+{{ .RawContent | safeHTML }}
+{{ if site.Params.comments.enable }}
+<div class="post-comments">
+  <div id="tcomment"></div>
+</div>
+{{ end }}
+{{ end }}

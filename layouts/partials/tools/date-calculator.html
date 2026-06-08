@@ -1,0 +1,268 @@
+<div class="tool-tabs">
+  <button class="tool-tab active" data-dc-tab="interval">日期间隔</button>
+  <button class="tool-tab" data-dc-tab="offset">日期推算</button>
+</div>
+
+<div id="dc-panel-interval">
+  <div class="tool-input-group">
+    <label class="tool-label">开始日期</label>
+    <div style="display:flex;gap:8px;">
+      <input type="date" class="tool-input" id="dc-start-date" style="flex:1;">
+      <button class="tool-btn" id="dc-start-today" style="white-space:nowrap;font-size:.78rem;">今天</button>
+    </div>
+  </div>
+
+  <div class="tool-input-group">
+    <label class="tool-label">结束日期</label>
+    <div style="display:flex;gap:8px;">
+      <input type="date" class="tool-input" id="dc-end-date" style="flex:1;">
+      <button class="tool-btn" id="dc-end-today" style="white-space:nowrap;font-size:.78rem;">今天</button>
+    </div>
+  </div>
+
+  <div class="tool-input-group">
+    <label class="tool-switch">
+      <input type="checkbox" id="dc-include-end" checked>
+      <span class="tool-switch-track"></span>
+      包含结束日期
+    </label>
+  </div>
+
+  <div class="tool-btn-row">
+    <button class="tool-btn tool-btn-primary" id="dc-calc-interval">计算间隔</button>
+  </div>
+
+  <div class="tool-output" id="dc-interval-output" style="display:none;">
+    <div class="tool-stats" id="dc-interval-stats"></div>
+    <div id="dc-interval-detail" style="margin-top:12px;"></div>
+  </div>
+</div>
+
+<div id="dc-panel-offset" style="display:none;">
+  <div class="tool-input-group">
+    <label class="tool-label">起始日期</label>
+    <div style="display:flex;gap:8px;">
+      <input type="date" class="tool-input" id="dc-offset-date" style="flex:1;">
+      <button class="tool-btn" id="dc-offset-today" style="white-space:nowrap;font-size:.78rem;">今天</button>
+    </div>
+  </div>
+
+  <div class="tool-input-group">
+    <label class="tool-label">偏移量</label>
+    <input type="number" class="tool-input" id="dc-offset-num" placeholder="正数向后推，负数向前推" value="30">
+  </div>
+
+  <div class="tool-input-group">
+    <label class="tool-label">单位</label>
+    <select class="tool-select" id="dc-offset-unit">
+      <option value="day">天</option>
+      <option value="week">周</option>
+      <option value="month">月</option>
+      <option value="year">年</option>
+    </select>
+  </div>
+
+  <div class="tool-btn-row">
+    <button class="tool-btn tool-btn-primary" id="dc-calc-offset">推算日期</button>
+  </div>
+
+  <div class="tool-output" id="dc-offset-output" style="display:none;">
+    <div class="tool-stats" id="dc-offset-stats"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const tabs = document.querySelectorAll('[data-dc-tab]');
+  const panelInterval = document.getElementById('dc-panel-interval');
+  const panelOffset = document.getElementById('dc-panel-offset');
+  const startDateInput = document.getElementById('dc-start-date');
+  const endDateInput = document.getElementById('dc-end-date');
+  const includeEndCheckbox = document.getElementById('dc-include-end');
+  const intervalOutput = document.getElementById('dc-interval-output');
+  const intervalStats = document.getElementById('dc-interval-stats');
+  const intervalDetail = document.getElementById('dc-interval-detail');
+  const offsetDateInput = document.getElementById('dc-offset-date');
+  const offsetNumInput = document.getElementById('dc-offset-num');
+  const offsetUnitSelect = document.getElementById('dc-offset-unit');
+  const offsetOutput = document.getElementById('dc-offset-output');
+  const offsetStats = document.getElementById('dc-offset-stats');
+
+  function todayStr() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  function formatDate(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+    return `${y}年${m}月${day}日 星期${weekDays[d.getDay()]}`;
+  }
+
+  function parseDate(str) {
+    const parts = str.split('-');
+    return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+  }
+
+  // Tab switching
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const target = tab.getAttribute('data-dc-tab');
+      panelInterval.style.display = target === 'interval' ? '' : 'none';
+      panelOffset.style.display = target === 'offset' ? '' : 'none';
+    });
+  });
+
+  // Today buttons
+  document.getElementById('dc-start-today').addEventListener('click', () => { startDateInput.value = todayStr(); });
+  document.getElementById('dc-end-today').addEventListener('click', () => { endDateInput.value = todayStr(); });
+  document.getElementById('dc-offset-today').addEventListener('click', () => { offsetDateInput.value = todayStr(); });
+
+  // Calculate interval
+  document.getElementById('dc-calc-interval').addEventListener('click', () => {
+    const startVal = startDateInput.value;
+    const endVal = endDateInput.value;
+    if (!startVal || !endVal) { alert('请选择开始日期和结束日期'); return; }
+
+    let start = parseDate(startVal);
+    let end = parseDate(endVal);
+
+    let swapped = false;
+    if (start > end) {
+      [start, end] = [end, start];
+      swapped = true;
+    }
+
+    const diffMs = end.getTime() - start.getTime();
+    let totalDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    if (includeEndCheckbox.checked) totalDays += 1;
+
+    const weeks = Math.floor(totalDays / 7);
+    const remainDays = totalDays % 7;
+
+    // Calculate months and years
+    let years = end.getFullYear() - start.getFullYear();
+    let months = end.getMonth() - start.getMonth();
+    let days = end.getDate() - start.getDate();
+
+    if (!includeEndCheckbox.checked) {
+      days -= 1;
+      if (days < 0) {
+        months -= 1;
+        const prevMonth = new Date(end.getFullYear(), end.getMonth(), 0);
+        days += prevMonth.getDate();
+      }
+    }
+
+    if (days < 0) {
+      months -= 1;
+      const prevMonth = new Date(end.getFullYear(), end.getMonth(), 0);
+      days += prevMonth.getDate();
+    }
+    if (months < 0) {
+      years -= 1;
+      months += 12;
+    }
+
+    intervalStats.innerHTML = '';
+
+    const statItems = [
+      { value: totalDays, label: '天' },
+      { value: weeks, label: '周' + (remainDays > 0 ? ` ${remainDays}天` : '') },
+      { value: `${years}年${months}月${days}日`, label: '详细' }
+    ];
+
+    statItems.forEach(item => {
+      const stat = document.createElement('div');
+      stat.className = 'tool-stat';
+      stat.innerHTML = `<div class="tool-stat-value">${item.value}</div><div class="tool-stat-label">${item.label}</div>`;
+      intervalStats.appendChild(stat);
+    });
+
+    intervalDetail.innerHTML = '';
+    if (swapped) {
+      const note = document.createElement('div');
+      note.style.cssText = 'font-size:.8rem;color:var(--text-muted,#9ca3af);margin-top:8px;';
+      note.textContent = '（开始日期晚于结束日期，已自动交换）';
+      intervalDetail.appendChild(note);
+    }
+
+    const totalHours = totalDays * 24;
+    const totalMinutes = totalHours * 60;
+    const detailItems = [
+      `总天数：${totalDays} 天`,
+      `总周数：${weeks} 周${remainDays > 0 ? ` ${remainDays} 天` : ''}`,
+      `总小时：${totalHours.toLocaleString()} 小时`,
+      `总分钟：${totalMinutes.toLocaleString()} 分钟`,
+      `精确间隔：${years} 年 ${months} 月 ${days} 日`
+    ];
+
+    const detailDiv = document.createElement('div');
+    detailDiv.style.cssText = 'font-size:.85rem;line-height:1.8;';
+    detailItems.forEach(text => {
+      const p = document.createElement('div');
+      p.textContent = text;
+      detailDiv.appendChild(p);
+    });
+    intervalDetail.appendChild(detailDiv);
+
+    intervalOutput.style.display = '';
+  });
+
+  // Calculate offset
+  document.getElementById('dc-calc-offset').addEventListener('click', () => {
+    const dateVal = offsetDateInput.value;
+    const num = parseInt(offsetNumInput.value, 10);
+    const unit = offsetUnitSelect.value;
+
+    if (!dateVal) { alert('请选择起始日期'); return; }
+    if (isNaN(num)) { alert('请输入有效的偏移量'); return; }
+
+    const start = parseDate(dateVal);
+    const result = new Date(start);
+
+    switch (unit) {
+      case 'day':
+        result.setDate(result.getDate() + num);
+        break;
+      case 'week':
+        result.setDate(result.getDate() + num * 7);
+        break;
+      case 'month':
+        result.setMonth(result.getMonth() + num);
+        break;
+      case 'year':
+        result.setFullYear(result.getFullYear() + num);
+        break;
+    }
+
+    offsetStats.innerHTML = '';
+
+    const stat = document.createElement('div');
+    stat.className = 'tool-stat';
+    stat.innerHTML = `<div class="tool-stat-value">${formatDate(result)}</div><div class="tool-stat-label">推算结果</div>`;
+    offsetStats.appendChild(stat);
+
+    const diffMs = Math.abs(result.getTime() - start.getTime());
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    const stat2 = document.createElement('div');
+    stat.className = 'tool-stat';
+    stat2.innerHTML = `<div class="tool-stat-value">${diffDays}</div><div class="tool-stat-label">间隔天数</div>`;
+    offsetStats.appendChild(stat2);
+
+    const isoStr = result.getFullYear() + '-' + String(result.getMonth() + 1).padStart(2, '0') + '-' + String(result.getDate()).padStart(2, '0');
+
+    const stat3 = document.createElement('div');
+    stat3.className = 'tool-stat';
+    stat3.innerHTML = `<div class="tool-stat-value">${isoStr}</div><div class="tool-stat-label">ISO 格式</div>`;
+    offsetStats.appendChild(stat3);
+
+    offsetOutput.style.display = '';
+  });
+})();
+</script>

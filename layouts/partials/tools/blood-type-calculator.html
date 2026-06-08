@@ -1,0 +1,81 @@
+<div class="tool-input-group">
+  <label class="tool-label">父母血型</label>
+  <div style="display:flex;gap:10px;">
+    <div style="flex:1;">
+      <label class="tool-label" style="font-size:12px;">父亲血型</label>
+      <select class="tool-select" id="bt-father">
+        <option value="A">A型</option>
+        <option value="B">B型</option>
+        <option value="AB">AB型</option>
+        <option value="O">O型</option>
+      </select>
+    </div>
+    <div style="flex:1;">
+      <label class="tool-label" style="font-size:12px;">母亲血型</label>
+      <select class="tool-select" id="bt-mother">
+        <option value="A">A型</option>
+        <option value="B">B型</option>
+        <option value="AB">AB型</option>
+        <option value="O">O型</option>
+      </select>
+    </div>
+  </div>
+</div>
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="bt-calc">计算子女血型</button>
+</div>
+<div class="tool-result" id="bt-result"></div>
+
+<script>
+(function() {
+  // 血型遗传概率表：父母血型 -> {子女血型: 概率}
+  var bloodTable = {
+    'A,A': { A: 93.75, O: 6.25 },
+    'A,B': { A: 18.75, B: 18.75, AB: 56.25, O: 6.25 },
+    'A,AB': { A: 25, B: 25, AB: 50 },
+    'A,O': { A: 75, O: 25 },
+    'B,A': { A: 18.75, B: 18.75, AB: 56.25, O: 6.25 },
+    'B,B': { B: 93.75, O: 6.25 },
+    'B,AB': { A: 25, B: 25, AB: 50 },
+    'B,O': { B: 75, O: 25 },
+    'AB,A': { A: 25, B: 25, AB: 50 },
+    'AB,B': { A: 25, B: 25, AB: 50 },
+    'AB,AB': { A: 25, B: 25, AB: 50 },
+    'AB,O': { A: 50, B: 50 },
+    'O,A': { A: 75, O: 25 },
+    'O,B': { B: 75, O: 25 },
+    'O,AB': { A: 50, B: 50 },
+    'O,O': { O: 100 }
+  };
+
+  document.getElementById('bt-calc').addEventListener('click', function() {
+    var father = document.getElementById('bt-father').value;
+    var mother = document.getElementById('bt-mother').value;
+    var result = document.getElementById('bt-result');
+    var key = father + ',' + mother;
+    var probs = bloodTable[key];
+
+    if (!probs) {
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">结果</div><p>无法计算。</p></div>';
+      return;
+    }
+
+    var types = Object.keys(probs).sort(function(a,b){ return probs[b] - probs[a]; });
+    var html = '<div class="tool-output"><div class="tool-output-title">子女可能血型</div>';
+    html += '<p style="margin-bottom:10px;font-size:13px;">父亲：' + father + '型  |  母亲：' + mother + '型</p>';
+    html += '<table style="width:100%;border-collapse:collapse;">';
+    html += '<tr style="background:#f5f5f5;"><th style="padding:8px;text-align:left;">子女血型</th><th style="padding:8px;text-align:left;">概率</th><th style="padding:8px;text-align:left;">可视化</th></tr>';
+    for (var i = 0; i < types.length; i++) {
+      var p = probs[types[i]];
+      var barWidth = p;
+      html += '<tr style="border-bottom:1px solid #eee;"><td style="padding:8px;font-weight:bold;">' + types[i] + '型</td><td style="padding:8px;font-family:monospace;">' + p + '%</td><td style="padding:8px;"><div style="background:#4a90d9;height:20px;width:' + barWidth + '%;border-radius:3px;min-width:4px;"></div></td></tr>';
+    }
+    html += '</table>';
+    html += '<p style="margin-top:12px;font-size:12px;color:#888;">注：以上为基于常见基因型频率的理论概率估算，实际概率因人群基因型分布而有差异。</p>';
+    html += '</div>';
+    result.innerHTML = html;
+  });
+
+  document.getElementById('bt-calc').click();
+})();
+</script>

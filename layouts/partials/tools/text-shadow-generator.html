@@ -1,0 +1,196 @@
+<div style="display:flex;gap:28px;flex-wrap:wrap;">
+  <div style="flex:1;min-width:280px;">
+    <div class="tool-input-group">
+      <label class="tool-label">阴影层</label>
+      <div class="tool-btn-row">
+        <button class="tool-btn" id="tsg-add-layer">+ 添加阴影层</button>
+        <button class="tool-btn" id="tsg-remove-layer">- 删除阴影层</button>
+      </div>
+    </div>
+
+    <div id="tsg-layers"></div>
+
+    <div class="tool-input-group">
+      <label class="tool-label">预览文字</label>
+      <input class="tool-input" type="text" id="tsg-text" value="Hello World" style="font-size:1.1rem;">
+    </div>
+  </div>
+
+  <div style="flex:1;min-width:280px;display:flex;align-items:center;justify-content:center;">
+    <div id="tsg-preview" style="font-size:3rem;font-weight:800;color:#667eea;text-align:center;padding:20px;word-break:break-word;">
+      Hello World
+    </div>
+  </div>
+</div>
+
+<div class="tool-output">
+  <label class="tool-label">CSS 代码</label>
+  <div class="tool-result" id="tsg-code">text-shadow: 2px 2px 4px rgba(0,0,0,0.3);</div>
+  <button class="tool-copy-btn" id="tsg-copy">复制 CSS</button>
+</div>
+
+<script>
+(function(){
+  var layersContainer = document.getElementById('tsg-layers');
+  var addBtn = document.getElementById('tsg-add-layer');
+  var removeBtn = document.getElementById('tsg-remove-layer');
+  var textInput = document.getElementById('tsg-text');
+  var preview = document.getElementById('tsg-preview');
+  var codeEl = document.getElementById('tsg-code');
+  var copyBtn = document.getElementById('tsg-copy');
+
+  var layerId = 0;
+  var layers = [];
+
+  function createLayer(item){
+    var id = layerId++;
+    var container = document.createElement('div');
+    container.className = 'tool-input-group';
+    container.style.cssText = 'padding:8px;border:1px solid var(--border-color,#e5e7eb);border-radius:8px;margin-bottom:8px;';
+    container.id = 'tsg-layer-' + id;
+
+    var row1 = document.createElement('div');
+    row1.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:8px;';
+    
+    var label = document.createElement('span');
+    label.style.cssText = 'font-size:.8rem;font-weight:600;color:var(--text-muted);min-width:60px;';
+    label.textContent = '偏移 X/Y';
+
+    var xInput = document.createElement('input');
+    xInput.type = 'range';
+    xInput.className = 'tool-range';
+    xInput.style.flex = '1';
+    xInput.min = '-30'; xInput.max = '30'; xInput.value = item ? item.x : '2';
+    var xVal = document.createElement('span');
+    xVal.className = 'tool-range-value';
+    xVal.style.minWidth = '30px';
+    xVal.textContent = (item ? item.x : 2) + 'px';
+
+    xInput.addEventListener('input', function(){ xVal.textContent = xInput.value + 'px'; update(); });
+
+    var yInput = document.createElement('input');
+    yInput.type = 'range';
+    yInput.className = 'tool-range';
+    yInput.style.flex = '1';
+    yInput.min = '-30'; yInput.max = '30'; yInput.value = item ? item.y : '2';
+    var yVal = document.createElement('span');
+    yVal.className = 'tool-range-value';
+    yVal.style.minWidth = '30px';
+    yVal.textContent = (item ? item.y : 2) + 'px';
+
+    yInput.addEventListener('input', function(){ yVal.textContent = yInput.value + 'px'; update(); });
+
+    row1.appendChild(label);
+    row1.appendChild(xInput);
+    row1.appendChild(xVal);
+    row1.appendChild(yInput);
+    row1.appendChild(yVal);
+
+    var row2 = document.createElement('div');
+    row2.style.cssText = 'display:flex;gap:8px;align-items:center;';
+
+    var blurLabel = document.createElement('span');
+    blurLabel.style.cssText = 'font-size:.8rem;font-weight:600;color:var(--text-muted);min-width:60px;';
+    blurLabel.textContent = '模糊';
+
+    var blurInput = document.createElement('input');
+    blurInput.type = 'range';
+    blurInput.className = 'tool-range';
+    blurInput.style.flex = '1';
+    blurInput.min = '0'; blurInput.max = '30'; blurInput.value = item ? item.blur : '4';
+    var blurVal = document.createElement('span');
+    blurVal.className = 'tool-range-value';
+    blurVal.style.minWidth = '30px';
+    blurVal.textContent = (item ? item.blur : 4) + 'px';
+
+    blurInput.addEventListener('input', function(){ blurVal.textContent = blurInput.value + 'px'; update(); });
+
+    var colorInput = document.createElement('input');
+    colorInput.type = 'color';
+    colorInput.value = item ? item.color : '#000000';
+    colorInput.style.cssText = 'width:32px;height:28px;border:none;cursor:pointer;';
+
+    var opacityInput = document.createElement('input');
+    opacityInput.type = 'number';
+    opacityInput.className = 'tool-input';
+    opacityInput.style.width = '60px';
+    opacityInput.min = '0'; opacityInput.max = '100';
+    opacityInput.value = item ? item.opacity : '30';
+
+    colorInput.addEventListener('input', update);
+    opacityInput.addEventListener('input', update);
+
+    var pctLabel = document.createElement('span');
+    pctLabel.textContent = '%';
+
+    row2.appendChild(blurLabel);
+    row2.appendChild(blurInput);
+    row2.appendChild(blurVal);
+    row2.appendChild(colorInput);
+    row2.appendChild(opacityInput);
+    row2.appendChild(pctLabel);
+
+    container.appendChild(row1);
+    container.appendChild(row2);
+    layersContainer.appendChild(container);
+
+    var layerData = {
+      x: xInput, y: yInput, blur: blurInput,
+      color: colorInput, opacity: opacityInput,
+      container: container
+    };
+    layers.push(layerData);
+    return layerData;
+  }
+
+  addBtn.addEventListener('click', function(){
+    if(layers.length >= 5) return;
+    createLayer(null);
+    update();
+  });
+
+  removeBtn.addEventListener('click', function(){
+    if(layers.length <= 1) return;
+    var last = layers.pop();
+    last.container.remove();
+    update();
+  });
+
+  textInput.addEventListener('input', function(){
+    preview.textContent = textInput.value || 'Hello World';
+  });
+
+  function hexToRgb(hex){
+    var r = parseInt(hex.slice(1,3), 16);
+    var g = parseInt(hex.slice(3,5), 16);
+    var b = parseInt(hex.slice(5,7), 16);
+    return r + ', ' + g + ', ' + b;
+  }
+
+  function update(){
+    var shadows = layers.map(function(l){
+      var x = l.x.value;
+      var y = l.y.value;
+      var blur = l.blur.value;
+      var rgb = hexToRgb(l.color.value);
+      var opacity = parseInt(l.opacity.value) / 100;
+      return x + 'px ' + y + 'px ' + blur + 'px rgba(' + rgb + ', ' + opacity.toFixed(2) + ')';
+    });
+
+    var css = shadows.join(', ');
+    preview.style.textShadow = css;
+    codeEl.textContent = 'text-shadow: ' + css + ';';
+  }
+
+  copyBtn.addEventListener('click', function(){
+    navigator.clipboard.writeText(codeEl.textContent).then(function(){
+      copyBtn.textContent = '已复制';
+      setTimeout(function(){ copyBtn.textContent = '复制 CSS'; }, 1500);
+    });
+  });
+
+  // Initialize with one layer
+  createLayer({x:2, y:2, blur:4, color:'#000000', opacity:30});
+  update();
+})();
+</script>

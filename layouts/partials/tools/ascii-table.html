@@ -1,0 +1,99 @@
+<div class="tool-input-group">
+  <label class="tool-label">搜索 ASCII 字符</label>
+  <input class="tool-input" type="text" id="ascii-search" placeholder="搜索码值、字符或名称...">
+</div>
+<div class="tool-result" id="ascii-result"></div>
+
+<script>
+(function() {
+  var ctrlNames = [
+    'NUL','SOH','STX','ETX','EOT','ENQ','ACK','BEL','BS','TAB',
+    'LF','VT','FF','CR','SO','SI','DLE','DC1','DC2','DC3','DC4',
+    'NAK','SYN','ETB','CAN','EM','SUB','ESC','FS','GS','RS','US'
+  ];
+
+  var data = [];
+  for (var i = 0; i < 128; i++) {
+    var name, char;
+    if (i < 32) {
+      name = ctrlNames[i];
+      char = ctrlNames[i];
+    } else if (i === 32) {
+      name = 'SP';
+      char = 'SP';
+    } else if (i === 127) {
+      name = 'DEL';
+      char = 'DEL';
+    } else {
+      name = String.fromCharCode(i);
+      char = String.fromCharCode(i);
+    }
+    data.push({
+      dec: i,
+      hex: i.toString(16).toUpperCase().padStart(2, '0'),
+      char: char,
+      name: name,
+      isCtrl: i < 32 || i === 127
+    });
+  }
+
+  function render(filter) {
+    filter = (filter || '').toLowerCase().trim();
+    var filtered = data;
+    if (filter) {
+      filtered = data.filter(function(d) {
+        return d.dec.toString().indexOf(filter) !== -1 ||
+               d.hex.toLowerCase().indexOf(filter) !== -1 ||
+               d.char.toLowerCase().indexOf(filter) !== -1 ||
+               d.name.toLowerCase().indexOf(filter) !== -1;
+      });
+    }
+
+    var html = '<div class="tool-output">';
+    html += '<div class="tool-output-title">ASCII 码表（0-127）' + (filter ? ' - 匹配 ' + filtered.length + ' 条' : ' - 点击格子复制') + '</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px;">';
+
+    for (var i = 0; i < filtered.length; i++) {
+      var d = filtered[i];
+      html += '<button class="ascii-cell" data-copy="' + d.char.replace(/"/g,'&quot;') + '" style="padding:6px 4px;border:1px solid var(--border-color,#e5e7eb);background:var(--bg-primary,#fff);border-radius:6px;cursor:pointer;font-size:11px;text-align:center;transition:background 0.15s;color:var(--text-primary,#1f2937);font-family:monospace;" title="' + d.dec + ' / ' + d.hex + ' / ' + (d.isCtrl ? d.name : d.char) + '">';
+      html += '<div style="font-weight:600;font-size:13px;">' + d.dec + '</div>';
+      if (d.isCtrl) {
+        html += '<div style="color:var(--text-secondary,#6b7280);font-size:10px;">' + d.name + '</div>';
+      } else {
+        html += '<div style="font-size:18px;">' + d.char + '</div>';
+      }
+      html += '<div style="color:var(--text-secondary,#6b7280);font-size:10px;">' + d.hex + '</div>';
+      html += '</button>';
+    }
+    html += '</div></div>';
+    document.getElementById('ascii-result').innerHTML = html;
+
+    var cells = document.querySelectorAll('.ascii-cell');
+    for (var c = 0; c < cells.length; c++) {
+      cells[c].addEventListener('click', function() {
+        var txt = this.getAttribute('data-copy');
+        navigator.clipboard.writeText(txt).then(function() {
+          var orig = this.style.background;
+          this.style.background = 'var(--success-bg,rgba(34,197,94,.1))';
+          var self = this;
+          setTimeout(function() { self.style.background = orig; }, 600);
+        }.bind(this));
+      });
+    }
+  }
+
+  render('');
+
+  document.getElementById('ascii-search').addEventListener('input', function() {
+    render(this.value);
+  });
+})();
+</script>
+
+<style>
+.ascii-cell:hover {
+  background: var(--bg-secondary,#f3f4f6) !important;
+  transform: scale(1.05);
+  z-index: 1;
+}
+</style>

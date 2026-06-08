@@ -1,0 +1,212 @@
+{{ define "main" }}
+{{ $games := hugo.Data.games.games | default slice }}
+{{ $total := len $games }}
+
+<style>
+.main-wrapper:has(#game-page) .container{max-width:100%!important;padding-left:40px!important;padding-right:40px!important}
+.game-page{max-width:1480px;margin:0 auto 24px;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+
+.game-page-header{text-align:center;min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 24px;background:linear-gradient(135deg,#faf5ff 0%,#f3e8ff 50%,#e9d5ff 100%);border-radius:20px;margin-bottom:22px;box-shadow:0 4px 20px rgba(0,0,0,.08);position:relative;overflow:hidden;border:1px solid rgba(168,85,247,.12)}
+.game-page-header::before{content:'';position:absolute;top:-60%;left:-30%;width:200%;height:200%;background:radial-gradient(circle at 30% 40%,rgba(168,85,247,.07) 0%,transparent 55%);pointer-events:none}
+.game-page .page-title{font-size:2rem;font-weight:800;color:#1e293b;margin:0 0 8px;display:inline-flex;align-items:center;gap:12px;position:relative;z-index:1}
+.game-page .title-icon{font-size:1.4em;color:#a855f7;animation:game-bounce 2.5s ease-in-out infinite;display:inline-block}
+@keyframes game-bounce{0%,100%{transform:scale(1) rotate(-5deg)}50%{transform:scale(1.08) rotate(5deg)}}
+.game-page .page-subtitle{font-size:.95rem;color:#475569;margin:0;line-height:1.6;position:relative;z-index:1}
+
+.game-filter-container{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:28px}
+.game-filter-tag{padding:8px 20px;border:1.5px solid rgba(128,128,128,.2);border-radius:50px;background:#fff;color:#333;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .25s ease;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.game-filter-tag:hover:not(.active){border-color:#a855f7;color:#a855f7;transform:translateY(-2px);box-shadow:0 4px 12px rgba(168,85,247,.15)}
+.game-filter-tag.active{background:linear-gradient(135deg,#a855f7,#9333ea);color:#fff;border-color:transparent;box-shadow:0 4px 16px rgba(168,85,247,.35)}
+
+.game-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+@media(min-width:600px){.game-grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:900px){.game-grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:1200px){.game-grid{grid-template-columns:repeat(4,1fr)}}
+
+.gc{position:relative;display:flex;flex-direction:column;background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:14px;overflow:hidden;transition:transform .35s ease,box-shadow .35s ease;text-decoration:none;color:inherit}
+.gc:hover{transform:translateY(-8px);box-shadow:0 20px 50px rgba(0,0,0,.12),0 6px 16px rgba(0,0,0,.06);border-color:transparent;z-index:2}
+
+.gcw{position:relative;aspect-ratio:3/4;overflow:hidden;background:linear-gradient(135deg,#e8ecf1,#d4dae6)}
+.gco{width:100%;height:100%;object-fit:cover;transition:transform .45s ease,filter .35s ease}
+.gc:hover .gco{transform:scale(1.06);filter:brightness(.55)}
+.gco-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:3rem;color:#bbb}
+
+.gcw-mask{position:absolute;inset:0;background:rgba(0,0,0,0);transition:background .35s ease;pointer-events:none;z-index:1}
+.gc:hover .gcw-mask{background:rgba(0,0,0,.3)}
+
+.sbg{position:absolute;top:10px;left:10px;padding:4px 11px;border-radius:8px;font-size:.7rem;font-weight:700;backdrop-filter:blur(8px);display:inline-flex;align-items:center;gap:4px;z-index:5;transition:opacity .3s}
+.gc:hover .sbg{opacity:0}
+.sbg.playing{background:linear-gradient(135deg,rgba(34,197,94,.92),rgba(22,163,74,.88));color:#fff}
+.sbg.completed{background:linear-gradient(135deg,rgba(59,130,246,.92),rgba(37,99,235,.88));color:#fff}
+.sbg.planned{background:linear-gradient(135deg,rgba(245,158,11,.92),rgba(217,119,6,.88));color:#fff}
+.sbg.onhold{background:linear-gradient(135deg,rgba(168,85,247,.92),rgba(147,51,234,.88));color:#fff}
+
+.rbg{position:absolute;top:10px;right:10px;padding:4px 9px;border-radius:8px;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);color:#fff;font-size:.78rem;font-weight:700;display:flex;align-items:center;gap:4px;z-index:5;transition:opacity .3s}
+.gc:hover .rbg{opacity:0}
+.rbg .st{color:#fbbf24}
+
+.gcw-info{position:absolute;left:0;right:0;bottom:0;z-index:4;padding:14px 12px;background:linear-gradient(to top,rgba(0,0,0,.88) 0%,rgba(0,0,0,.7) 60%,transparent 100%);transform:translateY(100%);transition:transform .4s cubic-bezier(.4,0,.2,1);max-height:90%;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent}
+.gc:hover .gcw-info{transform:translateY(0)}
+.gcw-info::-webkit-scrollbar{width:3px}
+.gcw-info::-webkit-scrollbar-thumb{background:rgba(255,255,255,.25);border-radius:3px}
+
+.gi-title{font-size:.9rem;font-weight:700;color:#fff;margin-bottom:8px;line-height:1.3}
+.gi-row{display:flex;gap:6px;font-size:.72rem;color:rgba(255,255,255,.85);margin-bottom:4px;line-height:1.5}
+.gi-label{color:rgba(255,255,255,.5);flex-shrink:0;min-width:36px}
+.gi-val{color:rgba(255,255,255,.9);word-break:break-all}
+.gi-desc{font-size:.72rem;color:rgba(255,255,255,.7);line-height:1.5;margin-top:6px}
+
+.gi{padding:12px 12px 10px;flex:1;display:flex;flex-direction:column}
+.gnm{font-size:.88rem;font-weight:700;color:#1e293b;line-height:1.35;margin:0 0 4px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+
+.gi-brief{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px}
+.gi-platform{display:inline-block;padding:1px 7px;border-radius:8px;background:rgba(168,85,247,.1);color:#9333ea;font-size:.62rem;font-weight:600}
+.gi-year{font-size:.72rem;color:#64748b}
+.gi-genre{display:inline-block;padding:1px 7px;border-radius:8px;background:rgba(59,130,246,.1);color:#2563eb;font-size:.62rem;font-weight:600}
+
+.gds{font-size:.72rem;color:#64748b;line-height:1.5;margin:0 0 6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+.gl{display:flex;flex-wrap:wrap;gap:5px;margin-top:auto;padding-top:6px;border-top:1px solid rgba(0,0,0,.05)}
+.glt{padding:3px 9px;border-radius:5px;font-size:.65rem;font-weight:600;display:inline-flex;align-items:center;gap:3px;border:1px solid rgba(0,0,0,.08);background:rgba(0,0,0,.03);color:#64748b;text-decoration:none;transition:all .2s}
+.glt:hover{background:#a855f7;color:#fff;border-color:#a855f7}
+.glt i{font-size:.6rem}
+
+.game-empty{text-align:center;padding:70px 20px;display:none}
+.game-empty .empty-icon{font-size:4.5rem;margin-bottom:14px}
+.game-empty h3{font-size:1.3rem;margin-bottom:8px;color:#333}
+.game-empty p{color:#888;margin:0}
+
+[data-theme="dark"] .gc{background:rgba(30,41,59,.9);border-color:rgba(148,163,184,.15)}
+[data-theme="dark"] .game-filter-tag{background:rgba(30,41,59,.8);color:#e2e8f0;border-color:rgba(148,163,184,.15)}
+[data-theme="dark"] .gnm{color:#f1f5f9}
+[data-theme="dark"] .gi-platform{background:rgba(168,85,247,.15);color:#c084fc}
+[data-theme="dark"] .gi-genre{background:rgba(59,130,246,.15);color:#93c5fd}
+[data-theme="dark"] .gi-year,[data-theme="dark"] .gds{color:#94a3b8}
+[data-theme="dark"] .gcw{background:linear-gradient(135deg,#1e293b,#334155)}
+[data-theme="dark"] .glt{background:rgba(30,41,59,.6);border-color:rgba(148,163,184,.15);color:#94a3b8}
+[data-theme="dark"] .gl{border-top-color:rgba(148,163,184,.1)}
+[data-theme="dark"] .glt:hover{background:#a855f7;color:#fff;border-color:#a855f7}
+[data-theme="dark"] .game-page-header{background:linear-gradient(135deg,#3b0764 0%,#581c87 50%,#6b21a8 100%);border-color:rgba(168,85,247,.15)}
+[data-theme="dark"] .game-page .page-title{color:#f1f5f9}
+[data-theme="dark"] .game-page .page-subtitle{color:#94a3b8}
+[data-theme="dark"] .gco-placeholder{color:#475569}
+[data-theme="dark"] .game-empty h3{color:#e2e8f0}
+[data-theme="dark"] .game-empty p{color:#64748b}
+
+@media(max-width:640px){
+.game-page-header{padding:22px 12px 16px}
+.game-page .page-title{font-size:1.5rem}
+.game-grid{grid-template-columns:repeat(2,1fr)!important;gap:12px}
+.gi{padding:10px 8px}
+.gnm{font-size:.82rem}
+}
+</style>
+
+<div class="game-page" id="game-page">
+  <div class="game-page-header">
+    <h1 class="page-title"><span class="title-icon"><i class="fas fa-gamepad"></i></span> 我的游戏</h1>
+    <p class="page-subtitle">探索虚拟世界，记录每一段精彩的游戏旅程</p>
+  </div>
+
+  {{ if gt $total 0 }}
+  <div class="game-filter-container" id="game-filters">
+    <button class="game-filter-tag active" data-status="all"><i class="fas fa-border-all"></i> 全部 ({{ $total }})</button>
+    <button class="game-filter-tag" data-status="playing"><i class="fas fa-play-circle"></i> 在玩 ({{ len (where $games "status" "playing") }})</button>
+    <button class="game-filter-tag" data-status="completed"><i class="fas fa-check-circle"></i> 已通关 ({{ len (where $games "status" "completed") }})</button>
+    <button class="game-filter-tag" data-status="planned"><i class="fas fa-heart"></i> 想玩 ({{ len (where $games "status" "planned") }})</button>
+    <button class="game-filter-tag" data-status="onhold"><i class="fas fa-pause-circle"></i> 搁置 ({{ len (where $games "status" "onhold") }})</button>
+  </div>
+
+  <div class="game-grid" id="gamelist">
+    {{ range $idx, $g := $games }}
+    {{ $stMap := dict "playing" "在玩" "completed" "已通关" "planned" "想玩" "onhold" "搁置" }}
+    {{ $stLabel := index $stMap $g.status | default "未知" }}
+    {{ $stIcon := dict "playing" "▶" "completed" "✓" "planned" "♥" "onhold" "⏸" }}
+    {{ $icon := index $stIcon $g.status | default "" }}
+    {{ $genreText := "" }}
+    {{ if $g.genre }}{{ if reflect.IsSlice $g.genre }}{{ $genreText = delimit $g.genre " / " }}{{ else }}{{ $genreText = $g.genre }}{{ end }}{{ end }}
+    <div class="gc" data-status="{{ $g.status }}" data-title="{{ $g.title }}">
+      <div class="gcw">
+        {{ if $g.cover }}
+        <img class="gco" src="{{ $g.cover }}" alt="{{ $g.title }}" loading="lazy" referrerpolicy="no-referrer"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        {{ end }}
+        <div class="gco-placeholder"{{ if $g.cover }} style="display:none"{{ end }}><i class="fas fa-gamepad"></i></div>
+        <div class="gcw-mask"></div>
+        <div class="sbg {{ $g.status }}">{{ $icon }} {{ $stLabel }}</div>
+        {{ if $g.rating }}
+        <div class="rbg"><span class="st">★</span> {{ $g.rating }} 分</div>
+        {{ end }}
+        <div class="gcw-info">
+          <div class="gi-title">{{ $g.title }}</div>
+          {{ if $genreText }}<div class="gi-row"><span class="gi-label">类型</span><span class="gi-val">{{ $genreText }}</span></div>{{ end }}
+          {{ if $g.developer }}<div class="gi-row"><span class="gi-label">开发商</span><span class="gi-val">{{ $g.developer }}</span></div>{{ end }}
+          {{ if $g.publisher }}<div class="gi-row"><span class="gi-label">发行商</span><span class="gi-val">{{ $g.publisher }}</span></div>{{ end }}
+          {{ if $g.platform }}<div class="gi-row"><span class="gi-label">平台</span><span class="gi-val">{{ $g.platform }}</span></div>{{ end }}
+          {{ if $g.releaseYear }}<div class="gi-row"><span class="gi-label">年份</span><span class="gi-val">{{ $g.releaseYear }}年</span></div>{{ end }}
+          {{ if $g.desc }}<div class="gi-desc">{{ $g.desc }}</div>{{ end }}
+        </div>
+      </div>
+      <div class="gi">
+        <h3 class="gnm">{{ $g.title }}</h3>
+        <div class="gi-brief">
+          {{ if $g.releaseYear }}<span class="gi-year">{{ $g.releaseYear }}年</span>{{ end }}
+          {{ if $g.platform }}<span class="gi-platform">{{ $g.platform }}</span>{{ end }}
+          {{ if $genreText }}<span class="gi-genre">{{ $genreText }}</span>{{ end }}
+        </div>
+        {{ if $g.desc }}<p class="gds">{{ $g.desc }}</p>{{ end }}
+        <div class="gl">
+          {{ range $g.links }}
+          <a href="{{ .url }}" target="_blank" rel="noopener noreferrer external" class="glt" title="前往 {{ .name }}">
+            {{ if .icon }}<i class="{{ .icon }}"></i>{{ end }}{{ .name }}
+          </a>
+          {{ end }}
+        </div>
+      </div>
+    </div>
+    {{ end }}
+  </div>
+
+  <div class="game-empty" id="empty-state">
+    <div class="empty-icon">🎮</div>
+    <h3>暂无游戏</h3>
+    <p>快添加喜欢的游戏吧</p>
+  </div>
+  {{ else }}
+  <div class="game-empty" style="display:block">
+    <div class="empty-icon">🎮</div>
+    <h3>暂无游戏数据</h3>
+    <p>请在后台添加游戏</p>
+  </div>
+  {{ end }}
+
+  {{ partial "comments.html" . }}
+</div>
+
+<script>
+(function(){
+  var grid = document.getElementById('gamelist');
+  var empty = document.getElementById('empty-state');
+  if (!grid) return;
+
+  var filterBtns = document.querySelectorAll('.game-filter-tag');
+  for (var i = 0; i < filterBtns.length; i++) {
+    (function(btn){
+      btn.addEventListener('click', function(){
+        var status = btn.dataset.status;
+        for (var j = 0; j < filterBtns.length; j++) filterBtns[j].classList.remove('active');
+        btn.classList.add('active');
+        var cards = grid.querySelectorAll('.gc');
+        var visible = 0;
+        for (var k = 0; k < cards.length; k++) {
+          var show = (status === 'all' || cards[k].dataset.status === status);
+          cards[k].style.display = show ? '' : 'none';
+          if (show) visible++;
+        }
+        if (empty) empty.style.display = (visible === 0) ? '' : 'none';
+      });
+    })(filterBtns[i]);
+  }
+})();
+</script>
+{{ end }}

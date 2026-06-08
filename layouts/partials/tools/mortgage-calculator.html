@@ -1,0 +1,109 @@
+<div class="tool-input-group">
+  <label class="tool-label">贷款总额（万元）</label>
+  <input class="tool-input" type="number" id="mc-principal" value="100" step="0.01" min="0">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">年利率（%）</label>
+  <input class="tool-input" type="number" id="mc-rate" value="4.2" step="0.01" min="0">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">贷款年限</label>
+  <input class="tool-input" type="number" id="mc-years" value="30" min="1" max="50" step="1">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">还款方式</label>
+  <select class="tool-select" id="mc-type">
+    <option value="equal-payment">等额本息</option>
+    <option value="equal-principal">等额本金</option>
+  </select>
+</div>
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="mc-calc">计算</button>
+</div>
+<div class="tool-result" id="mc-result"></div>
+
+<script>
+(function() {
+  document.getElementById('mc-calc').addEventListener('click', function() {
+    var principal = parseFloat(document.getElementById('mc-principal').value) * 10000;
+    var yearRate = parseFloat(document.getElementById('mc-rate').value) / 100;
+    var years = parseInt(document.getElementById('mc-years').value);
+    var type = document.getElementById('mc-type').value;
+    var result = document.getElementById('mc-result');
+
+    if (isNaN(principal) || isNaN(yearRate) || isNaN(years) || principal <= 0 || yearRate <= 0 || years <= 0) {
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">错误</div><p>请填写所有输入。</p></div>';
+      return;
+    }
+
+    var months = years * 12;
+    var monthRate = yearRate / 12;
+
+    var html = '';
+    if (type === 'equal-payment') {
+      var monthly = principal * monthRate * Math.pow(1 + monthRate, months) / (Math.pow(1 + monthRate, months) - 1);
+      var totalPayment = monthly * months;
+      var totalInterest = totalPayment - principal;
+
+      html += '<div class="tool-output"><div class="tool-output-title">等额本息还款</div>';
+      html += '<div class="tool-stats"><div class="tool-stat"><div class="tool-stat-value">¥' + monthly.toFixed(2) + '</div><div class="tool-stat-label">月供</div></div>';
+      html += '<div class="tool-stat"><div class="tool-stat-value">¥' + totalInterest.toFixed(2) + '</div><div class="tool-stat-label">总利息</div></div>';
+      html += '<div class="tool-stat"><div class="tool-stat-value">¥' + totalPayment.toFixed(2) + '</div><div class="tool-stat-label">总还款额</div></div></div>';
+
+      html += '<h4 style="margin:15px 0 8px;">还款明细（首12期 + 末1期）</h4>';
+      html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+      html += '<tr style="background:#f5f5f5;"><th style="padding:6px;text-align:left;">期数</th><th style="padding:6px;text-align:right;">月供</th><th style="padding:6px;text-align:right;">本金</th><th style="padding:6px;text-align:right;">利息</th><th style="padding:6px;text-align:right;">剩余本金</th></tr>';
+
+      var remaining = principal;
+      for (var i = 1; i <= Math.min(12, months); i++) {
+        var interest = remaining * monthRate;
+        var cap = monthly - interest;
+        remaining -= cap;
+        html += '<tr style="border-bottom:1px solid #eee;"><td style="padding:6px;">' + i + '</td><td style="padding:6px;text-align:right;font-family:monospace;">¥' + monthly.toFixed(2) + '</td><td style="padding:6px;text-align:right;font-family:monospace;">¥' + cap.toFixed(2) + '</td><td style="padding:6px;text-align:right;font-family:monospace;">¥' + interest.toFixed(2) + '</td><td style="padding:6px;text-align:right;font-family:monospace;">¥' + Math.max(0, remaining).toFixed(2) + '</td></tr>';
+      }
+      if (months > 12) {
+        html += '<tr style="border-bottom:1px solid #eee;"><td style="padding:6px;">...</td><td style="padding:6px;text-align:center;" colspan="4">... 中间省略 ...</td></tr>';
+        var lastInterest = monthly * (1 - 1/Math.pow(1+monthRate, 1));
+        var lastCap = monthly - lastInterest;
+        html += '<tr style="border-bottom:1px solid #eee;"><td style="padding:6px;">' + months + '</td><td style="padding:6px;text-align:right;font-family:monospace;">¥' + monthly.toFixed(2) + '</td><td style="padding:6px;text-align:right;font-family:monospace;">¥' + lastCap.toFixed(2) + '</td><td style="padding:6px;text-align:right;font-family:monospace;">¥' + lastInterest.toFixed(2) + '</td><td style="padding:6px;text-align:right;font-family:monospace;">¥0.00</td></tr>';
+      }
+      html += '</table></div>';
+
+    } else {
+      var monthlyPrincipal = principal / months;
+      var totalInterest = 0;
+      var remaining = principal;
+
+      html += '<div class="tool-output"><div class="tool-output-title">等额本金还款</div>';
+      var firstMonth = monthlyPrincipal + principal * monthRate;
+      html += '<div class="tool-stats"><div class="tool-stat"><div class="tool-stat-value">¥' + firstMonth.toFixed(2) + '</div><div class="tool-stat-label">首月月供</div></div>';
+
+      totalInterest = principal * monthRate * (months + 1) / 2;
+      var totalPayment = principal + totalInterest;
+      html += '<div class="tool-stat"><div class="tool-stat-value">¥' + totalInterest.toFixed(2) + '</div><div class="tool-stat-label">总利息</div></div>';
+      html += '<div class="tool-stat"><div class="tool-stat-value">¥' + totalPayment.toFixed(2) + '</div><div class="tool-stat-label">总还款额</div></div></div>';
+
+      html += '<h4 style="margin:15px 0 8px;">还款明细（首12期 + 末1期）</h4>';
+      html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+      html += '<tr style="background:#f5f5f5;"><th style="padding:6px;text-align:left;">期数</th><th style="padding:6px;text-align:right;">月供</th><th style="padding:6px;text-align:right;">本金</th><th style="padding:6px;text-align:right;">利息</th><th style="padding:6px;text-align:right;">剩余本金</th></tr>';
+
+      for (var i = 1; i <= Math.min(12, months); i++) {
+        var interest = remaining * monthRate;
+        var payment = monthlyPrincipal + interest;
+        remaining -= monthlyPrincipal;
+        html += '<tr style="border-bottom:1px solid #eee;"><td style="padding:6px;">' + i + '</td><td style="padding:6px;text-align:right;font-family:monospace;">¥' + payment.toFixed(2) + '</td><td style="padding:6px;text-align:right;font-family:monospace;">¥' + monthlyPrincipal.toFixed(2) + '</td><td style="padding:6px;text-align:right;font-family:monospace;">¥' + interest.toFixed(2) + '</td><td style="padding:6px;text-align:right;font-family:monospace;">¥' + Math.max(0, remaining).toFixed(2) + '</td></tr>';
+      }
+      if (months > 12) {
+        html += '<tr style="border-bottom:1px solid #eee;"><td style="padding:6px;">...</td><td style="padding:6px;text-align:center;" colspan="4">... 中间省略 ...</td></tr>';
+        var lastInterest = monthlyPrincipal * monthRate;
+        html += '<tr style="border-bottom:1px solid #eee;"><td style="padding:6px;">' + months + '</td><td style="padding:6px;text-align:right;font-family:monospace;">¥' + (monthlyPrincipal + lastInterest).toFixed(2) + '</td><td style="padding:6px;text-align:right;font-family:monospace;">¥' + monthlyPrincipal.toFixed(2) + '</td><td style="padding:6px;text-align:right;font-family:monospace;">¥' + lastInterest.toFixed(2) + '</td><td style="padding:6px;text-align:right;font-family:monospace;">¥0.00</td></tr>';
+      }
+      html += '</table></div>';
+    }
+
+    result.innerHTML = html;
+  });
+
+  document.getElementById('mc-calc').click();
+})();
+</script>

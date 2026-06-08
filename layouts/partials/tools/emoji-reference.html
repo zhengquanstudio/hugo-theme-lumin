@@ -1,0 +1,237 @@
+<div class="tool-input-group">
+  <label class="tool-label">搜索 Emoji</label>
+  <input class="tool-input" type="text" id="emoji-search" placeholder="输入关键词搜索 emoji...">
+</div>
+<div class="tool-tabs" id="emoji-tabs" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;"></div>
+<div class="tool-result" id="emoji-result"></div>
+
+<script>
+(function() {
+  var emojiMap = {};
+  emojiMap['笑脸'] = '😀😃😄😁😅😂🤣😊😇🙂😉😌😍🥰😘😗😙😚😋😛😝😜🤪🤨🧐🤓😎🥸🤩🥳😏😒😞😔😟😕🙁☹️😣😖😫😩🥺😢😭😤😠😡🤬🤯😳🥵🥶😱😨😰😥😓🤗🤔🤭🤫🤥😶😐😑😬🙄😯😦😧😮😲🥱😴🤤😪😵🤐🥴🤢🤮🤧😷🤒🤕🤑🤠😈👿👹👺🤡💩👻💀👽👾🤖🎃😺😸😹😻😼😽🙀😿😾';
+  emojiMap['手势'] = '👍👎👌✌️🤞🤟🤘🤙👈👉👆👇🖕☝️✋🤚🖐️🖖👋🤏✍️🙏💪🦵🦶👂👃🦻🧠🫀🫁🦷🦴👀👁️👅👄👶🧒👦👧🧑👱👨🧔👩🧓👴👵🙍🙎🙅🙆💁🙋🤦🤷🙇🧎🧍💆💇🧖🤸🤾🚶👯🕴️💃🕺🛀🧘🤲👐🙌👏🤝🧏🤗🫂👩‍🦰👨‍🦰👩‍🦱👨‍🦱👩‍🦳👨‍🦳👩‍🦲👨‍🦲🧑‍🦰🧑‍🦱🧑‍🦳🧑‍🦲';
+  emojiMap['动物'] = '🐶🐱🐭🐹🐰🦊🐻🐼🐨🐯🦁🐮🐷🐸🐵🙈🙉🙊🐒🐔🐧🐦🐤🐣🐥🦆🦅🦉🦇🐺🐗🐴🦄🐝🐛🦋🐌🐞🐜🦗🕷️🕸️🦂🐢🐍🦎🦖🦕🐙🦑🦐🦞🦀🐡🐠🐟🐬🐳🐋🦈🐊🐅🐆🦓🦍🦧🐘🦛🦏🐪🐫🦒🦘🐃🐂🐄🐎🐖🐏🐑🦙🐐🦌🐕🐩🦮🐈🐓🦃🦚🦜🦢🦩🕊️🐇🦝🦨🦡🦦🦥🐁🐀🐿️🦔🦇🐾🦴🦷🐚🪸🐉🐲';
+  emojiMap['食物'] = '🍏🍎🍐🍊🍋🍌🍉🍇🍓🫐🍈🍒🍑🥭🍍🥥🥝🍅🍆🥑🥦🥬🥒🌶️🫑🌽🥕🫒🧄🧅🥔🍠🥐🍞🥖🥨🧀🥚🍳🧈🥞🧇🥓🥩🍗🍖🌭🍔🍟🍕🥪🥙🧆🌮🌯🥗🥘🥫🍝🍜🍲🍛🍣🍱🥟🦪🍤🍙🍚🍘🍥🥠🥮🍢🍡🍧🍨🍦🥧🧁🍰🎂🍮🍭🍬🍫🍿🍩🍪🌰🥜🍯🥛🍼☕🍵🧃🥤🧋🍶🍺🍻🥂🍷🥃🍸🍹🧊🥄🍴🥣🥡🥢🧂🫖🍾🧉';
+  emojiMap['运动'] = '⚽🏀🏈⚾🥎🎾🏐🏉🥏🎱🏓🏸🏒🏑🥍🏏🥅⛳🏹🎣🤿🥊🥋🎽🛹🛼🛷⛸️🥌🎯🎳⛷️🏂🏋️🤼🤸⛹️🤺🤾🏌️🏇🏄🏊🤽🚣🧗🚴🚵🏆🥇🥈🥉🏅🎖️🏵️🎗️🎮🕹️🎲♟️🎰🎳🎱🎯🪀🪁🥏🪃🤸‍♀️🤸‍♂️🤾‍♀️🤾‍♂️🏊‍♀️🏊‍♂️';
+  emojiMap['交通'] = '🚗🚕🚙🚌🚎🏎️🚓🚑🚒🚐🚚🚛🚜🏍️🛵🚲🛴🚨🚔🚍🚘🚖🚡🚠🚟🚃🚋🚞🚝🚄🚅🚈🚂🚆🚇🚊🚉✈️🛫🛬🛩️💺🛰️🚀🛸🚁🛶⛵🚤🛳️⛴️🚢⚓🚧⛽🚏🚦🚥🗺️🗿🗽🗼🏰🏯🏟️🎡🎢🎠⛲⛱️🏖️🏝️🏜️🌋⛰️🏔️🗻🏕️⛺🏠🏡🏘️🏚️🏗️🏭🏢🏬🏣🏤🏥🏦🏨🏪🏫🏩💒🏛️⛪🕌🕍🛕🕋⛩️🛤️🛣️🗾🎑🏞️🌅🌄🌠🎇🎆🌇🌆🏙️🌃🌌🌉🌁🛞🛻';
+  emojiMap['符号'] = '❤️🧡💛💚💙💜🖤🤍🤎💔❣️💕💞💓💗💖💘💝💟☮️✝️☪️🕉️☸️✡️🔯🕎☯️☦️🛐⛎♈♉♊♋♌♍♎♏♐♑♒♓🆔⚛️☢️☣️📴📳🈶🈚🈸🈺✴️🆚💮🉐㊙️㊗️🈴🈵🈹🈲🅰️🅱️🆎🆑🅾️🆘❌⭕🛑⛔📛🚫💯💢♨️🚷🚯🚳🚱🔞📵🚭❗❕❓❔‼️⁉️🔅🔆〽️⚠️🚸🔱⚜️🔰♻️✅🈯💹❇️✳️❎🌐💠Ⓜ️🌀💤🏧🚾♿🅿️🈳🈂️🛂🛃🛄🛅🚹🚺🚼🚻🚮🎦📶🔣ℹ️🔤🔡🔠🆖🆗🆙🆒🆕🆓0️⃣1️⃣2️⃣3️⃣4️⃣5️⃣6️⃣7️⃣8️⃣9️⃣🔟🔢#️⃣*️⃣⏏️▶️⏸️⏯️⏹️⏺️⏭️⏮️⏩⏪⏫⏬◀️🔼🔽➡️⬅️⬆️⬇️↗️↘️↙️↖️🔀🔁🔄🔃🎵🎶➕➖➗✖️♾️💲💱™️©️®️〰️➰➿🔚🔙🔛🔝🔜☑️🔘🔴🟠🟡🟢🔵🟣⚫⚪🟤🔺🔻🔸🔹🔶🔷🔳🔲▪️▫️◾◽◼️◻️🟥🟧🟨🟩🟦🟪⬛⬜🟫🔈🔇🔉🔊🔔🔕📣📢💬💭♠️♣️♥️♦️🃏🀄🎴🛗🏧🚾🅿️';
+
+  // Flags with country names — use ISO code for cross-platform rendering via Twemoji
+  var flagList = [
+    {c:'1f3f3-fe0f',n:'白旗'},{c:'1f3f4',n:'黑旗'},{c:'1f6a9',n:'三角旗'},{c:'1f38c',n:'日本旗'},
+    {c:'1f1e8-1f1f3',n:'中国'},{c:'1f1fa-1f1f8',n:'美国'},{c:'1f1ec-1f1e7',n:'英国'},{c:'1f1ef-1f1f5',n:'日本'},
+    {c:'1f1f0-1f1f7',n:'韩国'},{c:'1f1e9-1f1ea',n:'德国'},{c:'1f1eb-1f1f7',n:'法国'},{c:'1f1ee-1f1f9',n:'意大利'},
+    {c:'1f1f7-1f1fa',n:'俄罗斯'},{c:'1f1e7-1f1f7',n:'巴西'},{c:'1f1ee-1f1f3',n:'印度'},{c:'1f1e6-1f1fa',n:'澳大利亚'},
+    {c:'1f1e8-1f1e6',n:'加拿大'},{c:'1f1ea-1f1f8',n:'西班牙'},{c:'1f1f2-1f1fd',n:'墨西哥'},{c:'1f1e6-1f1f7',n:'阿根廷'},
+    {c:'1f1ff-1f1e6',n:'南非'},{c:'1f1f9-1f1f7',n:'土耳其'},{c:'1f1f8-1f1e6',n:'沙特'},{c:'1f1f3-1f1f1',n:'荷兰'},
+    {c:'1f1e8-1f1ed',n:'瑞士'},{c:'1f1f8-1f1ea',n:'瑞典'},{c:'1f1f3-1f1f4',n:'挪威'},{c:'1f1e9-1f1f0',n:'丹麦'},
+    {c:'1f1eb-1f1ee',n:'芬兰'},{c:'1f1e7-1f1ea',n:'比利时'},{c:'1f1f5-1f1f9',n:'葡萄牙'},{c:'1f1ec-1f1f7',n:'希腊'},
+    {c:'1f1f5-1f1f1',n:'波兰'},{c:'1f1fa-1f1e6',n:'乌克兰'},{c:'1f1f9-1f1ed',n:'泰国'},{c:'1f1fb-1f1f3',n:'越南'},
+    {c:'1f1ee-1f1e9',n:'印尼'},{c:'1f1f2-1f1fe',n:'马来西亚'},{c:'1f1f5-1f1ed',n:'菲律宾'},{c:'1f1f8-1f1ec',n:'新加坡'},
+    {c:'1f1f3-1f1ec',n:'尼日利亚'},{c:'1f1ea-1f1ec',n:'埃及'},{c:'1f1e6-1f1ea',n:'阿联酋'},{c:'1f1e6-1f1eb',n:'阿富汗'},
+    {c:'1f1e6-1f1f1',n:'阿尔巴尼亚'},{c:'1f1e9-1f1ff',n:'阿尔及利亚'},{c:'1f1e6-1f1f2',n:'亚美尼亚'},{c:'1f1e6-1f1f9',n:'奥地利'},
+    {c:'1f1e6-1f1ff',n:'阿塞拜疆'},{c:'1f1e7-1f1ed',n:'巴林'},{c:'1f1e7-1f1e9',n:'孟加拉'},{c:'1f1e7-1f1fe',n:'白俄罗斯'},
+    {c:'1f1e7-1f1ff',n:'伯利兹'},{c:'1f1e7-1f1f4',n:'玻利维亚'},{c:'1f1e7-1f1e6',n:'波黑'},{c:'1f1e7-1f1fc',n:'博茨瓦纳'},
+    {c:'1f1e7-1f1ec',n:'保加利亚'},{c:'1f1e7-1f1eb',n:'布基纳法索'},{c:'1f1f0-1f1ed',n:'柬埔寨'},{c:'1f1e8-1f1f2',n:'喀麦隆'},
+    {c:'1f1e8-1f1f1',n:'智利'},{c:'1f1e8-1f1f4',n:'哥伦比亚'},{c:'1f1e8-1f1f7',n:'哥斯达黎加'},{c:'1f1ed-1f1f7',n:'克罗地亚'},
+    {c:'1f1e8-1f1fa',n:'古巴'},{c:'1f1e8-1f1fe',n:'塞浦路斯'},{c:'1f1e8-1f1ff',n:'捷克'},{c:'1f1ea-1f1e8',n:'厄瓜多尔'},
+    {c:'1f1f8-1f1fb',n:'萨尔瓦多'},{c:'1f1ea-1f1ea',n:'爱沙尼亚'},{c:'1f1ea-1f1f9',n:'埃塞俄比亚'},{c:'1f1eb-1f1ef',n:'斐济'},
+    {c:'1f1ec-1f1ea',n:'格鲁吉亚'},{c:'1f1ec-1f1ed',n:'加纳'},{c:'1f1ec-1f1f9',n:'危地马拉'},{c:'1f1ed-1f1f9',n:'海地'},
+    {c:'1f1ed-1f1f3',n:'洪都拉斯'},{c:'1f1ed-1f1fa',n:'匈牙利'},{c:'1f1ee-1f1f8',n:'冰岛'},{c:'1f1ee-1f1f7',n:'伊朗'},
+    {c:'1f1ee-1f1f6',n:'伊拉克'},{c:'1f1ee-1f1ea',n:'爱尔兰'},{c:'1f1ee-1f1f1',n:'以色列'},{c:'1f1ef-1f1f2',n:'牙买加'},
+    {c:'1f1ef-1f1f4',n:'约旦'},{c:'1f1f0-1f1ff',n:'哈萨克'},{c:'1f1f0-1f1ea',n:'肯尼亚'},{c:'1f1f0-1f1fc',n:'科威特'},
+    {c:'1f1f1-1f1e6',n:'老挝'},{c:'1f1f1-1f1fb',n:'拉脱维亚'},{c:'1f1f1-1f1e7',n:'黎巴嫩'},{c:'1f1f1-1f1fe',n:'利比亚'},
+    {c:'1f1f1-1f1f9',n:'立陶宛'},{c:'1f1f2-1f1ec',n:'马达加斯加'},{c:'1f1f2-1f1fb',n:'马尔代夫'},{c:'1f1f2-1f1f9',n:'马耳他'},
+    {c:'1f1f2-1f1fa',n:'毛里求斯'},{c:'1f1f2-1f1e6',n:'摩洛哥'},{c:'1f1f2-1f1f2',n:'缅甸'},{c:'1f1f3-1f1f5',n:'尼泊尔'},
+    {c:'1f1f3-1f1ff',n:'新西兰'},{c:'1f1f3-1f1ee',n:'尼加拉瓜'},{c:'1f1f0-1f1f5',n:'朝鲜'},{c:'1f1f4-1f1f2',n:'阿曼'},
+    {c:'1f1f5-1f1f0',n:'巴基斯坦'},{c:'1f1f5-1f1f8',n:'巴勒斯坦'},{c:'1f1f5-1f1e6',n:'巴拿马'},{c:'1f1f5-1f1fe',n:'巴拉圭'},
+    {c:'1f1f5-1f1ea',n:'秘鲁'},{c:'1f1f6-1f1e6',n:'卡塔尔'},{c:'1f1f7-1f1f4',n:'罗马尼亚'},{c:'1f1f7-1f1fc',n:'卢旺达'},
+    {c:'1f1f8-1f1f3',n:'塞内加尔'},{c:'1f1f7-1f1f8',n:'塞尔维亚'},{c:'1f1f8-1f1f0',n:'斯洛伐克'},{c:'1f1f8-1f1ee',n:'斯洛文尼亚'},
+    {c:'1f1f1-1f1f0',n:'斯里兰卡'},{c:'1f1f8-1f1e9',n:'苏丹'},{c:'1f1f8-1f1fe',n:'叙利亚'},{c:'1f1f9-1f1fc',n:'中国台湾'},
+    {c:'1f1f9-1f1ff',n:'坦桑尼亚'},{c:'1f1f9-1f1f3',n:'突尼斯'},{c:'1f1fa-1f1fe',n:'乌拉圭'},{c:'1f1fb-1f1ea',n:'委内瑞拉'},
+    {c:'1f1fe-1f1ea',n:'也门'},{c:'1f1ff-1f1f2',n:'赞比亚'},{c:'1f1ff-1f1fc',n:'津巴布韦'}
+  ];
+
+  // Twemoji CDN base URL
+  var twemojiBase = 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/';
+
+  // Convert Twemoji code string back to real emoji character (for clipboard)
+  function twemojiToEmoji(code) {
+    var cps = code.split('-');
+    var chars = [];
+    for (var i = 0; i < cps.length; i++) {
+      var cp = parseInt(cps[i], 16);
+      if (cp > 0xFFFF) {
+        var hi = Math.floor((cp - 0x10000) / 0x400) + 0xD800;
+        var lo = (cp - 0x10000) % 0x400 + 0xDC00;
+        chars.push(String.fromCharCode(hi, lo));
+      } else {
+        chars.push(String.fromCharCode(cp));
+      }
+    }
+    return chars.join('');
+  }
+
+  // Split emoji strings into arrays, handling multi-codepoint sequences
+  function splitEmoji(str) {
+    var result = [];
+    var i = 0;
+    var len = str.length;
+    while (i < len) {
+      var cp = str.codePointAt(i);
+      if (cp >= 0x1F1E6 && cp <= 0x1F1FF) {
+        if (i + 2 < len) {
+          var nextCp = str.codePointAt(i + 2);
+          if (nextCp >= 0x1F1E6 && nextCp <= 0x1F1FF) {
+            result.push(str.substring(i, i + 4));
+            i += 4;
+            continue;
+          }
+        }
+        result.push(str.substring(i, i + 2));
+        i += 2;
+        continue;
+      }
+      var start = i;
+      i += (cp > 0xFFFF) ? 2 : 1;
+      while (i < len) {
+        if (str.codePointAt(i) === 0x200D) {
+          i += 1;
+          if (i < len) {
+            var nextCp2 = str.codePointAt(i);
+            i += (nextCp2 > 0xFFFF) ? 2 : 1;
+            if (i < len && str.codePointAt(i) === 0xFE0F) i += 1;
+          }
+        } else if (str.codePointAt(i) === 0xFE0F) {
+          i += 1;
+        } else {
+          break;
+        }
+      }
+      result.push(str.substring(start, i));
+    }
+    return result;
+  }
+
+  var processed = {};
+  var allEmojis = [];
+  for (var cat in emojiMap) {
+    if (!emojiMap.hasOwnProperty(cat)) continue;
+    processed[cat] = splitEmoji(emojiMap[cat]);
+    for (var j = 0; j < processed[cat].length; j++) {
+      allEmojis.push({ cat: cat, emoji: processed[cat][j] });
+    }
+  }
+  // Add flag category — store emoji characters for search/comparison
+  processed['旗帜'] = flagList.map(function(f){ return twemojiToEmoji(f.c); });
+  var categories = Object.keys(emojiMap).concat(['旗帜']);
+  var activeCat = '笑脸';
+
+  function render(cat, search) {
+    cat = cat || activeCat;
+    search = (search || '').toLowerCase().trim();
+
+    var tabsHtml = categories.map(function(c) {
+      return '<button class="tool-tab' + (c === cat ? ' active' : '') + '" data-cat="' + c + '" style="padding:6px 14px;border:1px solid var(--border-color,#e5e7eb);background:' + (c===cat?'var(--bg-secondary,#e8f0fe)':'var(--bg-primary,#fff)') + ';border-radius:6px;cursor:pointer;color:var(--text-primary,#1f2937);font-size:14px;transition:all 0.15s;' + (c===cat?'font-weight:600;':'') + '">' + c + '</button>';
+    }).join('');
+    document.getElementById('emoji-tabs').innerHTML = tabsHtml;
+
+    var isFlag = (cat === '旗帜' && !search);
+    var html;
+
+    if (isFlag) {
+      // Special flag rendering with Twemoji images for cross-platform display
+      html = '<div class="tool-output"><div class="tool-output-title">旗帜 Emoji（' + flagList.length + ' 个，点击复制）</div>';
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px;">';
+      for (var fi = 0; fi < flagList.length; fi++) {
+        var f = flagList[fi];
+        var emojiChar = twemojiToEmoji(f.c);
+        html += '<button class="emoji-cell" data-emoji="' + emojiChar.replace(/"/g, '&quot;') + '" style="width:72px;min-height:62px;border:1px solid var(--border-color,#e5e7eb);background:var(--bg-primary,#fff);border-radius:8px;cursor:pointer;font-size:22px;text-align:center;padding:4px 2px;transition:transform 0.15s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;" title="点击复制 ' + f.n + '">'
+          + '<img src="' + twemojiBase + f.c + '.png" alt="' + f.n + '" style="width:28px;height:28px;display:block;image-rendering:auto;" loading="lazy">'
+          + '<span style="font-size:10px;color:var(--text-muted,#9ca3af);line-height:1.2;">' + f.n + '</span>'
+          + '</button>';
+      }
+      html += '</div></div>';
+    } else {
+      var list;
+      if (search) {
+        list = [];
+        for (var a = 0; a < allEmojis.length; a++) {
+          list.push(allEmojis[a].emoji);
+        }
+        // Also include flag emojis in search
+        for (var si = 0; si < flagList.length; si++) {
+          list.push(twemojiToEmoji(flagList[si].c));
+        }
+      } else {
+        list = processed[cat] || [];
+      }
+      html = '<div class="tool-output"><div class="tool-output-title">' + (search ? '搜索 "' + search + '"（' + list.length + ' 个结果）' : cat + '（' + list.length + ' 个 Emoji，点击复制）') + '</div>';
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(48px,1fr));gap:6px;">';
+      for (var i = 0; i < list.length; i++) {
+        html += '<button class="emoji-cell" data-emoji="' + list[i].replace(/"/g, '&quot;') + '" style="width:48px;height:48px;border:1px solid var(--border-color,#e5e7eb);background:var(--bg-primary,#fff);border-radius:8px;cursor:pointer;font-size:24px;text-align:center;line-height:48px;padding:0;transition:transform 0.15s;display:flex;align-items:center;justify-content:center;" title="点击复制">' + list[i] + '</button>';
+      }
+      html += '</div></div>';
+    }
+
+    document.getElementById('emoji-result').innerHTML = html;
+
+    var tabBtns = document.querySelectorAll('#emoji-tabs .tool-tab');
+    for (var t = 0; t < tabBtns.length; t++) {
+      tabBtns[t].addEventListener('click', function() {
+        activeCat = this.dataset.cat;
+        document.getElementById('emoji-search').value = '';
+        render(this.dataset.cat, '');
+      });
+    }
+
+    var cells = document.querySelectorAll('.emoji-cell');
+    for (var c = 0; c < cells.length; c++) {
+      cells[c].addEventListener('click', function() {
+        // Prefer data-emoji attribute (accurate for flags), fallback to text content
+        var emojiChar = this.dataset.emoji || '';
+        if (!emojiChar) {
+          for (var n = 0; n < this.childNodes.length; n++) {
+            if (this.childNodes[n].nodeType === 3) {
+              emojiChar = this.childNodes[n].textContent;
+              break;
+            }
+          }
+        }
+        if (!emojiChar) emojiChar = this.textContent.trim();
+        navigator.clipboard.writeText(emojiChar.trim()).then(function() {
+          var toast = document.createElement('div');
+          toast.textContent = '已复制!';
+          toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--success-color,#4caf50);color:#fff;padding:8px 20px;border-radius:6px;font-size:14px;z-index:9999;transition:opacity 0.3s;';
+          document.body.appendChild(toast);
+          setTimeout(function() {
+            toast.style.opacity = '0';
+            setTimeout(function() { toast.remove(); }, 300);
+          }, 1800);
+          var orig = this.style.background;
+          this.style.background = 'var(--success-bg,rgba(34,197,94,.1))';
+          var self = this;
+          setTimeout(function() { self.style.background = orig; }, 600);
+        }.bind(this));
+      });
+    }
+  }
+
+  render('笑脸', '');
+
+  document.getElementById('emoji-search').addEventListener('input', function() {
+    render(activeCat, this.value);
+  });
+})();
+</script>
+
+<style>
+.emoji-cell:hover {
+  transform: scale(1.15);
+  z-index: 2;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.tool-tab:hover {
+  background: var(--bg-secondary,#f0f4ff) !important;
+}
+</style>

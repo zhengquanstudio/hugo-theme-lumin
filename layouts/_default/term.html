@@ -1,0 +1,32 @@
+{{ define "main" }}
+{{ $isCat := eq .Data.Plural "categories" }}
+{{ $extra := cond $isCat "tags" "categories" }}
+<nav class="breadcrumb" aria-label="面包屑导航">
+  <ol class="breadcrumb-list">
+    <li class="breadcrumb-item"><a href="{{ site.BaseURL }}"><i class="fas fa-home" style="font-size:0.9em;margin-right:2px;"></i> 首页</a></li>
+    <li class="breadcrumb-item"><a href="/{{ .Data.Plural }}/"><i class="fas {{ if $isCat }}fa-folder-open{{ else }}fa-tags{{ end }}" style="font-size:0.85em;margin-right:4px;opacity:0.8;"></i>{{- if $isCat -}}分类{{- else -}}标签{{- end -}}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{- if $isCat -}}{{- partial "category-display-name.html" (dict "Site" .Site "Slug" .Data.Term) -}}{{- else -}}{{- .Title -}}{{- end -}}</li>
+  </ol>
+</nav>
+<div class="list-page archives-page taxonomy-term-page">
+  <header class="list-header">
+    <h1 class="list-title">
+      {{- if $isCat -}}
+        {{- partial "category-display-name.html" (dict "Site" .Site "Slug" .Data.Term) -}}
+      {{- else -}}
+        {{- .Title -}}
+      {{- end -}}
+    </h1>
+    {{ with .Description }}
+    <p class="list-description">{{ . }}</p>
+    {{ end }}
+    <div class="list-count">共 {{ len .Pages }} 篇文章</div>
+  </header>
+
+  <div class="taxonomy-term-body">
+    {{ partial "archive-post-list.html" (dict "Pages" .Pages "extraMeta" $extra) }}
+  </div>
+
+  {{ partial "taxonomy-cloud.html" (dict) }}
+</div>
+{{ end }}

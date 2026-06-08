@@ -1,0 +1,554 @@
+{{ define "main" }}
+<style>
+/* ===== 番茄钟页面 ===== */
+.main-wrapper:has(#pomo-page) .container{max-width:100%!important;padding-left:40px!important;padding-right:40px!important}
+
+.pomo-page{max-width:1480px;margin:0 auto 24px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+
+/* 页面头部 — 与出行轨迹统一风格 */
+.pomo-page-header{text-align:center;min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 24px;background:linear-gradient(135deg,#fef2f2 0%,#fee2e2 50%,#fce7f3 100%);border-radius:20px;margin-bottom:22px;box-shadow:0 4px 20px rgba(0,0,0,.08);position:relative;overflow:hidden;border:1px solid rgba(239,68,68,.12)}
+.pomo-page-header::before{content:'';position:absolute;top:-60%;left:-30%;width:200%;height:200%;background:radial-gradient(circle at 30% 40%,rgba(239,68,68,.08) 0%,transparent 55%);pointer-events:none}
+.pomo-page-title{font-size:2rem;font-weight:800;color:#1e293b;margin:0 0 10px;display:inline-flex;align-items:center;gap:12px;position:relative;z-index:1}
+.pomo-title-icon{font-size:1.4em;color:#ef4444;animation:pomo-icon-pulse 2.5s ease-in-out infinite;display:inline-block}
+@keyframes pomo-icon-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.pomo-page-subtitle{font-size:.95rem;color:#475569;margin:0;line-height:1.6;position:relative;z-index:1}
+
+/* 计时器主区域 */
+.pomo-timer-card{background:var(--bg-primary,#fff);border-radius:20px;border:1px solid var(--border-color,#e5e7eb);box-shadow:0 4px 20px rgba(0,0,0,.06);padding:40px 32px;text-align:center;margin-bottom:24px}
+
+/* 模式切换 */
+.pomo-modes{display:flex;gap:8px;justify-content:center;margin-bottom:32px}
+.pomo-mode-btn{padding:8px 20px;border-radius:50px;border:1.5px solid rgba(128,128,128,.2);background:var(--bg-primary,#fff);color:var(--text-primary,#1f2937);font-size:.85rem;font-weight:600;cursor:pointer;transition:all .25s ease;white-space:nowrap}
+.pomo-mode-btn:hover:not(.active){border-color:#ef4444;color:#ef4444;transform:translateY(-2px)}
+.pomo-mode-btn.active{background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;border-color:transparent;box-shadow:0 4px 16px rgba(239,68,68,.35)}
+.pomo-mode-btn.active[data-mode="shortBreak"]{background:linear-gradient(135deg,#22c55e,#10b981);box-shadow:0 4px 16px rgba(34,197,94,.35)}
+.pomo-mode-btn.active[data-mode="longBreak"]{background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 4px 16px rgba(99,102,241,.35)}
+
+/* 圆形计时器 */
+.pomo-clock{position:relative;width:280px;height:280px;margin:0 auto 32px}
+.pomo-clock svg{width:100%;height:100%;transform:rotate(-90deg)}
+.pomo-clock-bg{fill:none;stroke:var(--border-color,#e5e7eb);stroke-width:8}
+.pomo-clock-progress{fill:none;stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .5s ease,stroke .3s ease}
+.pomo-clock-progress.work{stroke:#ef4444}
+.pomo-clock-progress.shortBreak{stroke:#22c55e}
+.pomo-clock-progress.longBreak{stroke:#6366f1}
+.pomo-clock-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.pomo-clock-time{font-size:3.2rem;font-weight:800;color:var(--text-primary,#1e293b);font-variant-numeric:tabular-nums;letter-spacing:2px;line-height:1}
+.pomo-clock-label{font-size:.82rem;color:var(--text-muted,#9ca3af);margin-top:6px;font-weight:500}
+
+/* 控制按钮 */
+.pomo-controls{display:flex;gap:12px;justify-content:center;align-items:center;margin-bottom:24px}
+.pomo-btn{width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.2rem;transition:all .25s ease;box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.pomo-btn-primary{background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;width:64px;height:64px;font-size:1.4rem}
+.pomo-btn-primary:hover{transform:scale(1.08);box-shadow:0 6px 20px rgba(239,68,68,.4)}
+.pomo-btn-primary.shortBreak{background:linear-gradient(135deg,#22c55e,#10b981)}
+.pomo-btn-primary.shortBreak:hover{box-shadow:0 6px 20px rgba(34,197,94,.4)}
+.pomo-btn-primary.longBreak{background:linear-gradient(135deg,#6366f1,#8b5cf6)}
+.pomo-btn-primary.longBreak:hover{box-shadow:0 6px 20px rgba(99,102,241,.4)}
+.pomo-btn-secondary{background:var(--bg-secondary,#f3f4f6);color:var(--text-primary,#1f2937)}
+.pomo-btn-secondary:hover{background:var(--border-color,#e5e7eb);transform:scale(1.05)}
+
+/* 设置区域 */
+.pomo-settings{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;padding:20px;background:var(--bg-secondary,#f9fafb);border-radius:14px;border:1px solid var(--border-color,#e5e7eb)}
+.pomo-setting-item{display:flex;flex-direction:column;align-items:center;gap:6px}
+.pomo-setting-label{font-size:.78rem;font-weight:600;color:var(--text-muted,#9ca3af)}
+.pomo-setting-control{display:flex;align-items:center;gap:8px}
+.pomo-setting-btn{width:28px;height:28px;border-radius:8px;border:1px solid var(--border-color,#e5e7eb);background:var(--bg-primary,#fff);color:var(--text-primary,#1f2937);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9rem;transition:all .2s}
+.pomo-setting-btn:hover{border-color:#ef4444;color:#ef4444}
+.pomo-setting-value{font-size:1.1rem;font-weight:700;color:var(--text-primary,#1f293b);min-width:32px;text-align:center;font-variant-numeric:tabular-nums}
+
+/* 统计区域 */
+.pomo-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.pomo-stat-card{background:var(--bg-primary,#fff);border-radius:14px;border:1px solid var(--border-color,#e5e7eb);padding:16px 12px;text-align:center;transition:all .25s}
+.pomo-stat-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.06)}
+.pomo-stat-icon{font-size:1.4rem;margin-bottom:6px}
+.pomo-stat-value{font-size:1.5rem;font-weight:800;color:var(--text-primary,#1e293b);font-variant-numeric:tabular-nums}
+.pomo-stat-label{font-size:.72rem;color:var(--text-muted,#9ca3af);margin-top:2px;font-weight:500}
+
+/* 白噪音 */
+.pomo-ambient{background:var(--bg-primary,#fff);border-radius:14px;border:1px solid var(--border-color,#e5e7eb);padding:20px;margin-bottom:24px}
+.pomo-ambient-title{font-size:.9rem;font-weight:700;color:var(--text-primary,#1e293b);margin:0 0 14px;display:flex;align-items:center;gap:8px}
+.pomo-ambient-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px}
+.pomo-ambient-btn{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;border-radius:12px;border:1.5px solid var(--border-color,#e5e7eb);background:var(--bg-secondary,#f9fafb);cursor:pointer;transition:all .25s}
+.pomo-ambient-btn:hover{border-color:#6366f1;transform:translateY(-2px)}
+.pomo-ambient-btn.active{border-color:#6366f1;background:rgba(99,102,241,.08);box-shadow:0 2px 8px rgba(99,102,241,.15)}
+.pomo-ambient-icon{font-size:1.3rem}
+.pomo-ambient-name{font-size:.72rem;font-weight:600;color:var(--text-muted,#64748b)}
+.pomo-ambient-btn.active .pomo-ambient-name{color:#6366f1}
+
+/* 任务列表 */
+.pomo-tasks{background:var(--bg-primary,#fff);border-radius:14px;border:1px solid var(--border-color,#e5e7eb);padding:20px;margin-bottom:24px}
+.pomo-tasks-title{font-size:.9rem;font-weight:700;color:var(--text-primary,#1e293b);margin:0 0 14px;display:flex;align-items:center;gap:8px}
+.pomo-task-input{display:flex;gap:8px;margin-bottom:14px}
+.pomo-task-input input{flex:1;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border-color,#e5e7eb);background:var(--bg-secondary,#f9fafb);color:var(--text-primary,#1f2937);font-size:.85rem;outline:none;transition:border-color .2s}
+.pomo-task-input input:focus{border-color:#6366f1}
+.pomo-task-input button{padding:10px 18px;border-radius:10px;border:none;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.pomo-task-input button:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(99,102,241,.3)}
+.pomo-task-list{list-style:none;padding:0;margin:0}
+.pomo-task-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;margin-bottom:6px;background:var(--bg-secondary,#f9fafb);transition:all .2s}
+.pomo-task-item:hover{background:var(--bg-primary,#fff);box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.pomo-task-check{width:20px;height:20px;border-radius:6px;border:2px solid var(--border-color,#d1d5db);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;background:var(--bg-primary,#fff)}
+.pomo-task-check.done{background:#22c55e;border-color:#22c55e;color:#fff}
+.pomo-task-text{flex:1;font-size:.85rem;color:var(--text-primary,#1f2937)}
+.pomo-task-text.done{text-decoration:line-through;color:var(--text-muted,#9ca3af)}
+.pomo-task-pomo{font-size:.72rem;color:var(--text-muted,#9ca3af);display:flex;align-items:center;gap:2px}
+.pomo-task-delete{width:24px;height:24px;border-radius:6px;border:none;background:transparent;color:var(--text-muted,#9ca3af);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.75rem;transition:all .2s;opacity:0}
+.pomo-task-item:hover .pomo-task-delete{opacity:1}
+.pomo-task-delete:hover{background:#fef2f2;color:#ef4444}
+
+/* 暗色模式 */
+[data-theme="dark"] .pomo-page-header{background:linear-gradient(135deg,#1c1917 0%,#292524 50%,#1c1917 100%);border-color:rgba(239,68,68,.15)}
+[data-theme="dark"] .pomo-page-title{color:#f1f5f9}
+[data-theme="dark"] .pomo-page-subtitle{color:#94a3b8}
+[data-theme="dark"] .pomo-timer-card{background:var(--bg-primary,#1e293b);border-color:var(--border-color,#334155)}
+[data-theme="dark"] .pomo-clock-bg{stroke:#334155}
+[data-theme="dark"] .pomo-clock-time{color:#f1f5f9}
+[data-theme="dark"] .pomo-btn-secondary{background:#334155;color:#e2e8f0}
+[data-theme="dark"] .pomo-btn-secondary:hover{background:#475569}
+[data-theme="dark"] .pomo-settings{background:rgba(15,23,42,.6);border-color:#334155}
+[data-theme="dark"] .pomo-setting-btn{background:#1e293b;border-color:#475569;color:#e2e8f0}
+[data-theme="dark"] .pomo-stat-card{background:var(--bg-primary,#1e293b);border-color:#334155}
+[data-theme="dark"] .pomo-stat-value{color:#f1f5f9}
+[data-theme="dark"] .pomo-ambient{background:var(--bg-primary,#1e293b);border-color:#334155}
+[data-theme="dark"] .pomo-ambient-btn{background:rgba(15,23,42,.6);border-color:#475569}
+[data-theme="dark"] .pomo-ambient-btn.active{border-color:#818cf8;background:rgba(99,102,241,.12)}
+[data-theme="dark"] .pomo-tasks{background:var(--bg-primary,#1e293b);border-color:#334155}
+[data-theme="dark"] .pomo-task-input input{background:rgba(15,23,42,.6);border-color:#475569;color:#e2e8f0}
+[data-theme="dark"] .pomo-task-item{background:rgba(15,23,42,.6)}
+[data-theme="dark"] .pomo-task-item:hover{background:var(--bg-primary,#1e293b)}
+[data-theme="dark"] .pomo-task-check{background:#1e293b;border-color:#475569}
+[data-theme="dark"] .pomo-task-delete:hover{background:rgba(127,29,29,.3)}
+
+/* 响应式 */
+@media(max-width:900px){
+  .main-wrapper:has(.pomo-page) .container{padding-left:16px!important;padding-right:16px!important}
+  .pomo-page-header{padding:26px 16px 20px;min-height:160px}
+  .pomo-page-title{font-size:1.65rem}
+}
+@media(max-width:600px){
+  .main-wrapper:has(#pomo-page) .container{padding-left:12px!important;padding-right:12px!important}
+  .pomo-page-header{padding:22px 12px 16px;min-height:140px}
+  .pomo-page-title{font-size:1.4rem}
+  .pomo-clock{width:220px;height:220px}
+  .pomo-clock-time{font-size:2.4rem}
+  .pomo-settings{grid-template-columns:1fr;gap:10px}
+  .pomo-stats{grid-template-columns:repeat(2,1fr)}
+  .pomo-ambient-grid{grid-template-columns:repeat(3,1fr)}
+  .pomo-timer-card{padding:28px 20px}
+}
+</style>
+
+<div class="pomo-page" id="pomo-page">
+  <div class="pomo-page-header">
+    <h1 class="pomo-page-title"><span class="pomo-title-icon"><i class="fas fa-clock"></i></span> 番茄钟</h1>
+    <p class="pomo-page-subtitle">专注工作，高效生活 — 番茄工作法计时器</p>
+  </div>
+
+  <div class="pomo-timer-card">
+    <!-- 模式切换 -->
+    <div class="pomo-modes">
+      <button class="pomo-mode-btn active" data-mode="work" onclick="Pomodoro.setMode('work')">专注</button>
+      <button class="pomo-mode-btn" data-mode="shortBreak" onclick="Pomodoro.setMode('shortBreak')">短休息</button>
+      <button class="pomo-mode-btn" data-mode="longBreak" onclick="Pomodoro.setMode('longBreak')">长休息</button>
+    </div>
+
+    <!-- 圆形计时器 -->
+    <div class="pomo-clock">
+      <svg viewBox="0 0 280 280">
+        <circle class="pomo-clock-bg" cx="140" cy="140" r="126"></circle>
+        <circle class="pomo-clock-progress work" id="pomoProgress" cx="140" cy="140" r="126"
+          stroke-dasharray="791.68" stroke-dashoffset="0"></circle>
+      </svg>
+      <div class="pomo-clock-center">
+        <div class="pomo-clock-time" id="pomoTime">25:00</div>
+        <div class="pomo-clock-label" id="pomoLabel">专注时间</div>
+      </div>
+    </div>
+
+    <!-- 控制按钮 -->
+    <div class="pomo-controls">
+      <button class="pomo-btn pomo-btn-secondary" onclick="Pomodoro.reset()" title="重置"><i class="fas fa-redo"></i></button>
+      <button class="pomo-btn pomo-btn-primary" id="pomoStartBtn" onclick="Pomodoro.toggle()" title="开始"><i class="fas fa-play"></i></button>
+      <button class="pomo-btn pomo-btn-secondary" onclick="Pomodoro.skip()" title="跳过"><i class="fas fa-forward"></i></button>
+    </div>
+
+    <!-- 时间设置 -->
+    <div class="pomo-settings">
+      <div class="pomo-setting-item">
+        <span class="pomo-setting-label">专注 (分钟)</span>
+        <div class="pomo-setting-control">
+          <button class="pomo-setting-btn" onclick="Pomodoro.adjustTime('work',-1)">-</button>
+          <span class="pomo-setting-value" id="workMin">25</span>
+          <button class="pomo-setting-btn" onclick="Pomodoro.adjustTime('work',1)">+</button>
+        </div>
+      </div>
+      <div class="pomo-setting-item">
+        <span class="pomo-setting-label">短休息 (分钟)</span>
+        <div class="pomo-setting-control">
+          <button class="pomo-setting-btn" onclick="Pomodoro.adjustTime('shortBreak',-1)">-</button>
+          <span class="pomo-setting-value" id="shortBreakMin">5</span>
+          <button class="pomo-setting-btn" onclick="Pomodoro.adjustTime('shortBreak',1)">+</button>
+        </div>
+      </div>
+      <div class="pomo-setting-item">
+        <span class="pomo-setting-label">长休息 (分钟)</span>
+        <div class="pomo-setting-control">
+          <button class="pomo-setting-btn" onclick="Pomodoro.adjustTime('longBreak',-1)">-</button>
+          <span class="pomo-setting-value" id="longBreakMin">15</span>
+          <button class="pomo-setting-btn" onclick="Pomodoro.adjustTime('longBreak',1)">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 今日统计 -->
+  <div class="pomo-stats">
+    <div class="pomo-stat-card">
+      <div class="pomo-stat-icon">🍅</div>
+      <div class="pomo-stat-value" id="statPomos">0</div>
+      <div class="pomo-stat-label">完成番茄</div>
+    </div>
+    <div class="pomo-stat-card">
+      <div class="pomo-stat-icon">⏱️</div>
+      <div class="pomo-stat-value" id="statMinutes">0</div>
+      <div class="pomo-stat-label">专注分钟</div>
+    </div>
+    <div class="pomo-stat-card">
+      <div class="pomo-stat-icon">🔥</div>
+      <div class="pomo-stat-value" id="statStreak">0</div>
+      <div class="pomo-stat-label">连续番茄</div>
+    </div>
+    <div class="pomo-stat-card">
+      <div class="pomo-stat-icon">🎯</div>
+      <div class="pomo-stat-value" id="statGoal">0/8</div>
+      <div class="pomo-stat-label">今日目标</div>
+    </div>
+  </div>
+
+  <!-- 白噪音 -->
+  <div class="pomo-ambient">
+    <h3 class="pomo-ambient-title"><i class="fas fa-headphones" style="color:#6366f1"></i> 白噪音</h3>
+    <div class="pomo-ambient-grid">
+      <button class="pomo-ambient-btn" data-sound="rain" onclick="Pomodoro.toggleSound('rain')">
+        <span class="pomo-ambient-icon">🌧️</span>
+        <span class="pomo-ambient-name">雨声</span>
+      </button>
+      <button class="pomo-ambient-btn" data-sound="forest" onclick="Pomodoro.toggleSound('forest')">
+        <span class="pomo-ambient-icon">🌲</span>
+        <span class="pomo-ambient-name">森林</span>
+      </button>
+      <button class="pomo-ambient-btn" data-sound="ocean" onclick="Pomodoro.toggleSound('ocean')">
+        <span class="pomo-ambient-icon">🌊</span>
+        <span class="pomo-ambient-name">海浪</span>
+      </button>
+      <button class="pomo-ambient-btn" data-sound="fire" onclick="Pomodoro.toggleSound('fire')">
+        <span class="pomo-ambient-icon">🔥</span>
+        <span class="pomo-ambient-name">篝火</span>
+      </button>
+      <button class="pomo-ambient-btn" data-sound="cafe" onclick="Pomodoro.toggleSound('cafe')">
+        <span class="pomo-ambient-icon">☕</span>
+        <span class="pomo-ambient-name">咖啡厅</span>
+      </button>
+      <button class="pomo-ambient-btn" data-sound="wind" onclick="Pomodoro.toggleSound('wind')">
+        <span class="pomo-ambient-icon">💨</span>
+        <span class="pomo-ambient-name">微风</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 任务列表 -->
+  <div class="pomo-tasks">
+    <h3 class="pomo-tasks-title"><i class="fas fa-tasks" style="color:#6366f1"></i> 任务清单</h3>
+    <div class="pomo-task-input">
+      <input type="text" id="taskInput" placeholder="输入任务，按回车添加..." onkeydown="if(event.key==='Enter')Pomodoro.addTask()" />
+      <button onclick="Pomodoro.addTask()">添加</button>
+    </div>
+    <ul class="pomo-task-list" id="taskList"></ul>
+  </div>
+
+  {{ partial "comments.html" . }}
+</div>
+
+<script>
+var Pomodoro = (function() {
+  var CIRCUMFERENCE = 2 * Math.PI * 126; // 791.68
+  var config = { work: 25, shortBreak: 5, longBreak: 15, longBreakInterval: 4, dailyGoal: 8 };
+  var state = { mode: 'work', running: false, timeLeft: 25*60, totalTime: 25*60, pomosCompleted: 0, streak: 0, totalMinutes: 0 };
+  var timer = null;
+  var tasks = [];
+  var activeSound = null;
+  var audioCtx = null;
+  var soundNodes = {};
+
+  // 从 localStorage 恢复今日数据
+  var today = new Date().toDateString();
+  var saved = null;
+  try { saved = JSON.parse(localStorage.getItem('pomo_stats')); } catch(e) {}
+  if (saved && saved.date === today) {
+    state.pomosCompleted = saved.pomos || 0;
+    state.totalMinutes = saved.minutes || 0;
+    state.streak = saved.streak || 0;
+  }
+
+  function saveStats() {
+    try {
+      localStorage.setItem('pomo_stats', JSON.stringify({
+        date: today, pomos: state.pomosCompleted, minutes: state.totalMinutes, streak: state.streak
+      }));
+    } catch(e) {}
+  }
+
+  function updateDisplay() {
+    var min = Math.floor(state.timeLeft / 60);
+    var sec = state.timeLeft % 60;
+    document.getElementById('pomoTime').textContent =
+      String(min).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+
+    var progress = 1 - (state.timeLeft / state.totalTime);
+    var offset = CIRCUMFERENCE * (1 - progress);
+    var el = document.getElementById('pomoProgress');
+    el.style.strokeDashoffset = offset;
+    el.className = 'pomo-clock-progress ' + state.mode;
+
+    var labels = { work: '专注时间', shortBreak: '短休息', longBreak: '长休息' };
+    document.getElementById('pomoLabel').textContent = labels[state.mode];
+
+    // 更新按钮样式
+    var btn = document.getElementById('pomoStartBtn');
+    btn.className = 'pomo-btn pomo-btn-primary ' + state.mode;
+    btn.innerHTML = state.running ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
+
+    // 更新统计
+    document.getElementById('statPomos').textContent = state.pomosCompleted;
+    document.getElementById('statMinutes').textContent = state.totalMinutes;
+    document.getElementById('statStreak').textContent = state.streak;
+    document.getElementById('statGoal').textContent = state.pomosCompleted + '/' + config.dailyGoal;
+
+    // 更新页面标题
+    document.title = (state.running ? String(min).padStart(2,'0') + ':' + String(sec).padStart(2,'0') + ' - ' : '') + '番茄钟';
+  }
+
+  function updateModeButtons() {
+    var btns = document.querySelectorAll('.pomo-mode-btn');
+    btns.forEach(function(b) {
+      b.classList.toggle('active', b.dataset.mode === state.mode);
+    });
+  }
+
+  function tick() {
+    if (state.timeLeft <= 0) {
+      complete();
+      return;
+    }
+    state.timeLeft--;
+    updateDisplay();
+  }
+
+  function complete() {
+    clearInterval(timer);
+    timer = null;
+    state.running = false;
+
+    if (state.mode === 'work') {
+      state.pomosCompleted++;
+      state.totalMinutes += config.work;
+      state.streak++;
+      saveStats();
+      playNotification();
+
+      // 自动切换休息模式
+      if (state.pomosCompleted % config.longBreakInterval === 0) {
+        setModeInternal('longBreak');
+      } else {
+        setModeInternal('shortBreak');
+      }
+    } else {
+      playNotification();
+      setModeInternal('work');
+    }
+    updateDisplay();
+  }
+
+  function setModeInternal(mode) {
+    state.mode = mode;
+    state.totalTime = config[mode] * 60;
+    state.timeLeft = state.totalTime;
+    state.running = false;
+    clearInterval(timer);
+    timer = null;
+    updateModeButtons();
+    updateDisplay();
+  }
+
+  function playNotification() {
+    try {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 800;
+      osc.type = 'sine';
+      gain.gain.value = 0.3;
+      osc.start();
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+      osc.stop(ctx.currentTime + 0.8);
+      // 第二声
+      setTimeout(function() {
+        var osc2 = ctx.createOscillator();
+        var gain2 = ctx.createGain();
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.frequency.value = 1000;
+        osc2.type = 'sine';
+        gain2.gain.value = 0.3;
+        osc2.start();
+        gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+        osc2.stop(ctx.currentTime + 0.8);
+      }, 300);
+    } catch(e) {}
+  }
+
+  // 白噪音生成（使用 Web Audio API 合成）
+  function createNoise(type) {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (soundNodes[type]) return soundNodes[type];
+
+    var bufferSize = 2 * audioCtx.sampleRate;
+    var buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    var data = buffer.getChannelData(0);
+
+    if (type === 'rain') {
+      for (var i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.3;
+    } else if (type === 'forest') {
+      for (var i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.15;
+    } else if (type === 'ocean') {
+      for (var i = 0; i < bufferSize; i++) {
+        var wave = Math.sin(i / audioCtx.sampleRate * Math.PI * 0.1);
+        data[i] = (Math.random() * 2 - 1) * 0.2 * (0.5 + 0.5 * wave);
+      }
+    } else if (type === 'fire') {
+      for (var i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.1;
+    } else if (type === 'cafe') {
+      for (var i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.08;
+    } else if (type === 'wind') {
+      for (var i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.12;
+    }
+
+    var source = audioCtx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
+
+    var gain = audioCtx.createGain();
+    gain.gain.value = 0.5;
+    source.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    soundNodes[type] = { source: source, gain: gain, playing: false };
+    source.start();
+    gain.gain.value = 0; // 初始静音
+    return soundNodes[type];
+  }
+
+  function renderTasks() {
+    var list = document.getElementById('taskList');
+    list.innerHTML = tasks.map(function(t, i) {
+      return '<li class="pomo-task-item">' +
+        '<div class="pomo-task-check' + (t.done ? ' done' : '') + '" onclick="Pomodoro.toggleTask(' + i + ')">' +
+        (t.done ? '<i class="fas fa-check" style="font-size:.65rem"></i>' : '') + '</div>' +
+        '<span class="pomo-task-text' + (t.done ? ' done' : '') + '">' + escapeHtml(t.text) + '</span>' +
+        '<span class="pomo-task-pomo">' + (t.pomos > 0 ? '🍅×' + t.pomos : '') + '</span>' +
+        '<button class="pomo-task-delete" onclick="Pomodoro.deleteTask(' + i + ')"><i class="fas fa-times"></i></button>' +
+        '</li>';
+    }).join('');
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // 初始化
+  updateDisplay();
+
+  return {
+    toggle: function() {
+      if (state.running) {
+        clearInterval(timer);
+        timer = null;
+        state.running = false;
+      } else {
+        state.running = true;
+        timer = setInterval(tick, 1000);
+      }
+      updateDisplay();
+    },
+    reset: function() {
+      clearInterval(timer);
+      timer = null;
+      state.timeLeft = state.totalTime;
+      state.running = false;
+      updateDisplay();
+    },
+    skip: function() {
+      complete();
+    },
+    setMode: function(mode) {
+      setModeInternal(mode);
+    },
+    adjustTime: function(mode, delta) {
+      config[mode] = Math.max(1, Math.min(60, config[mode] + delta));
+      document.getElementById(mode + 'Min').textContent = config[mode];
+      if (mode === state.mode && !state.running) {
+        state.totalTime = config[mode] * 60;
+        state.timeLeft = state.totalTime;
+        updateDisplay();
+      }
+    },
+    toggleSound: function(type) {
+      var nodes = createNoise(type);
+      var btn = document.querySelector('.pomo-ambient-btn[data-sound="' + type + '"]');
+
+      if (activeSound && activeSound !== type) {
+        // 关闭当前声音
+        var prev = soundNodes[activeSound];
+        if (prev) { prev.gain.gain.value = 0; prev.playing = false; }
+        var prevBtn = document.querySelector('.pomo-ambient-btn[data-sound="' + activeSound + '"]');
+        if (prevBtn) prevBtn.classList.remove('active');
+      }
+
+      if (nodes.playing) {
+        nodes.gain.gain.value = 0;
+        nodes.playing = false;
+        if (btn) btn.classList.remove('active');
+        activeSound = null;
+      } else {
+        nodes.gain.gain.value = 0.5;
+        nodes.playing = true;
+        if (btn) btn.classList.add('active');
+        activeSound = type;
+      }
+    },
+    addTask: function() {
+      var input = document.getElementById('taskInput');
+      var text = input.value.trim();
+      if (!text) return;
+      tasks.push({ text: text, done: false, pomos: 0 });
+      input.value = '';
+      renderTasks();
+    },
+    toggleTask: function(idx) {
+      if (tasks[idx]) {
+        tasks[idx].done = !tasks[idx].done;
+        renderTasks();
+      }
+    },
+    deleteTask: function(idx) {
+      tasks.splice(idx, 1);
+      renderTasks();
+    }
+  };
+})();
+</script>
+{{ end }}

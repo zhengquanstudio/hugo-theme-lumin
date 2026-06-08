@@ -1,0 +1,48 @@
+<div class="tool-input-group">
+  <label class="tool-label">输入 n 计算阶乘 (0 ≤ n ≤ 170, 超出使用科学计数法)</label>
+  <input class="tool-input" type="number" id="fc-n" value="10" min="0" max="10000" step="1" placeholder="输入n">
+</div>
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="fc-calc">计算 n!</button>
+</div>
+<div class="tool-result" id="fc-result"></div>
+
+<script>
+(function() {
+  document.getElementById('fc-calc').addEventListener('click', function() {
+    var n = parseInt(document.getElementById('fc-n').value);
+    var result = document.getElementById('fc-result');
+
+    if (isNaN(n) || n < 0) {
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">错误</div><p>请输入一个非负整数。</p></div>';
+      return;
+    }
+
+    if (n === 0 || n === 1) {
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">结果</div><p>' + n + '! = <strong>1</strong></p><p>计算过程：' + n + '! = 1</p></div>';
+      return;
+    }
+
+    var process = n + '! = ' + n;
+    if (n > 170) {
+      var logSum = 0;
+      for (var i = 2; i <= n; i++) logSum += Math.log10(i);
+      var mantissa = Math.pow(10, logSum - Math.floor(logSum));
+      process = n + '! ≈ ' + mantissa.toFixed(6) + ' × 10^' + Math.floor(logSum);
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">结果（科学计数法）</div><p>' + n + '! ≈ <strong>' + mantissa.toFixed(6) + ' × 10<sup>' + Math.floor(logSum) + '</sup></strong></p><p>计算过程：使用对数求和计算</p></div>';
+      return;
+    }
+
+    try {
+      var val = 1n;
+      for (var i = 2n; i <= BigInt(n); i++) val *= i;
+      process = '';
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">结果</div><p>' + n + '! = <strong>' + val.toString() + '</strong></p><p style="font-size:12px;color:#888;">位数：' + val.toString().length + ' 位</p></div>';
+    } catch(e) {
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">错误</div><p>计算错误。</p></div>';
+    }
+  });
+
+  document.getElementById('fc-calc').click();
+})();
+</script>

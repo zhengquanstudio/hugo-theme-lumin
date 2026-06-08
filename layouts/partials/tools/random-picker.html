@@ -1,0 +1,195 @@
+<div class="tool-input-group">
+  <label class="tool-label">输入候选项（每行一个）</label>
+  <textarea class="tool-textarea" id="rp-items" rows="6" placeholder="例如：&#10;张三&#10;李四&#10;王五&#10;赵六"></textarea>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">快速模板</label>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">
+    <button class="tool-btn" id="rp-tpl-numbers" style="font-size:.78rem;">数字 1-100</button>
+    <button class="tool-btn" id="rp-tpl-letters" style="font-size:.78rem;">字母 A-Z</button>
+    <button class="tool-btn" id="rp-tpl-yesno" style="font-size:.78rem;">是 / 否</button>
+  </div>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">抽取数量：<span id="rp-pick-value">1</span></label>
+  <div class="tool-range-group">
+    <input type="range" class="tool-range" id="rp-pick-count" min="1" max="20" value="1">
+    <span class="tool-range-value" id="rp-pick-display">1</span>
+  </div>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-switch">
+    <input type="checkbox" id="rp-allow-repeat">
+    <span class="tool-switch-track"></span>
+    允许重复抽取
+  </label>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="rp-pick-btn" style="font-size:1.1rem;padding:12px 24px;">🎲 抽取</button>
+  <button class="tool-btn" id="rp-reset-btn">重置</button>
+</div>
+
+<div class="tool-output" id="rp-output-area" style="display:none;">
+  <label class="tool-label">抽取结果</label>
+  <div id="rp-results" style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:8px;"></div>
+</div>
+
+<div id="rp-history-area" style="display:none;margin-top:16px;">
+  <label class="tool-label">历史记录</label>
+  <div id="rp-history"></div>
+</div>
+
+<script>
+(function(){
+  const itemsTextarea = document.getElementById('rp-items');
+  const pickCountSlider = document.getElementById('rp-pick-count');
+  const pickCountValue = document.getElementById('rp-pick-value');
+  const pickCountDisplay = document.getElementById('rp-pick-display');
+  const allowRepeatCheckbox = document.getElementById('rp-allow-repeat');
+  const pickBtn = document.getElementById('rp-pick-btn');
+  const resetBtn = document.getElementById('rp-reset-btn');
+  const outputArea = document.getElementById('rp-output-area');
+  const resultsDiv = document.getElementById('rp-results');
+  const historyArea = document.getElementById('rp-history-area');
+  const historyDiv = document.getElementById('rp-history');
+
+  const history = [];
+  const COLORS = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe', '#43e97b', '#fa709a', '#feb47b', '#ff7eb3'];
+
+  pickCountSlider.addEventListener('input', () => {
+    pickCountValue.textContent = pickCountSlider.value;
+    pickCountDisplay.textContent = pickCountSlider.value;
+  });
+
+  // Templates
+  document.getElementById('rp-tpl-numbers').addEventListener('click', () => {
+    itemsTextarea.value = Array.from({ length: 100 }, (_, i) => i + 1).join('\n');
+  });
+  document.getElementById('rp-tpl-letters').addEventListener('click', () => {
+    itemsTextarea.value = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).join('\n');
+  });
+  document.getElementById('rp-tpl-yesno').addEventListener('click', () => {
+    itemsTextarea.value = '是\n否';
+  });
+
+  function getItems() {
+    return itemsTextarea.value.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+  }
+
+  function pickRandom(items, count, allowRepeat) {
+    if (allowRepeat) {
+      const results = [];
+      for (let i = 0; i < count; i++) {
+        results.push(items[Math.floor(Math.random() * items.length)]);
+      }
+      return results;
+    } else {
+      const shuffled = [...items];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled.slice(0, Math.min(count, shuffled.length));
+    }
+  }
+
+  function renderResults(picked) {
+    resultsDiv.innerHTML = '';
+    picked.forEach((item, i) => {
+      const color = COLORS[i % COLORS.length];
+      const el = document.createElement('div');
+      el.style.cssText = `
+        display:inline-flex;align-items:center;justify-content:center;
+        padding:12px 20px;border-radius:12px;
+        background:${color}15;color:${color};
+        border:2px solid ${color}40;
+        font-size:1.3rem;font-weight:700;
+        animation:rp-pop 0.3s ease ${i * 0.08}s both;
+        min-width:60px;text-align:center;
+      `;
+      el.textContent = item;
+      resultsDiv.appendChild(el);
+    });
+
+    // Add keyframes if not present
+    if (!document.getElementById('rp-keyframes')) {
+      const style = document.createElement('style');
+      style.id = 'rp-keyframes';
+      style.textContent = '@keyframes rp-pop{0%{transform:scale(0.3);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}';
+      document.head.appendChild(style);
+    }
+  }
+
+  function renderHistory() {
+    if (history.length === 0) {
+      historyArea.style.display = 'none';
+      return;
+    }
+    historyArea.style.display = 'block';
+    historyDiv.innerHTML = '';
+    history.forEach((entry, i) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 10px;margin-bottom:4px;background:var(--bg-secondary,#f9fafb);border:1px solid var(--border-color,#e5e7eb);border-radius:6px;font-size:.85rem;';
+
+      const num = document.createElement('span');
+      num.style.cssText = 'color:var(--text-muted,#9ca3af);min-width:24px;';
+      num.textContent = `#${history.length - i}`;
+
+      const items = document.createElement('span');
+      items.style.cssText = 'flex:1;color:var(--text-primary,#1f2937);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+      items.textContent = entry.join('、');
+
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'tool-copy-btn';
+      copyBtn.textContent = '复制';
+      copyBtn.style.cssText = 'flex-shrink:0;font-size:.75rem;';
+      copyBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(entry.join(', ')).then(() => {
+          copyBtn.textContent = '已复制！';
+          setTimeout(() => { copyBtn.textContent = '复制'; }, 1500);
+        }).catch(() => {});
+      });
+
+      row.appendChild(num);
+      row.appendChild(items);
+      row.appendChild(copyBtn);
+      historyDiv.appendChild(row);
+    });
+  }
+
+  pickBtn.addEventListener('click', () => {
+    const items = getItems();
+    if (items.length === 0) { alert('请输入候选项'); return; }
+
+    const count = parseInt(pickCountSlider.value, 10);
+    const allowRepeat = allowRepeatCheckbox.checked;
+
+    if (!allowRepeat && count > items.length) {
+      alert(`候选项只有 ${items.length} 个，不允许重复时最多抽取 ${items.length} 个`);
+      return;
+    }
+
+    const picked = pickRandom(items, count, allowRepeat);
+    renderResults(picked);
+    outputArea.style.display = '';
+
+    history.unshift(picked);
+    if (history.length > 10) history.pop();
+    renderHistory();
+  });
+
+  resetBtn.addEventListener('click', () => {
+    itemsTextarea.value = '';
+    resultsDiv.innerHTML = '';
+    outputArea.style.display = 'none';
+    pickCountSlider.value = 1;
+    pickCountValue.textContent = '1';
+    pickCountDisplay.textContent = '1';
+    allowRepeatCheckbox.checked = false;
+  });
+})();
+</script>

@@ -1,0 +1,343 @@
+{{ define "main" }}
+<style>
+/* ===== 五子棋页面 ===== */
+.main-wrapper:has(#gomoku-page) .container{max-width:100%!important;padding-left:40px!important;padding-right:40px!important}
+
+.gomoku-page{max-width:1480px;margin:0 auto 24px;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+
+/* 页面头部 */
+.gomoku-page-header{text-align:center;min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 24px;background:linear-gradient(135deg,#fef3c7 0%,#fde68a 50%,#fbbf24 100%);border-radius:20px;margin-bottom:22px;box-shadow:0 4px 20px rgba(0,0,0,.08);position:relative;overflow:hidden;border:1px solid rgba(245,158,11,.12)}
+.gomoku-page-header::before{content:'';position:absolute;top:-60%;left:-30%;width:200%;height:200%;background:radial-gradient(circle at 30% 40%,rgba(245,158,11,.1) 0%,transparent 55%);pointer-events:none}
+.gomoku-page-title{font-size:2rem;font-weight:800;color:#1e293b;margin:0 0 8px;display:inline-flex;align-items:center;gap:12px;position:relative;z-index:1}
+.gomoku-title-icon{font-size:1.4em;color:#f59e0b;animation:gomoku-icon-bounce 2.5s ease-in-out infinite;display:inline-block}
+@keyframes gomoku-icon-bounce{0%,100%{transform:scale(1) rotate(-5deg)}50%{transform:scale(1.08) rotate(5deg)}}
+.gomoku-page-subtitle{font-size:.95rem;color:#475569;margin:0;line-height:1.6;position:relative;z-index:1}
+
+/* 游戏主体 */
+.gomoku-main{display:flex;gap:24px;align-items:flex-start;justify-content:center;flex-wrap:wrap}
+
+/* 棋盘 */
+.gomoku-board-wrap{background:var(--bg-primary,#fff);border-radius:18px;border:1px solid var(--border-color,#e5e7eb);padding:24px;box-shadow:0 1px 6px rgba(0,0,0,.03)}
+.gomoku-board{display:inline-grid;grid-template-columns:repeat(15,var(--cell-size,36px));grid-template-rows:repeat(15,var(--cell-size,36px));background:#dcb35c;border-radius:4px;border:3px solid #b8860b;position:relative;box-shadow:inset 0 0 20px rgba(0,0,0,.1)}
+.gomoku-cell{width:var(--cell-size,36px);height:var(--cell-size,36px);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:background .15s}
+.gomoku-cell:hover{background:rgba(0,0,0,.06)}
+.gomoku-cell::before,.gomoku-cell::after{content:'';position:absolute;background:#8b6914}
+.gomoku-cell::before{width:1px;height:100%;left:50%;top:0}
+.gomoku-cell::after{height:1px;width:100%;top:50%;left:0}
+/* 边缘隐藏线 */
+.gomoku-cell[data-row="0"]::before{top:50%;height:50%}
+.gomoku-cell[data-row="14"]::before{height:50%}
+.gomoku-cell[data-col="0"]::after{left:50%;width:50%}
+.gomoku-cell[data-col="14"]::after{width:50%}
+/* 星位 */
+.gomoku-cell.star::before,.gomoku-cell.star::after{display:none}
+.gomoku-star-dot{width:8px;height:8px;border-radius:50%;background:#8b6914;position:absolute;z-index:1}
+
+/* 棋子 */
+.gomoku-piece{width:calc(var(--cell-size,36px) * .82);height:calc(var(--cell-size,36px) * .82);border-radius:50%;position:absolute;z-index:2;pointer-events:none;transition:transform .15s}
+.gomoku-piece.black{background:radial-gradient(circle at 35% 35%,#555,#111 60%,#000);box-shadow:2px 2px 6px rgba(0,0,0,.4)}
+.gomoku-piece.white{background:radial-gradient(circle at 35% 35%,#fff,#e8e8e8 60%,#ccc);box-shadow:2px 2px 6px rgba(0,0,0,.2)}
+.gomoku-piece.last{box-shadow:0 0 0 3px #f59e0b,2px 2px 6px rgba(0,0,0,.3)}
+.gomoku-piece.win{animation:gomoku-win-pulse .6s ease-in-out infinite alternate}
+@keyframes gomoku-win-pulse{0%{transform:scale(1)}100%{transform:scale(1.1)}}
+
+/* 侧边面板 */
+.gomoku-panel{min-width:240px;max-width:300px;display:flex;flex-direction:column;gap:16px}
+.gomoku-card{background:var(--bg-primary,#fff);border-radius:14px;border:1px solid var(--border-color,#e5e7eb);padding:18px;box-shadow:0 1px 6px rgba(0,0,0,.03)}
+.gomoku-card-title{font-size:.85rem;font-weight:700;color:var(--text-muted,#9ca3af);margin:0 0 12px;text-transform:uppercase;letter-spacing:.5px}
+
+/* 状态显示 */
+.gomoku-status{display:flex;align-items:center;gap:12px;padding:14px;border-radius:12px;background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid rgba(245,158,11,.2)}
+[data-theme="dark"] .gomoku-status{background:linear-gradient(135deg,#78350f,#92400e);border-color:rgba(245,158,11,.3)}
+.gomoku-status-piece{width:28px;height:28px;border-radius:50%;flex-shrink:0}
+.gomoku-status-piece.black{background:radial-gradient(circle at 35% 35%,#555,#000);box-shadow:1px 1px 3px rgba(0,0,0,.3)}
+.gomoku-status-piece.white{background:radial-gradient(circle at 35% 35%,#fff,#ccc);box-shadow:1px 1px 3px rgba(0,0,0,.15)}
+.gomoku-status-text{font-size:1rem;font-weight:700;color:#1e293b}
+[data-theme="dark"] .gomoku-status-text{color:#f1f5f9}
+
+/* 比分 */
+.gomoku-score{display:flex;align-items:center;justify-content:center;gap:20px;padding:8px 0}
+.gomoku-score-item{text-align:center}
+.gomoku-score-label{font-size:.75rem;color:var(--text-muted,#9ca3af);margin-bottom:4px}
+.gomoku-score-val{font-size:1.5rem;font-weight:800;color:var(--text-primary,#1f2937)}
+.gomoku-score-vs{font-size:.9rem;font-weight:700;color:var(--text-muted,#9ca3af)}
+
+/* 按钮 */
+.gomoku-btn{width:100%;padding:10px 16px;border-radius:10px;border:1.5px solid rgba(128,128,128,.2);background:var(--bg-primary,#fff);color:var(--text-primary,#1f2937);font-size:.85rem;font-weight:600;cursor:pointer;transition:all .25s ease;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.gomoku-btn:hover{border-color:#f59e0b;color:#f59e0b;transform:translateY(-2px);box-shadow:0 4px 12px rgba(245,158,11,.15)}
+.gomoku-btn.primary{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border-color:transparent;box-shadow:0 4px 16px rgba(245,158,11,.35)}
+.gomoku-btn.primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(245,158,11,.4)}
+
+/* 历史记录 */
+.gomoku-history{max-height:200px;overflow-y:auto;font-size:.8rem;color:var(--text-secondary,#475569)}
+.gomoku-history-item{padding:4px 8px;border-radius:6px;display:flex;align-items:center;gap:6px}
+.gomoku-history-item:nth-child(odd){background:rgba(0,0,0,.02)}
+.gomoku-history-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.gomoku-history-dot.black{background:#333}
+.gomoku-history-dot.white{background:#ddd;border:1px solid #aaa}
+
+/* 暗色模式 */
+[data-theme="dark"] .gomoku-page-header{background:linear-gradient(135deg,#78350f 0%,#92400e 50%,#78350f 100%);border-color:rgba(245,158,11,.2)}
+[data-theme="dark"] .gomoku-page-title{color:#f1f5f9}
+[data-theme="dark"] .gomoku-page-subtitle{color:#94a3b8}
+[data-theme="dark"] .gomoku-board-wrap{background:var(--bg-primary,#1e293b);border-color:var(--border-color,#334155)}
+[data-theme="dark"] .gomoku-card{background:var(--bg-primary,#1e293b);border-color:var(--border-color,#334155)}
+[data-theme="dark"] .gomoku-btn{background:rgba(30,41,59,.8);color:#e2e8f0;border-color:rgba(148,163,184,.15)}
+[data-theme="dark"] .gomoku-btn:hover{border-color:#f59e0b;color:#f59e0b}
+[data-theme="dark"] .gomoku-btn.primary{background:linear-gradient(135deg,#d97706,#b45309);color:#fff;border-color:transparent}
+[data-theme="dark"] .gomoku-score-val{color:#f1f5f9}
+
+/* 响应式 */
+@media(max-width:900px){
+  .main-wrapper:has(#gomoku-page) .container{padding-left:16px!important;padding-right:16px!important}
+  .gomoku-page-header{padding:26px 16px 20px;min-height:140px}
+  .gomoku-page-title{font-size:1.65rem}
+  .gomoku-main{flex-direction:column;align-items:center}
+  .gomoku-panel{min-width:unset;max-width:unset;width:100%}
+}
+@media(max-width:600px){
+  .main-wrapper:has(#gomoku-page) .container{padding-left:12px!important;padding-right:12px!important}
+  .gomoku-page-header{padding:22px 12px 16px;min-height:120px}
+  .gomoku-page-title{font-size:1.4rem}
+  .gomoku-board-wrap{padding:12px}
+}
+</style>
+
+<div class="gomoku-page" id="gomoku-page">
+  <div class="gomoku-page-header">
+    <h1 class="gomoku-page-title"><span class="gomoku-title-icon"><i class="fas fa-chess"></i></span> 五子棋</h1>
+    <p class="gomoku-page-subtitle">黑白对弈，智慧交锋 — 经典五子棋游戏</p>
+  </div>
+
+  <div class="gomoku-main">
+    <!-- 棋盘 -->
+    <div class="gomoku-board-wrap">
+      <div class="gomoku-board" id="gomoku-board"></div>
+    </div>
+
+    <!-- 侧边面板 -->
+    <div class="gomoku-panel">
+      <!-- 当前状态 -->
+      <div class="gomoku-status" id="gomoku-status">
+        <div class="gomoku-status-piece black"></div>
+        <div class="gomoku-status-text">黑棋落子</div>
+      </div>
+
+      <!-- 比分 -->
+      <div class="gomoku-card">
+        <div class="gomoku-card-title">比分</div>
+        <div class="gomoku-score">
+          <div class="gomoku-score-item">
+            <div class="gomoku-score-label">黑棋</div>
+            <div class="gomoku-score-val" id="gomoku-score-black">0</div>
+          </div>
+          <div class="gomoku-score-vs">:</div>
+          <div class="gomoku-score-item">
+            <div class="gomoku-score-label">白棋</div>
+            <div class="gomoku-score-val" id="gomoku-score-white">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 操作 -->
+      <div class="gomoku-card">
+        <div class="gomoku-card-title">操作</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="gomoku-btn" id="gomoku-undo"><i class="fas fa-undo"></i> 悔棋</button>
+          <button class="gomoku-btn primary" id="gomoku-restart"><i class="fas fa-redo"></i> 重新开始</button>
+        </div>
+      </div>
+
+      <!-- 落子记录 -->
+      <div class="gomoku-card">
+        <div class="gomoku-card-title">落子记录</div>
+        <div class="gomoku-history" id="gomoku-history"></div>
+      </div>
+    </div>
+  </div>
+
+  {{ partial "comments.html" . }}
+</div>
+
+<script>
+(function(){
+  var SIZE = 15;
+  var EMPTY = 0, BLACK = 1, WHITE = 2;
+  var board = [];
+  var current = BLACK;
+  var history = [];
+  var gameOver = false;
+  var winCells = [];
+  var scoreBlack = 0, scoreWhite = 0;
+  var lastMove = null;
+
+  // 星位坐标
+  var STARS = [[3,3],[3,7],[3,11],[7,3],[7,7],[7,11],[11,3],[11,7],[11,11]];
+
+  var boardEl = document.getElementById('gomoku-board');
+  var statusEl = document.getElementById('gomoku-status');
+  var historyEl = document.getElementById('gomoku-history');
+
+  function init(){
+    board = [];
+    for(var i = 0; i < SIZE; i++){
+      board[i] = [];
+      for(var j = 0; j < SIZE; j++) board[i][j] = EMPTY;
+    }
+    current = BLACK;
+    history = [];
+    gameOver = false;
+    winCells = [];
+    lastMove = null;
+    renderBoard();
+    updateStatus();
+    updateHistory();
+  }
+
+  function renderBoard(){
+    boardEl.innerHTML = '';
+    // 计算格子大小
+    var maxW = Math.min(window.innerWidth - 360, 600);
+    if(window.innerWidth <= 900) maxW = window.innerWidth - 60;
+    var cellSize = Math.floor(maxW / SIZE);
+    cellSize = Math.max(24, Math.min(cellSize, 40));
+    boardEl.style.setProperty('--cell-size', cellSize + 'px');
+
+    for(var r = 0; r < SIZE; r++){
+      for(var c = 0; c < SIZE; c++){
+        var cell = document.createElement('div');
+        cell.className = 'gomoku-cell';
+        cell.dataset.row = r;
+        cell.dataset.col = c;
+
+        // 星位
+        var isStar = STARS.some(function(s){ return s[0] === r && s[1] === c; });
+        if(isStar){
+          cell.classList.add('star');
+          var dot = document.createElement('div');
+          dot.className = 'gomoku-star-dot';
+          cell.appendChild(dot);
+        }
+
+        // 棋子
+        if(board[r][c] !== EMPTY){
+          var piece = document.createElement('div');
+          piece.className = 'gomoku-piece ' + (board[r][c] === BLACK ? 'black' : 'white');
+          if(lastMove && lastMove[0] === r && lastMove[1] === c) piece.classList.add('last');
+          if(winCells.some(function(w){ return w[0] === r && w[1] === c; })) piece.classList.add('win');
+          cell.appendChild(piece);
+        }
+
+        cell.addEventListener('click', (function(row, col){
+          return function(){ placePiece(row, col); };
+        })(r, c));
+
+        boardEl.appendChild(cell);
+      }
+    }
+  }
+
+  function placePiece(r, c){
+    if(gameOver || board[r][c] !== EMPTY) return;
+    board[r][c] = current;
+    lastMove = [r, c];
+    history.push({r: r, c: c, player: current});
+
+    // 检查胜负
+    var win = checkWin(r, c, current);
+    if(win){
+      gameOver = true;
+      winCells = win;
+      if(current === BLACK) scoreBlack++; else scoreWhite++;
+      document.getElementById('gomoku-score-black').textContent = scoreBlack;
+      document.getElementById('gomoku-score-white').textContent = scoreWhite;
+    } else if(history.length === SIZE * SIZE){
+      gameOver = true; // 平局
+    } else {
+      current = current === BLACK ? WHITE : BLACK;
+    }
+
+    renderBoard();
+    updateStatus();
+    updateHistory();
+  }
+
+  function checkWin(r, c, player){
+    var dirs = [[0,1],[1,0],[1,1],[1,-1]];
+    for(var d = 0; d < dirs.length; d++){
+      var dr = dirs[d][0], dc = dirs[d][1];
+      var cells = [[r, c]];
+      // 正方向
+      for(var i = 1; i < 5; i++){
+        var nr = r + dr * i, nc = c + dc * i;
+        if(nr < 0 || nr >= SIZE || nc < 0 || nc >= SIZE || board[nr][nc] !== player) break;
+        cells.push([nr, nc]);
+      }
+      // 反方向
+      for(var i = 1; i < 5; i++){
+        var nr = r - dr * i, nc = c - dc * i;
+        if(nr < 0 || nr >= SIZE || nc < 0 || nc >= SIZE || board[nr][nc] !== player) break;
+        cells.push([nr, nc]);
+      }
+      if(cells.length >= 5) return cells;
+    }
+    return null;
+  }
+
+  function updateStatus(){
+    var pieceClass = current === BLACK ? 'black' : 'white';
+    var text = '';
+    if(gameOver){
+      if(winCells.length > 0){
+        var winner = board[winCells[0][0]][winCells[0][1]];
+        text = (winner === BLACK ? '黑棋' : '白棋') + '获胜！';
+        pieceClass = winner === BLACK ? 'black' : 'white';
+      } else {
+        text = '平局！';
+      }
+    } else {
+      text = (current === BLACK ? '黑棋' : '白棋') + '落子';
+    }
+    statusEl.innerHTML = '<div class="gomoku-status-piece ' + pieceClass + '"></div><div class="gomoku-status-text">' + text + '</div>';
+  }
+
+  function updateHistory(){
+    historyEl.innerHTML = '';
+    for(var i = history.length - 1; i >= 0; i--){
+      var h = history[i];
+      var colLetter = String.fromCharCode(65 + h.c);
+      var rowNum = SIZE - h.r;
+      var item = document.createElement('div');
+      item.className = 'gomoku-history-item';
+      item.innerHTML = '<span class="gomoku-history-dot ' + (h.player === BLACK ? 'black' : 'white') + '"></span><span>#' + (i + 1) + ' ' + colLetter + rowNum + '</span>';
+      historyEl.appendChild(item);
+    }
+  }
+
+  // 悔棋
+  document.getElementById('gomoku-undo').addEventListener('click', function(){
+    if(history.length === 0 || gameOver) return;
+    var last = history.pop();
+    board[last.r][last.c] = EMPTY;
+    current = last.player;
+    lastMove = history.length > 0 ? [history[history.length-1].r, history[history.length-1].c] : null;
+    winCells = [];
+    renderBoard();
+    updateStatus();
+    updateHistory();
+  });
+
+  // 重新开始
+  document.getElementById('gomoku-restart').addEventListener('click', function(){
+    init();
+  });
+
+  // 窗口resize
+  window.addEventListener('resize', function(){
+    renderBoard();
+  });
+
+  init();
+})();
+</script>
+{{ end }}

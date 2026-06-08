@@ -1,0 +1,151 @@
+{{ define "main" }}
+{{ $items := .Params.items }}
+
+<style>
+.main-wrapper:has(.equipment-page) .layout-grid{gap:36px!important}
+.equipment-page .list-header{padding:28px 0;margin-bottom:32px;border-bottom:2px solid var(--border-color,#e5e7eb);background:transparent}
+.equipment-page .list-title{font-size:1.8rem;font-weight:700;color:var(--text-primary,#1f2937);margin:0 0 10px 0;letter-spacing:-0.02em;display:flex;align-items:center;gap:12px}
+.equipment-page .list-title .title-icon{width:40px;height:40px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:18px;color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 4px 14px rgba(99,102,241,.25);flex-shrink:0}
+.equipment-page .list-description{font-size:0.95rem;color:var(--text-secondary,#6b7280);margin:0;line-height:1.6}
+
+:root {
+  --eq-bg-card:#fff;--eq-text-primary:#1e293b;--eq-text-secondary:#475569;--eq-text-tertiary:#94a3b8;
+  --eq-accent:#6366f1;--eq-border:#e2e8f0;--eq-hover-bg:#f1f5f9;
+  --eq-shadow-sm:0 1px 3px rgba(0,0,0,.06);--eq-shadow-md:0 4px 20px rgba(0,0,0,.08);--eq-shadow-lg:0 8px 40px rgba(0,0,0,.12);
+  --eq-section-bg:#f8fafc;
+}
+[data-theme="dark"]{
+  --eq-bg-card:#1e293b;--eq-text-primary:#f1f5f9;--eq-text-secondary:#94a3b8;--eq-text-tertiary:#64748b;
+  --eq-border:#334155;--eq-hover-bg:#334155;
+  --eq-shadow-sm:0 1px 3px rgba(0,0,0,.2);--eq-shadow-md:0 4px 20px rgba(0,0,0,.35);--eq-shadow-lg:0 8px 40px rgba(0,0,0,.45);
+  --eq-section-bg:#0f172a;
+}
+
+.eq-section{margin-bottom:44px;}
+.eq-section:last-child{margin-bottom:28px;}
+.eq-section-title{display:flex;align-items:center;gap:10px;font-size:1.18rem;font-weight:700;color:var(--eq-text-primary);margin:0 0 20px;padding-bottom:14px;border-bottom:2px solid var(--eq-accent);}
+.eq-section-title i{color:var(--eq-accent);font-size:1.1rem;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:rgba(99,102,241,.1);border-radius:8px;}
+.eq-section-count{font-size:.78rem;font-weight:400;color:var(--eq-text-tertiary);margin-left:auto;}
+
+.eq-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:20px;}
+
+.eq-card{background:var(--eq-bg-card);border-radius:16px;overflow:hidden;box-shadow:var(--eq-shadow-sm);border:1px solid var(--eq-border);transition:all .35s cubic-bezier(.25,.8,.25,1);cursor:default;}
+.eq-card:hover{transform:translateY(-6px);box-shadow:var(--eq-shadow-lg);border-color:rgba(99,102,241,.3);}
+
+.eq-card-img{position:relative;width:100%;aspect-ratio:1.618/1;overflow:hidden;background:#fafafa;}
+[data-theme="dark"] .eq-card-img{background:#1a2332;}
+.eq-card-img img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .45s cubic-bezier(.25,.8,.25,1);}
+.eq-card:hover .eq-card-img img{transform:scale(1.08);}
+
+.eq-card-info{padding:16px 18px 18px;}
+.eq-card-name{font-size:15px;font-weight:700;color:var(--eq-text-primary);margin:0 0 8px;line-height:1.4;}
+.eq-card-desc{font-size:12.5px;color:var(--eq-text-tertiary);margin:0 0 14px;line-height:1.65;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+
+.eq-card-footer{display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid var(--eq-border);}
+.eq-card-price{font-size:15px;font-weight:700;color:#ef4444;display:inline-flex;align-items:center;gap:4px;}
+.eq-card-status{font-size:11.5px;color:var(--eq-text-secondary);background:var(--eq-hover-bg);padding:4px 12px;border-radius:10px;font-weight:500;white-space:nowrap;}
+
+.eq-empty{grid-column:1/-1;text-align:center;padding:36px 20px;color:var(--eq-text-tertiary);font-size:13.5px;}
+
+.eq-bottom{text-align:center;padding:18px 24px;margin-top:12px;background:var(--eq-bg-card);border-radius:14px;border:1px solid var(--eq-border);font-size:13px;color:var(--eq-text-secondary);}
+
+@media(max-width:600px){
+  .eq-section{margin-bottom:32px;}
+  .eq-grid{grid-template-columns:1fr 1fr;gap:12px;}
+  .eq-section-title{font-size:1.05rem;}
+  .eq-card-info{padding:12px 14px 14px;}
+  .eq-card-name{font-size:14px;}
+}
+</style>
+
+{{/* 面包屑导航 */}}
+<nav class="breadcrumb" aria-label="面包屑导航">
+  <ol class="breadcrumb-list">
+    <li class="breadcrumb-item"><a href="{{ site.BaseURL }}"><i class="fas fa-home" style="font-size:0.9em;margin-right:2px;"></i> 首页</a></li>
+    <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-toolbox" style="font-size:0.85em;margin-right:4px;opacity:0.8;"></i>{{ .Title }}</li>
+  </ol>
+</nav>
+
+<div class="list-page equipment-page">
+  <header class="list-header">
+    <h1 class="list-title">
+      <span class="title-icon"><i class="fas fa-toolbox"></i></span>
+      {{ .Title }}
+    </h1>
+    {{ with .Description }}
+    <p class="list-description">{{ . }}</p>
+    {{ else }}
+    <p class="list-description">工欲善其事，必先利其器 ✨</p>
+    {{ end }}
+  </header>
+
+  <div class="eq-section">
+    <h2 class="eq-section-title"><i class="fas fa-mobile-alt"></i> 手机数码 <span class="eq-section-count" id="eq-count-phone"></span></h2>
+    <div class="eq-grid" id="eq-grid-phone"></div>
+  </div>
+
+  <div class="eq-section">
+    <h2 class="eq-section-title"><i class="fas fa-laptop"></i> 电脑设备 <span class="eq-section-count" id="eq-count-computer"></span></h2>
+    <div class="eq-grid" id="eq-grid-computer"></div>
+  </div>
+
+  <div class="eq-section">
+    <h2 class="eq-section-title"><i class="fas fa-keyboard"></i> 外设配件 <span class="eq-section-count" id="eq-count-peripheral"></span></h2>
+    <div class="eq-grid" id="eq-grid-peripheral"></div>
+  </div>
+
+  <div class="eq-section">
+    <h2 class="eq-section-title"><i class="fas fa-watch"></i> 生活穿戴 <span class="eq-section-count" id="eq-count-life"></span></h2>
+    <div class="eq-grid" id="eq-grid-life"></div>
+  </div>
+
+  <div class="eq-bottom"><i class="fas fa-heart"></i> 好工具让生活更美好 · 持续更新中</div>
+
+  {{ partial "comments.html" . }}
+</div>
+
+<script>
+var equipmentData = [
+  {{- $first := true -}}
+  {{- range $items -}}
+  {{- if not $first -}},{{- end -}}
+  {{- $first = false -}}
+  {"n":"{{ .name | safeHTML }}","d":"{{ .desc | safeHTML }}","p":"{{ .price | safeHTML }}","c":"{{ .category | safeHTML }}","s":"{{ .status | safeHTML }}","i":"{{ .image | default `/images/equipment.jpg` | safeHTML }}"}
+  {{- end -}}
+];
+
+function renderSection(cat, gridId, countId){
+  var list = equipmentData.filter(function(x){return x.c===cat});
+  var g = document.getElementById(gridId);
+  var cnt = document.getElementById(countId);
+  cnt.textContent = list.length + '\u4EF6';
+
+  if(!list.length){
+    g.innerHTML = '<div class="eq-empty">\u6682\u65E0\u88C5\u5907</div>';
+    return;
+  }
+
+  var h = '';
+  for(var j=0;j<list.length;j++){
+    var e = list[j];
+    h += '<div class="eq-card">';
+    h += '<div class="eq-card-img">';
+    h += '<img src="'+e.i+'" alt="'+e.n+'" loading="lazy" referrerpolicy="no-referrer">';
+    h += '</div>';
+    h += '<div class="eq-card-info">';
+    h += '<h3 class="eq-card-name">'+e.n+'</h3>';
+    h += '<p class="eq-card-desc">'+e.d+'</p>';
+    h += '<div class="eq-card-footer">';
+    h += '<span class="eq-card-price"><i class="fas fa-tag"></i> '+e.p+'</span>';
+    h += '<span class="eq-card-status">'+e.s+'</span>';
+    h += '</div></div></div>';
+  }
+  g.innerHTML = h;
+}
+
+renderSection('phone', 'eq-grid-phone', 'eq-count-phone');
+renderSection('computer', 'eq-grid-computer', 'eq-count-computer');
+renderSection('peripheral', 'eq-grid-peripheral', 'eq-count-peripheral');
+renderSection('life', 'eq-grid-life', 'eq-count-life');
+</script>
+{{ end }}

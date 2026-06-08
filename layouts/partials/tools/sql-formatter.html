@@ -1,0 +1,209 @@
+<div class="tool-tabs" id="sf-tabs">
+  <button class="tool-tab active" data-tab="sf-format">格式化</button>
+  <button class="tool-tab" data-tab="sf-minify">压缩</button>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">输入 SQL 语句</label>
+  <textarea class="tool-textarea" id="sf-input" rows="10" placeholder="请输入 SQL 查询，支持 SELECT/INSERT/UPDATE/DELETE 等语句">SELECT u.id,u.name,u.email,o.order_id,o.total_amount FROM users u LEFT JOIN orders o ON u.id=o.user_id WHERE u.status='active' AND o.created_at>='2024-01-01' ORDER BY o.total_amount DESC LIMIT 20;</textarea>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="sf-format-btn">格式化</button>
+  <button class="tool-btn tool-btn-primary" id="sf-minify-btn">压缩</button>
+  <button class="tool-btn" id="sf-clear-btn">清空</button>
+</div>
+
+<div id="sf-error" style="display:none;color:var(--color-error,#e53e3e);margin-top:8px;"></div>
+
+<div class="tool-output" id="sf-output-area" style="display:none;">
+  <div class="tool-result" id="sf-result"></div>
+  <button class="tool-copy-btn" id="sf-copy-btn">复制结果</button>
+</div>
+
+<div class="tool-stats" id="sf-stats" style="display:none;">
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="sf-stat-original">0</span>
+    <span class="tool-stat-label">原始大小</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="sf-stat-result">0</span>
+    <span class="tool-stat-label">结果大小</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  const input = document.getElementById('sf-input');
+  const result = document.getElementById('sf-result');
+  const outputArea = document.getElementById('sf-output-area');
+  const errorDiv = document.getElementById('sf-error');
+  const statsDiv = document.getElementById('sf-stats');
+  const tabs = document.querySelectorAll('#sf-tabs .tool-tab');
+
+  let currentTab = 'sf-format';
+
+  function switchTab(tabId) {
+    currentTab = tabId;
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
+  }
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+  });
+
+  function showError(msg) {
+    errorDiv.textContent = msg;
+    errorDiv.style.display = 'block';
+    outputArea.style.display = 'none';
+    statsDiv.style.display = 'none';
+  }
+
+  function hideError() {
+    errorDiv.style.display = 'none';
+  }
+
+  function showResult(text, origSize) {
+    result.textContent = text;
+    outputArea.style.display = 'block';
+    statsDiv.style.display = 'flex';
+    document.getElementById('sf-stat-original').textContent = formatSize(origSize);
+    document.getElementById('sf-stat-result').textContent = formatSize(new Blob([text]).size);
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    return (bytes / 1024).toFixed(1) + ' KB';
+  }
+
+  // SQL 关键字列表
+  const TOP_KEYWORDS = [
+    'SELECT', 'FROM', 'WHERE', 'AND', 'OR', 'ORDER BY', 'GROUP BY',
+    'HAVING', 'LIMIT', 'OFFSET', 'INSERT INTO', 'VALUES', 'UPDATE',
+    'SET', 'DELETE FROM', 'CREATE TABLE', 'ALTER TABLE', 'DROP TABLE',
+    'CREATE INDEX', 'DROP INDEX', 'JOIN', 'INNER JOIN', 'LEFT JOIN',
+    'RIGHT JOIN', 'OUTER JOIN', 'CROSS JOIN', 'ON', 'UNION', 'UNION ALL',
+    'AS', 'DISTINCT', 'CASE', 'WHEN', 'THEN', 'ELSE', 'END',
+    'IS NULL', 'IS NOT NULL', 'IN', 'NOT IN', 'BETWEEN', 'LIKE', 'NOT',
+    'ASC', 'DESC', 'NULLS FIRST', 'NULLS LAST'
+  ];
+
+  const ALL_KEYWORDS = [
+    'SELECT', 'FROM', 'WHERE', 'AND', 'OR', 'NOT', 'IN', 'IS', 'NULL',
+    'LIKE', 'BETWEEN', 'ORDER', 'GROUP', 'BY', 'HAVING', 'LIMIT', 'OFFSET',
+    'INSERT', 'INTO', 'VALUES', 'UPDATE', 'SET', 'DELETE', 'CREATE',
+    'ALTER', 'DROP', 'TABLE', 'INDEX', 'JOIN', 'INNER', 'LEFT', 'RIGHT',
+    'OUTER', 'CROSS', 'ON', 'AS', 'DISTINCT', 'UNION', 'ALL', 'CASE',
+    'WHEN', 'THEN', 'ELSE', 'END', 'ASC', 'DESC', 'EXISTS', 'PRIMARY',
+    'KEY', 'FOREIGN', 'REFERENCES', 'DEFAULT', 'CHECK', 'UNIQUE',
+    'CONSTRAINT', 'CASCADE', 'TRUNCATE', 'EXCEPT', 'INTERSECT',
+    'RETURNING', 'WITH', 'RECURSIVE', 'OVER', 'PARTITION', 'WINDOW',
+    'ROWS', 'RANGE', 'FETCH', 'NEXT', 'ONLY', 'NULLS', 'FIRST', 'LAST'
+  ];
+
+  function formatSQL(sql) {
+    let formatted = sql.replace(/\s+/g, ' ').trim();
+
+    // 子句前换行
+    const clauseBreaks = [
+      'SELECT', 'FROM', 'WHERE', 'AND', 'OR', 'ORDER BY', 'GROUP BY',
+      'HAVING', 'LIMIT', 'OFFSET', 'INSERT INTO', 'VALUES', 'UPDATE',
+      'SET', 'DELETE FROM', 'CREATE TABLE', 'ALTER TABLE', 'DROP TABLE',
+      'CREATE INDEX', 'JOIN', 'INNER JOIN', 'LEFT JOIN', 'RIGHT JOIN',
+      'OUTER JOIN', 'CROSS JOIN', 'ON', 'UNION', 'UNION ALL', 'RETURNING',
+      'EXCEPT', 'INTERSECT', 'WITH'
+    ];
+
+    // 在关键字前添加换行
+    clauseBreaks.forEach(kw => {
+      const regex = new RegExp('\\b' + kw.replace(/\s+/g, '\\s+') + '\\b', 'gi');
+      formatted = formatted.replace(regex, '\n' + kw.toUpperCase());
+    });
+
+    // AND/OR 缩进
+    formatted = formatted.replace(/\n(AND|OR)\s/gi, '\n  $1 ');
+
+    // 逗号后换行 (在 SELECT 子句中)
+    formatted = formatted.replace(/,\s*/g, ',\n   ');
+
+    // 大写关键字
+    ALL_KEYWORDS.forEach(kw => {
+      const regex = new RegExp('\\b' + kw + '\\b', 'gi');
+      formatted = formatted.replace(regex, kw);
+    });
+
+    // 清理多余空行和缩进
+    formatted = formatted.replace(/\n\s*\n/g, '\n');
+    formatted = formatted.replace(/^\n/, '');
+    formatted = formatted.replace(/\n\s*$/, '');
+
+    // VALUES 子句缩进
+    formatted = formatted.replace(/\nVALUES\n/g, '\nVALUES\n  ');
+
+    return formatted.trim();
+  }
+
+  function minifySQL(sql) {
+    let minified = sql.replace(/\s+/g, ' ').trim();
+    minified = minified.replace(/\s*,\s*/g, ', ');
+    minified = minified.replace(/\s*=\s*/g, '=');
+    minified = minified.replace(/\(\s+/g, '(');
+    minified = minified.replace(/\s+\)/g, ')');
+    return minified;
+  }
+
+  document.getElementById('sf-format-btn').addEventListener('click', () => {
+    hideError();
+    const raw = input.value;
+    if (!raw.trim()) { showError('请输入 SQL 语句'); return; }
+    try {
+      const formatted = formatSQL(raw);
+      showResult(formatted, new Blob([raw]).size);
+      switchTab('sf-format');
+    } catch(e) {
+      showError('格式化失败：' + e.message);
+    }
+  });
+
+  document.getElementById('sf-minify-btn').addEventListener('click', () => {
+    hideError();
+    const raw = input.value;
+    if (!raw.trim()) { showError('请输入 SQL 语句'); return; }
+    try {
+      const minified = minifySQL(raw);
+      showResult(minified, new Blob([raw]).size);
+      switchTab('sf-minify');
+    } catch(e) {
+      showError('压缩失败：' + e.message);
+    }
+  });
+
+  document.getElementById('sf-clear-btn').addEventListener('click', () => {
+    input.value = '';
+    result.textContent = '';
+    outputArea.style.display = 'none';
+    statsDiv.style.display = 'none';
+    hideError();
+  });
+
+  document.getElementById('sf-copy-btn').addEventListener('click', () => {
+    const text = result.textContent;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('sf-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const btn = document.getElementById('sf-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    });
+  });
+})();
+</script>

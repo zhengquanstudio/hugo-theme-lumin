@@ -1,0 +1,76 @@
+<div class="tool-input-group">
+  <label class="tool-label">出生日期</label>
+  <input class="tool-input" type="date" id="age-birth" value="1990-01-01">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">计算到日期（可选，默认为今天）</label>
+  <input class="tool-input" type="date" id="age-to" value="">
+</div>
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="age-calc">计算年龄</button>
+</div>
+<div class="tool-result" id="age-result"></div>
+
+<script>
+(function() {
+  document.getElementById('age-to').value = new Date().toISOString().split('T')[0];
+
+  document.getElementById('age-calc').addEventListener('click', function() {
+    var birthStr = document.getElementById('age-birth').value;
+    var toStr = document.getElementById('age-to').value;
+    var result = document.getElementById('age-result');
+
+    if (!birthStr) {
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">错误</div><p>请选择出生日期。</p></div>';
+      return;
+    }
+
+    var birth = new Date(birthStr + 'T00:00:00');
+    var toDate = new Date((toStr || new Date().toISOString().split('T')[0]) + 'T00:00:00');
+
+    if (toDate < birth) {
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">错误</div><p>"计算到日期"不能早于出生日期。</p></div>';
+      return;
+    }
+
+    // 精确年龄 X年Y月Z天
+    var years = toDate.getFullYear() - birth.getFullYear();
+    var months = toDate.getMonth() - birth.getMonth();
+    var days = toDate.getDate() - birth.getDate();
+
+    if (days < 0) {
+      months--;
+      var prevMonth = new Date(toDate.getFullYear(), toDate.getMonth(), 0);
+      days += prevMonth.getDate();
+    }
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+
+    var totalMs = toDate - birth;
+    var totalDays = Math.floor(totalMs / (1000 * 60 * 60 * 24));
+    var totalWeeks = Math.floor(totalDays / 7);
+    var totalHours = Math.floor(totalMs / (1000 * 60 * 60));
+    var totalMonthsCalc = years * 12 + months;
+
+    var html = '<div class="tool-output"><div class="tool-output-title">年龄计算结果</div>';
+    html += '<div class="tool-stats"><div class="tool-stat"><div class="tool-stat-value">' + years + '年' + months + '月' + days + '天</div><div class="tool-stat-label">精确年龄</div></div></div>';
+    html += '<table style="width:100%;border-collapse:collapse;margin-top:12px;">';
+    html += '<tr style="border-bottom:1px solid #eee;"><td style="padding:8px;">总月数：</td><td style="padding:8px;font-family:monospace;">' + totalMonthsCalc.toLocaleString() + ' 个月</td></tr>';
+    html += '<tr style="border-bottom:1px solid #eee;"><td style="padding:8px;">总周数：</td><td style="padding:8px;font-family:monospace;">' + totalWeeks.toLocaleString() + ' 周零 ' + (totalDays % 7) + ' 天</td></tr>';
+    html += '<tr style="border-bottom:1px solid #eee;"><td style="padding:8px;">总天数：</td><td style="padding:8px;font-family:monospace;">' + totalDays.toLocaleString() + ' 天</td></tr>';
+    html += '<tr style="border-bottom:1px solid #eee;"><td style="padding:8px;">总小时数：</td><td style="padding:8px;font-family:monospace;">' + totalHours.toLocaleString() + ' 小时</td></tr>';
+    html += '</table>';
+    html += '<p style="margin-top:10px;font-size:13px;color:#666;">出生日期：' + birthStr + ' | 计算到：' + formatDate(toDate) + '</p></div>';
+
+    result.innerHTML = html;
+  });
+
+  function formatDate(d) {
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  document.getElementById('age-calc').click();
+})();
+</script>

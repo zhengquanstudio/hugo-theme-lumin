@@ -1,0 +1,196 @@
+<div class="tool-tabs" id="cssGradTabs">
+  <button class="tool-tab active" data-tab="linear">线性渐变</button>
+  <button class="tool-tab" data-tab="radial">径向渐变</button>
+</div>
+
+<div id="cssGradLinearOpts">
+  <div class="tool-range-group">
+    <label class="tool-label">角度</label>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <input class="tool-range" type="range" id="cssGradAngle" min="0" max="360" value="90">
+      <span class="tool-range-value" id="cssGradAngleVal">90°</span>
+    </div>
+  </div>
+</div>
+
+<div id="cssGradRadialOpts" style="display:none;">
+  <div class="tool-input-group">
+    <label class="tool-label">形状</label>
+    <select class="tool-select" id="cssGradShape">
+      <option value="circle">circle</option>
+      <option value="ellipse">ellipse</option>
+    </select>
+  </div>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">颜色节点</label>
+  <div id="cssGradStops"></div>
+  <div class="tool-btn-row" style="margin-top:8px;">
+    <button class="tool-btn" id="cssGradAddStop">添加节点</button>
+    <button class="tool-btn" id="cssGradRemoveStop">删除节点</button>
+  </div>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">预设</label>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;" id="cssGradPresets"></div>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">预览</label>
+  <div id="cssGradPreview" style="height:200px;border-radius:12px;border:1px solid var(--color-border,#e2e8f0);"></div>
+</div>
+
+<div class="tool-output" id="cssGradOutput">
+  <label class="tool-label">CSS 代码</label>
+  <div class="tool-result" id="cssGradCode" style="font-family:monospace;font-size:13px;"></div>
+  <button class="tool-copy-btn" id="cssGradCopyBtn">复制</button>
+</div>
+
+<script>
+(function(){
+  var tabs = document.getElementById('cssGradTabs');
+  var linearOpts = document.getElementById('cssGradLinearOpts');
+  var radialOpts = document.getElementById('cssGradRadialOpts');
+  var angleInput = document.getElementById('cssGradAngle');
+  var angleVal = document.getElementById('cssGradAngleVal');
+  var shapeSelect = document.getElementById('cssGradShape');
+  var stopsContainer = document.getElementById('cssGradStops');
+  var addStopBtn = document.getElementById('cssGradAddStop');
+  var removeStopBtn = document.getElementById('cssGradRemoveStop');
+  var preview = document.getElementById('cssGradPreview');
+  var codeEl = document.getElementById('cssGradCode');
+  var copyBtn = document.getElementById('cssGradCopyBtn');
+  var presetsContainer = document.getElementById('cssGradPresets');
+
+  var currentType = 'linear';
+  var stops = [
+    { color: '#667eea', position: 0 },
+    { color: '#764ba2', position: 100 }
+  ];
+
+  var presets = [
+    { name: '日落', css: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
+    { name: '海洋', css: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+    { name: '森林', css: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)' },
+    { name: '火焰', css: 'linear-gradient(135deg, #f12711 0%, #f5af19 100%)' },
+    { name: '极光', css: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)' },
+    { name: '星空', css: 'linear-gradient(135deg, #0c3483 0%, #a2b6df 50%, #6b8cce 100%)' }
+  ];
+
+  tabs.addEventListener('click', function(e){
+    if(!e.target.classList.contains('tool-tab')) return;
+    tabs.querySelectorAll('.tool-tab').forEach(function(t){ t.classList.remove('active'); });
+    e.target.classList.add('active');
+    currentType = e.target.dataset.tab;
+    linearOpts.style.display = currentType === 'linear' ? '' : 'none';
+    radialOpts.style.display = currentType === 'radial' ? '' : 'none';
+    updatePreview();
+  });
+
+  angleInput.addEventListener('input', function(){
+    angleVal.textContent = angleInput.value + '°';
+    updatePreview();
+  });
+
+  shapeSelect.addEventListener('change', function(){
+    updatePreview();
+  });
+
+  function renderStops(){
+    stopsContainer.innerHTML = '';
+    stops.forEach(function(stop, i){
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:8px;';
+
+      var colorInput = document.createElement('input');
+      colorInput.type = 'color';
+      colorInput.value = stop.color;
+      colorInput.style.cssText = 'width:40px;height:32px;border:none;cursor:pointer;padding:0;';
+      colorInput.dataset.index = i;
+      colorInput.addEventListener('input', function(e){
+        stops[parseInt(e.target.dataset.index)].color = e.target.value;
+        updatePreview();
+      });
+
+      var posInput = document.createElement('input');
+      posInput.type = 'range';
+      posInput.className = 'tool-range';
+      posInput.min = '0';
+      posInput.max = '100';
+      posInput.value = stop.position;
+      posInput.style.flex = '1';
+      posInput.dataset.index = i;
+      posInput.addEventListener('input', function(e){
+        var idx = parseInt(e.target.dataset.index);
+        stops[idx].position = parseInt(e.target.value);
+        posVal.textContent = e.target.value + '%';
+        updatePreview();
+      });
+
+      var posVal = document.createElement('span');
+      posVal.className = 'tool-range-value';
+      posVal.textContent = stop.position + '%';
+
+      row.appendChild(colorInput);
+      row.appendChild(posInput);
+      row.appendChild(posVal);
+      stopsContainer.appendChild(row);
+    });
+  }
+
+  addStopBtn.addEventListener('click', function(){
+    if(stops.length >= 8) return;
+    var lastColor = stops[stops.length - 1].color;
+    var newPos = Math.min(100, stops[stops.length - 1].position + 20);
+    stops.push({ color: lastColor, position: newPos });
+    renderStops();
+    updatePreview();
+  });
+
+  removeStopBtn.addEventListener('click', function(){
+    if(stops.length <= 2) return;
+    stops.pop();
+    renderStops();
+    updatePreview();
+  });
+
+  function generateCSS(){
+    var stopsStr = stops.map(function(s){ return s.color + ' ' + s.position + '%'; }).join(', ');
+    if(currentType === 'linear'){
+      return 'linear-gradient(' + angleInput.value + 'deg, ' + stopsStr + ')';
+    }else{
+      return 'radial-gradient(' + shapeSelect.value + ', ' + stopsStr + ')';
+    }
+  }
+
+  function updatePreview(){
+    var css = generateCSS();
+    preview.style.background = css;
+    codeEl.textContent = 'background: ' + css + ';';
+  }
+
+  presets.forEach(function(preset){
+    var btn = document.createElement('button');
+    btn.className = 'tool-btn';
+    btn.textContent = preset.name;
+    btn.style.cssText = 'font-size:12px;padding:4px 12px;';
+    btn.addEventListener('click', function(){
+      preview.style.background = preset.css;
+      codeEl.textContent = 'background: ' + preset.css + ';';
+    });
+    presetsContainer.appendChild(btn);
+  });
+
+  copyBtn.addEventListener('click', function(){
+    navigator.clipboard.writeText(codeEl.textContent).then(function(){
+      copyBtn.textContent = '已复制';
+      setTimeout(function(){ copyBtn.textContent = '复制'; }, 1500);
+    });
+  });
+
+  renderStops();
+  updatePreview();
+})();
+</script>

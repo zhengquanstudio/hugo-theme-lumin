@@ -1,0 +1,34 @@
+{{/*
+  PWA (Progressive Web App) Service Worker 注册
+  - 支持离线访问
+  - 监听在线/离线状态切换
+  
+  使用方式: 在 baseof.html 中调用
+  {{ partial "scripts/pwa.html" . }}
+*/}}
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('/sw.js')
+        .then(function(reg) {
+          reg.addEventListener('updatefound', function() {
+            var newWorker = reg.installing;
+            newWorker.addEventListener('statechange', function() {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // 新版本可用，刷新页面即可更新
+              }
+            });
+          });
+        })
+        .catch(function(err) { /* SW 注册失败 */ });
+    });
+
+    window.addEventListener('online', function() { 
+      document.body.classList.remove('is-offline'); 
+    });
+    window.addEventListener('offline', function() { 
+      document.body.classList.add('is-offline'); 
+    });
+  }
+</script>

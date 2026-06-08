@@ -1,0 +1,140 @@
+<div class="tool-tabs" id="uc-tabs">
+  <button class="tool-tab active" data-tab="uc-encode">编码</button>
+  <button class="tool-tab" data-tab="uc-decode">解码</button>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">输入内容</label>
+  <textarea class="tool-textarea" id="uc-input" rows="8" placeholder="请输入需要编码或解码的 URI 组件文本">你好，世界！Hello World! 特殊字符：& = ? # @ % 空格</textarea>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="uc-encode-btn">编码</button>
+  <button class="tool-btn tool-btn-primary" id="uc-decode-btn">解码</button>
+  <button class="tool-btn" id="uc-clear-btn">清空</button>
+</div>
+
+<div id="uc-error" style="display:none;color:var(--color-error,#e53e3e);margin-top:8px;"></div>
+
+<div class="tool-output" id="uc-output-area" style="display:none;">
+  <div class="tool-result" id="uc-result"></div>
+  <button class="tool-copy-btn" id="uc-copy-btn">复制结果</button>
+</div>
+
+<div class="tool-stats" id="uc-stats" style="display:none;">
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="uc-stat-input">0</span>
+    <span class="tool-stat-label">输入长度</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="uc-stat-output">0</span>
+    <span class="tool-stat-label">输出长度</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="uc-stat-encoded">0</span>
+    <span class="tool-stat-label">编码字符数</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  const input = document.getElementById('uc-input');
+  const result = document.getElementById('uc-result');
+  const outputArea = document.getElementById('uc-output-area');
+  const errorDiv = document.getElementById('uc-error');
+  const statsDiv = document.getElementById('uc-stats');
+  const tabs = document.querySelectorAll('#uc-tabs .tool-tab');
+
+  let currentTab = 'uc-encode';
+
+  function switchTab(tabId) {
+    currentTab = tabId;
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
+  }
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+  });
+
+  function showError(msg) {
+    errorDiv.textContent = msg;
+    errorDiv.style.display = 'block';
+    outputArea.style.display = 'none';
+    statsDiv.style.display = 'none';
+  }
+
+  function hideError() {
+    errorDiv.style.display = 'none';
+  }
+
+  function showResult(text, inputLen, encodedCount) {
+    result.textContent = text;
+    outputArea.style.display = 'block';
+    statsDiv.style.display = 'flex';
+    document.getElementById('uc-stat-input').textContent = inputLen + ' 字符';
+    document.getElementById('uc-stat-output').textContent = text.length + ' 字符';
+    document.getElementById('uc-stat-encoded').textContent = encodedCount;
+  }
+
+  document.getElementById('uc-encode-btn').addEventListener('click', () => {
+    hideError();
+    const raw = input.value;
+    if (!raw) { showError('请输入需要编码的文本'); return; }
+    try {
+      const encoded = encodeURIComponent(raw);
+      // 统计不安全的 ASCII 字符被编码数量
+      let count = 0;
+      for (let i = 0; i < raw.length; i++) {
+        const ch = raw[i];
+        const enc = encodeURIComponent(ch);
+        if (enc !== ch || (ch.charCodeAt(0) > 127)) count++;
+      }
+      showResult(encoded, raw.length, count);
+      switchTab('uc-encode');
+    } catch(e) {
+      showError('编码失败：' + e.message);
+    }
+  });
+
+  document.getElementById('uc-decode-btn').addEventListener('click', () => {
+    hideError();
+    const raw = input.value.trim();
+    if (!raw) { showError('请输入需要解码的 URI 组件文本'); return; }
+    try {
+      const decoded = decodeURIComponent(raw);
+      showResult(decoded, raw.length, 0);
+      switchTab('uc-decode');
+    } catch(e) {
+      showError('解码失败：无效的 URI 组件编码字符串');
+    }
+  });
+
+  document.getElementById('uc-clear-btn').addEventListener('click', () => {
+    input.value = '';
+    result.textContent = '';
+    outputArea.style.display = 'none';
+    statsDiv.style.display = 'none';
+    hideError();
+  });
+
+  document.getElementById('uc-copy-btn').addEventListener('click', () => {
+    const text = result.textContent;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('uc-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const btn = document.getElementById('uc-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    });
+  });
+})();
+</script>

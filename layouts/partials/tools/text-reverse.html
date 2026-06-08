@@ -1,0 +1,89 @@
+<div class="tool-input-group">
+  <label class="tool-label">输入文本</label>
+  <textarea class="tool-textarea" id="trev-input" placeholder="在此输入需要反转的文本...">Hello World! 你好世界！</textarea>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" data-rev="chars"><i class="fas fa-arrow-left-long"></i> 字符反转</button>
+  <button class="tool-btn" data-rev="words"><i class="fas fa-arrows-left-right"></i> 单词反转</button>
+  <button class="tool-btn" data-rev="lines"><i class="fas fa-rotate"></i> 行顺序反转</button>
+  <button class="tool-btn" data-rev="lines-each"><i class="fas fa-text-slash"></i> 每行字符反转</button>
+</div>
+
+<div class="tool-output" id="trev-output" style="display:none;">
+  <div class="tool-output-label">
+    <span class="tool-output-title">反转结果 <span id="trev-mode" style="font-weight:400;color:var(--text-muted,#9ca3af);font-size:.8rem;"></span></span>
+    <button class="tool-copy-btn" id="trev-copy-btn"><i class="far fa-copy"></i> 复制</button>
+  </div>
+  <textarea class="tool-result" id="trev-result" readonly></textarea>
+</div>
+
+<div class="tool-btn-row" style="margin-top:12px;">
+  <button class="tool-btn tool-btn-danger" id="trev-clear-btn"><i class="fas fa-trash"></i> 清空</button>
+</div>
+
+<script>
+(function(){
+  const input = document.getElementById('trev-input');
+  const output = document.getElementById('trev-output');
+  const result = document.getElementById('trev-result');
+  const modeEl = document.getElementById('trev-mode');
+  const copyBtn = document.getElementById('trev-copy-btn');
+  const revBtns = document.querySelectorAll('[data-rev]');
+
+  function copyText(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+      const orig = btn.innerHTML; btn.innerHTML = '✅ 已复制'; btn.classList.add('copied');
+      setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('copied'); }, 1500);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+      document.body.removeChild(ta);
+      const orig = btn.innerHTML; btn.innerHTML = '✅ 已复制'; btn.classList.add('copied');
+      setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('copied'); }, 1500);
+    });
+  }
+
+  const modeNames = {
+    chars: '字符反转',
+    words: '单词反转',
+    lines: '行顺序反转',
+    'lines-each': '每行字符反转'
+  };
+
+  revBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const text = input.value;
+      if (!text.trim()) return;
+      const mode = btn.getAttribute('data-rev');
+      let out = '';
+      switch(mode) {
+        case 'chars':
+          // Handle Unicode surrogates correctly
+          out = Array.from(text).reverse().join('');
+          break;
+        case 'words':
+          out = text.split(/\n/).map(line =>
+            line.split(/(\s+)/).reverse().join('')
+          ).join('\n');
+          break;
+        case 'lines':
+          out = text.split('\n').reverse().join('\n');
+          break;
+        case 'lines-each':
+          out = text.split('\n').map(line => Array.from(line).reverse().join('')).join('\n');
+          break;
+      }
+      result.value = out;
+      modeEl.textContent = '（' + modeNames[mode] + '）';
+      output.style.display = '';
+    });
+  });
+
+  copyBtn.addEventListener('click', () => copyText(result.value, copyBtn));
+  document.getElementById('trev-clear-btn').addEventListener('click', () => {
+    input.value = ''; result.value = ''; output.style.display = 'none';
+  });
+})();
+</script>

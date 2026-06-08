@@ -1,0 +1,12 @@
+{{/* 侧边栏 Widget 广告 */}}
+{{ if .widgetEnabled }}
+<div class="sidebar-widget-wrap sidebar-widget-ad-wrap">
+  <div class="sidebar-widget-icon">
+    <i class="fa-solid fa-rectangle-ad"></i>
+  </div>
+  <div class="sidebar-widget-content">
+    <div class="widget-ad-title">赞助商广告</div>
+    {{ partial "ads/render-ad.html" (dict "positionId" "sidebar_widget") }}
+  </div>
+</div>
+{{ end }}

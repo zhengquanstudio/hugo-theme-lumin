@@ -1,0 +1,82 @@
+<div class="tool-input-group">
+  <label class="tool-label">选择图片</label>
+  <input type="file" id="ic-file" accept="image/*" style="display:block;margin-top:4px;">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">压缩质量</label>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <input type="range" class="tool-range" id="ic-quality" min="0.1" max="1.0" step="0.1" value="0.7" style="flex:1;">
+    <span id="ic-quality-val" style="font-family:monospace;min-width:30px;">0.7</span>
+  </div>
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">输出格式</label>
+  <select class="tool-select" id="ic-format">
+    <option value="image/jpeg">JPEG</option>
+    <option value="image/webp">WebP</option>
+  </select>
+</div>
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="ic-compress" disabled>压缩图片</button>
+</div>
+<div class="tool-result" id="ic-result"></div>
+<div id="ic-preview" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;"></div>
+
+<script>
+(function() {
+  var originalImg = null, originalSize = 0;
+
+  document.getElementById('ic-quality').addEventListener('input', function() {
+    document.getElementById('ic-quality-val').textContent = this.value;
+  });
+
+  document.getElementById('ic-file').addEventListener('change', function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    originalSize = file.size;
+    var reader = new FileReader();
+    reader.onload = function(evt) {
+      var img = new Image();
+      img.onload = function() {
+        originalImg = img;
+        document.getElementById('ic-compress').disabled = false;
+        document.getElementById('ic-preview').innerHTML = '<div style="flex:1;min-width:200px;"><div class="tool-label">原图 (' + formatSize(originalSize) + ')</div><img src="' + evt.target.result + '" style="max-width:100%;max-height:300px;border:1px solid #ddd;border-radius:4px;"></div>';
+      };
+      img.src = evt.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('ic-compress').addEventListener('click', function() {
+    if (!originalImg) return;
+    var quality = parseFloat(document.getElementById('ic-quality').value);
+    var format = document.getElementById('ic-format').value;
+
+    var canvas = document.createElement('canvas');
+    canvas.width = originalImg.width;
+    canvas.height = originalImg.height;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(originalImg, 0, 0);
+
+    canvas.toBlob(function(blob) {
+      var compressedSize = blob.size;
+      var ratio = Math.round((1 - compressedSize / originalSize) * 100);
+      var url = URL.createObjectURL(blob);
+
+      document.getElementById('ic-preview').innerHTML += '<div style="flex:1;min-width:200px;"><div class="tool-label">压缩后 (' + formatSize(compressedSize) + ')</div><img src="' + url + '" style="max-width:100%;max-height:300px;border:1px solid #ddd;border-radius:4px;"></div>';
+
+      document.getElementById('ic-result').innerHTML = '<div class="tool-output"><div class="tool-output-title">压缩结果</div>' +
+        '<div class="tool-stats"><div class="tool-stat"><div class="tool-stat-value">' + formatSize(originalSize) + '</div><div class="tool-stat-label">原始大小</div></div>' +
+        '<div class="tool-stat"><div class="tool-stat-value">' + formatSize(compressedSize) + '</div><div class="tool-stat-label">压缩后大小</div></div>' +
+        '<div class="tool-stat"><div class="tool-stat-value">' + ratio + '%</div><div class="tool-stat-label">压缩率</div></div></div>' +
+        '<p style="margin-top:8px;"><button class="tool-btn tool-btn-success" onclick="var a=document.createElement(\'a\');a.href=\'' + url + '\';a.download=\'compressed.' + (format === 'image/webp' ? 'webp' : 'jpg') + '\';a.click();">下载图片</button></p></div>';
+    }, format, quality);
+  });
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(2) + ' MB';
+  }
+})();
+</script>

@@ -1,0 +1,89 @@
+<div class="tool-input-group">
+  <label class="tool-label">搜索 Unicode 区块</label>
+  <input class="tool-input" type="text" id="ub-search" placeholder="搜索区块名称...">
+</div>
+<div class="tool-result" id="ub-result"></div>
+
+<script>
+(function() {
+  var blocks = [
+    { name:'Basic Latin', start:'U+0000', end:'U+007F', count:128, desc:'基本拉丁字母(ASCII)' },
+    { name:'Latin-1 Supplement', start:'U+0080', end:'U+00FF', count:128, desc:'拉丁字母补充-1' },
+    { name:'Latin Extended-A', start:'U+0100', end:'U+017F', count:128, desc:'拉丁字母扩展-A' },
+    { name:'Latin Extended-B', start:'U+0180', end:'U+024F', count:208, desc:'拉丁字母扩展-B' },
+    { name:'IPA Extensions', start:'U+0250', end:'U+02AF', count:96, desc:'国际音标扩展' },
+    { name:'Spacing Modifier Letters', start:'U+02B0', end:'U+02FF', count:80, desc:'间距修饰字母' },
+    { name:'Combining Diacritical Marks', start:'U+0300', end:'U+036F', count:112, desc:'组合用附加符号' },
+    { name:'Greek and Coptic', start:'U+0370', end:'U+03FF', count:144, desc:'希腊字母和科普特文' },
+    { name:'Cyrillic', start:'U+0400', end:'U+04FF', count:256, desc:'西里尔字母' },
+    { name:'Armenian', start:'U+0530', end:'U+058F', count:96, desc:'亚美尼亚字母' },
+    { name:'Hebrew', start:'U+0590', end:'U+05FF', count:112, desc:'希伯来文' },
+    { name:'Arabic', start:'U+0600', end:'U+06FF', count:256, desc:'阿拉伯文' },
+    { name:'Devanagari', start:'U+0900', end:'U+097F', count:128, desc:'天城文' },
+    { name:'Bengali', start:'U+0980', end:'U+09FF', count:128, desc:'孟加拉文' },
+    { name:'Thai', start:'U+0E00', end:'U+0E7F', count:128, desc:'泰文' },
+    { name:'Georgian', start:'U+10A0', end:'U+10FF', count:96, desc:'格鲁吉亚文' },
+    { name:'Hangul Jamo', start:'U+1100', end:'U+11FF', count:256, desc:'谚文字母' },
+    { name:'Latin Extended Additional', start:'U+1E00', end:'U+1EFF', count:256, desc:'拉丁字母扩展附加' },
+    { name:'Greek Extended', start:'U+1F00', end:'U+1FFF', count:256, desc:'希腊字母扩展' },
+    { name:'General Punctuation', start:'U+2000', end:'U+206F', count:112, desc:'通用标点符号' },
+    { name:'Superscripts and Subscripts', start:'U+2070', end:'U+209F', count:48, desc:'上标和下标' },
+    { name:'Currency Symbols', start:'U+20A0', end:'U+20CF', count:48, desc:'货币符号' },
+    { name:'Letterlike Symbols', start:'U+2100', end:'U+214F', count:80, desc:'类字母符号' },
+    { name:'Number Forms', start:'U+2150', end:'U+218F', count:64, desc:'数字形式' },
+    { name:'Arrows', start:'U+2190', end:'U+21FF', count:112, desc:'箭头' },
+    { name:'Mathematical Operators', start:'U+2200', end:'U+22FF', count:256, desc:'数学运算符' },
+    { name:'Miscellaneous Technical', start:'U+2300', end:'U+23FF', count:256, desc:'杂项技术符号' },
+    { name:'Box Drawing', start:'U+2500', end:'U+257F', count:128, desc:'制表符' },
+    { name:'Block Elements', start:'U+2580', end:'U+259F', count:32, desc:'方块元素' },
+    { name:'Geometric Shapes', start:'U+25A0', end:'U+25FF', count:96, desc:'几何图形' },
+    { name:'Miscellaneous Symbols', start:'U+2600', end:'U+26FF', count:256, desc:'杂项符号' },
+    { name:'Dingbats', start:'U+2700', end:'U+27BF', count:192, desc:'装饰符号' },
+    { name:'CJK Symbols and Punctuation', start:'U+3000', end:'U+303F', count:64, desc:'CJK符号和标点' },
+    { name:'Hiragana', start:'U+3040', end:'U+309F', count:96, desc:'平假名' },
+    { name:'Katakana', start:'U+30A0', end:'U+30FF', count:96, desc:'片假名' },
+    { name:'CJK Unified Ideographs', start:'U+4E00', end:'U+9FFF', count:20992, desc:'中日韩统一表意文字' },
+    { name:'Hangul Syllables', start:'U+AC00', end:'U+D7AF', count:11184, desc:'谚文音节' },
+    { name:'Private Use Area', start:'U+E000', end:'U+F8FF', count:6400, desc:'私用区' },
+    { name:'CJK Compatibility Ideographs', start:'U+F900', end:'U+FAFF', count:512, desc:'CJK兼容表意文字' },
+    { name:'Alphabetic Presentation Forms', start:'U+FB00', end:'U+FB4F', count:80, desc:'字母表达形式' },
+    { name:'Arabic Presentation Forms-A', start:'U+FB50', end:'U+FDFF', count:688, desc:'阿拉伯文表达形式-A' },
+    { name:'Halfwidth and Fullwidth Forms', start:'U+FF00', end:'U+FFEF', count:240, desc:'半角及全角形式' },
+    { name:'Specials', start:'U+FFF0', end:'U+FFFF', count:16, desc:'特殊' },
+    { name:'Linear B Syllabary', start:'U+10000', end:'U+1007F', count:128, desc:'线形文字B音节' },
+    { name:'Linear B Ideograms', start:'U+10080', end:'U+100FF', count:128, desc:'线形文字B表意' },
+    { name:'Aegean Numbers', start:'U+10100', end:'U+1013F', count:64, desc:'爱琴数字' },
+    { name:'Ancient Greek Numbers', start:'U+10140', end:'U+1018F', count:80, desc:'古希腊数字' },
+    { name:'Cuneiform', start:'U+12000', end:'U+123FF', count:1024, desc:'楔形文字' },
+    { name:'Emoticons', start:'U+1F600', end:'U+1F64F', count:80, desc:'表情符号' },
+    { name:'Transport and Map Symbols', start:'U+1F680', end:'U+1F6FF', count:128, desc:'交通和地图符号' },
+    { name:'Alchemical Symbols', start:'U+1F700', end:'U+1F77F', count:128, desc:'炼金术符号' },
+    { name:'Geometric Shapes Extended', start:'U+1F780', end:'U+1F7FF', count:128, desc:'几何图形扩展' },
+    { name:'Supplemental Symbols and Pictographs', start:'U+1F900', end:'U+1F9FF', count:256, desc:'补充符号和象形文字' },
+    { name:'CJK Unified Ideographs Extension B', start:'U+20000', end:'U+2A6DF', count:42720, desc:'CJK统一表意文字扩展B' },
+    { name:'CJK Unified Ideographs Extension C', start:'U+2A700', end:'U+2B73F', count:4160, desc:'CJK扩展C' },
+    { name:'CJK Unified Ideographs Extension D', start:'U+2B740', end:'U+2B81F', count:224, desc:'CJK扩展D' },
+    { name:'CJK Compatibility Ideographs Supplement', start:'U+2F800', end:'U+2FA1F', count:544, desc:'CJK兼容表意补充' }
+  ];
+
+  function render(search) {
+    search = (search || '').toLowerCase();
+    var filtered = blocks.filter(function(b) {
+      return !search || b.name.toLowerCase().indexOf(search) >= 0 || b.desc.toLowerCase().indexOf(search) >= 0 || b.start.toLowerCase().indexOf(search) >= 0;
+    });
+
+    var html = '<div class="tool-output"><div class="tool-output-title">Unicode 区块参考（共 ' + filtered.length + ' 个）</div>';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+    html += '<tr style="background:#f5f5f5;"><th style="padding:6px;text-align:left;">区块名称</th><th style="padding:6px;text-align:left;">起始</th><th style="padding:6px;text-align:left;">结束</th><th style="padding:6px;text-align:right;">字符数</th><th style="padding:6px;text-align:left;">描述</th></tr>';
+
+    for (var i = 0; i < filtered.length; i++) {
+      html += '<tr style="border-bottom:1px solid #eee;"><td style="padding:6px;font-weight:bold;">' + filtered[i].name + '</td><td style="padding:6px;font-family:monospace;">' + filtered[i].start + '</td><td style="padding:6px;font-family:monospace;">' + filtered[i].end + '</td><td style="padding:6px;text-align:right;font-family:monospace;">' + filtered[i].count.toLocaleString() + '</td><td style="padding:6px;font-size:12px;color:#666;">' + filtered[i].desc + '</td></tr>';
+    }
+    html += '</table></div>';
+    document.getElementById('ub-result').innerHTML = html;
+  }
+
+  document.getElementById('ub-search').addEventListener('input', function(){ render(this.value); });
+  render('');
+})();
+</script>

@@ -1,0 +1,76 @@
+<div class="tool-input-group">
+  <label class="tool-label">选择城市（可多选）</label>
+  <div id="wc-presets" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;"></div>
+</div>
+<div class="tool-result" id="wc-result"></div>
+
+<script>
+(function() {
+  var cities = [
+    { name: '北京', tz: 'Asia/Shanghai' },
+    { name: '东京', tz: 'Asia/Tokyo' },
+    { name: '纽约', tz: 'America/New_York' },
+    { name: '伦敦', tz: 'Europe/London' },
+    { name: '巴黎', tz: 'Europe/Paris' },
+    { name: '悉尼', tz: 'Australia/Sydney' },
+    { name: '迪拜', tz: 'Asia/Dubai' },
+    { name: '莫斯科', tz: 'Europe/Moscow' },
+    { name: '新加坡', tz: 'Asia/Singapore' },
+    { name: '洛杉矶', tz: 'America/Los_Angeles' }
+  ];
+
+  var selected = [];
+
+  function renderPresets() {
+    var html = '';
+    for (var i = 0; i < cities.length; i++) {
+      var sel = selected.indexOf(cities[i].name) >= 0;
+      html += '<button class="wc-city-btn" data-name="' + cities[i].name + '" style="padding:6px 14px;border:1px solid ' + (sel ? '#4a90d9' : '#ddd') + ';background:' + (sel ? '#e8f0fe' : '#fff') + ';border-radius:20px;cursor:pointer;font-size:13px;">' + cities[i].name + '</button>';
+    }
+    document.getElementById('wc-presets').innerHTML = html;
+
+    var btns = document.querySelectorAll('.wc-city-btn');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].addEventListener('click', function() {
+        var name = this.dataset.name;
+        var idx = selected.indexOf(name);
+        if (idx >= 0) selected.splice(idx, 1);
+        else selected.push(name);
+        renderPresets();
+        updateClock();
+      });
+    }
+  }
+
+  function updateClock() {
+    var result = document.getElementById('wc-result');
+    if (selected.length === 0) {
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">世界时钟</div><p>请选择至少一个城市。</p></div>';
+      return;
+    }
+
+    var now = new Date();
+    var html = '<div class="tool-output"><div class="tool-output-title">世界时钟</div>';
+    html += '<table style="width:100%;border-collapse:collapse;">';
+    html += '<tr style="background:#f5f5f5;"><th style="padding:8px;text-align:left;">城市</th><th style="padding:8px;text-align:left;">时间</th><th style="padding:8px;text-align:left;">日期</th><th style="padding:8px;text-align:left;">时区</th></tr>';
+
+    for (var i = 0; i < cities.length; i++) {
+      if (selected.indexOf(cities[i].name) < 0) continue;
+      try {
+        var timeStr = now.toLocaleString('zh-CN', { timeZone: cities[i].tz, hour12: false });
+        var dateStr = now.toLocaleDateString('zh-CN', { timeZone: cities[i].tz, weekday: 'long', year: 'numeric', month: '2-digit', day: '2-digit' });
+        var parts = timeStr.split(' ');
+        var time = parts[1] || timeStr;
+        html += '<tr style="border-bottom:1px solid #eee;"><td style="padding:8px;font-weight:bold;">' + cities[i].name + '</td><td style="padding:8px;font-family:monospace;">' + time + '</td><td style="padding:8px;font-size:12px;">' + dateStr + '</td><td style="padding:8px;font-size:12px;color:#666;">' + cities[i].tz + '</td></tr>';
+      } catch(e) {
+        html += '<tr style="border-bottom:1px solid #eee;"><td style="padding:8px;">' + cities[i].name + '</td><td style="padding:8px;" colspan="3">时区不可用</td></tr>';
+      }
+    }
+    html += '</table></div>';
+    result.innerHTML = html;
+  }
+
+  renderPresets();
+  setInterval(updateClock, 1000);
+})();
+</script>

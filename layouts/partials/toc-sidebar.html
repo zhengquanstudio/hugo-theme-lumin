@@ -1,0 +1,17 @@
+{{/* 文章目录 TOC 侧边栏 */}}
+{{ if site.Params.article.showToc }}
+<aside class="post-toc-sidebar" id="post-toc-sidebar">
+  <div class="post-toc-card">
+    <h4 class="post-toc-title">目录</h4>
+    <nav class="post-toc-nav" id="toc-nav">
+      {{ with .TableOfContents }}
+        {{ . }}
+      {{ else }}
+      <div class="toc-empty">暂无目录</div>
+      {{ end }}
+    </nav>
+  </div>
+  {{/* 广告位：TOC 侧边栏 */}}
+  {{ partial "ads/toc-sidebar.html" (dict "Site" .Site "widgetEnabled" true) }}
+</aside>
+{{ end }}

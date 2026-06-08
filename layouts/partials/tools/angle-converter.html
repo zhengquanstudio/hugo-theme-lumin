@@ -1,0 +1,41 @@
+<div class="tool-input-group">
+  <label class="tool-label">输入角度</label>
+  <div style="display:flex;gap:10px;">
+    <input class="tool-input" type="number" id="ac-val" value="90" step="any" placeholder="数值" style="flex:2;">
+    <select class="tool-select" id="ac-unit" style="flex:1;">
+      <option value="deg">角度制 (°)</option>
+      <option value="rad">弧度制 (rad)</option>
+      <option value="grad">梯度制 (grad)</option>
+    </select>
+  </div>
+</div>
+<div class="tool-result" id="ac-result"></div>
+
+<script>
+(function() {
+  function update() {
+    var val = parseFloat(document.getElementById('ac-val').value);
+    var unit = document.getElementById('ac-unit').value;
+    var deg, rad, grad;
+
+    if (isNaN(val)) {
+      document.getElementById('ac-result').innerHTML = '';
+      return;
+    }
+
+    if (unit === 'deg') { deg = val; rad = val * Math.PI / 180; grad = val * 200 / 180; }
+    else if (unit === 'rad') { rad = val; deg = val * 180 / Math.PI; grad = val * 200 / Math.PI; }
+    else { grad = val; deg = val * 180 / 200; rad = val * Math.PI / 200; }
+
+    document.getElementById('ac-result').innerHTML = '<div class="tool-output"><div class="tool-output-title">换算结果</div>' +
+      '<div class="tool-stats"><div class="tool-stat"><div class="tool-stat-value">' + deg.toFixed(6) + '</div><div class="tool-stat-label">角度制 (°)</div></div>' +
+      '<div class="tool-stat"><div class="tool-stat-value">' + rad.toFixed(6) + '</div><div class="tool-stat-label">弧度制 (rad)</div></div>' +
+      '<div class="tool-stat"><div class="tool-stat-value">' + grad.toFixed(6) + '</div><div class="tool-stat-label">梯度制 (grad)</div></div></div>' + 
+      '<p style="margin-top:12px;font-size:12px;color:#666;">换算关系：180° = π rad = 200 grad</p></div>';
+  }
+
+  document.getElementById('ac-val').addEventListener('input', update);
+  document.getElementById('ac-unit').addEventListener('change', update);
+  update();
+})();
+</script>

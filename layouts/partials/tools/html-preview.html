@@ -1,0 +1,22 @@
+<div class="tool-section">
+  <div class="tool-title"><i class="fa-brands fa-html5"></i> HTML 在线预览</div>
+  <div class="tool-row">
+    <div class="tool-input-group" style="flex:1">
+      <label class="tool-label">HTML 代码 <span style="color:var(--text-secondary);font-weight:400">(自动合并 CSS/JS)</span></label>
+      <textarea id="html-code" class="tool-textarea" rows="10" placeholder="<h1>Hello World</h1>&#10;<p style='color:red'>这是一段测试文字</p>&#10;<button onclick='alert(&quot;点击了&quot;)'>点击我</button>"></textarea>
+      <div class="tool-btn-group" style="margin-top:8px">
+        <button class="tool-btn tool-btn-primary" onclick="runHTML()"><i class="fa-solid fa-play"></i> 运行</button>
+        <button class="tool-btn" onclick="resetHTML()"><i class="fa-solid fa-rotate-left"></i> 清空</button>
+      </div>
+    </div>
+    <div class="tool-input-group" style="flex:1">
+      <label class="tool-label">预览</label>
+      <div id="html-preview-frame" style="width:100%;height:360px;background:var(--bg-primary,#fff);border:2px solid var(--border-color);border-radius:8px;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+window.runHTML=function(){var code=document.getElementById('html-code').value;var frame=document.getElementById('html-preview-frame');frame.innerHTML=code;};
+window.resetHTML=function(){document.getElementById('html-code').value='';document.getElementById('html-preview-frame').innerHTML='';};
+</script>

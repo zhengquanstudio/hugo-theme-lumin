@@ -1,0 +1,254 @@
+<div class="tool-input-group">
+  <label class="tool-label">输入 TOML</label>
+  <textarea class="tool-textarea" id="tf-input" rows="12" placeholder='请输入 TOML 数据，例如：
+title = "TOML Example"
+[owner]
+name = "Tom Preston-Werner"
+dob = 1979-05-27T07:32:00-08:00
+
+[database]
+server = "192.168.1.1"
+ports = [8001, 8001, 8002]
+enabled = true'></textarea>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="tf-format-btn">格式化</button>
+  <button class="tool-btn tool-btn-success" id="tf-validate-btn">校验</button>
+  <button class="tool-btn" id="tf-clear-btn">清空</button>
+</div>
+
+<div id="tf-error" style="display:none;color:var(--color-error,#e53e3e);margin-top:8px;"></div>
+
+<div class="tool-output" id="tf-output-area" style="display:none;">
+  <div class="tool-result" id="tf-result"></div>
+  <button class="tool-copy-btn" id="tf-copy-btn">复制结果</button>
+</div>
+
+<div class="tool-stats" id="tf-stats" style="display:none;">
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="tf-stat-original">0</span>
+    <span class="tool-stat-label">原始大小</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="tf-stat-result">0</span>
+    <span class="tool-stat-label">结果大小</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="tf-stat-tables">0</span>
+    <span class="tool-stat-label">表数量</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  const input = document.getElementById('tf-input');
+  const result = document.getElementById('tf-result');
+  const outputArea = document.getElementById('tf-output-area');
+  const errorDiv = document.getElementById('tf-error');
+  const statsDiv = document.getElementById('tf-stats');
+
+  function showError(msg) {
+    errorDiv.textContent = msg;
+    errorDiv.style.display = 'block';
+    outputArea.style.display = 'none';
+    statsDiv.style.display = 'none';
+  }
+
+  function hideError() {
+    errorDiv.style.display = 'none';
+  }
+
+  function showResult(text, origSize) {
+    result.textContent = text;
+    outputArea.style.display = 'block';
+    statsDiv.style.display = 'flex';
+    document.getElementById('tf-stat-original').textContent = formatSize(origSize);
+    document.getElementById('tf-stat-result').textContent = formatSize(new Blob([text]).size);
+    const tables = (input.value.match(/^\[/gm) || []).length;
+    document.getElementById('tf-stat-tables').textContent = tables;
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    return (bytes / 1024).toFixed(1) + ' KB';
+  }
+
+  function formatTOML(tomlStr) {
+    const lines = tomlStr.split('\n');
+    const result = [];
+    let inArray = false;
+    let arrayIndent = '';
+
+    for (let i = 0; i < lines.length; i++) {
+      let line = lines[i];
+      let trimmed = line.trim();
+
+      // Skip empty lines
+      if (trimmed === '') {
+        result.push('');
+        continue;
+      }
+
+      // Skip comments
+      if (trimmed.startsWith('#')) {
+        result.push(line.replace(/^(\s*#)/, '#'));
+        continue;
+      }
+
+      // Section headers
+      if (trimmed.match(/^\[+[^\]]+\]+$/)) {
+        if (inArray) { inArray = false; }
+        if (trimmed.startsWith('[[')) {
+          result.push(trimmed);
+        } else {
+          result.push(trimmed);
+        }
+        continue;
+      }
+
+      // Key-value pairs
+      const eqIdx = trimmed.indexOf('=');
+      if (eqIdx !== -1 && !inArray) {
+        let key = trimmed.substring(0, eqIdx).trim();
+        let value = trimmed.substring(eqIdx + 1).trim();
+
+        // Handle array values
+        if (value.startsWith('[') && !value.endsWith(']')) {
+          inArray = true;
+          arrayIndent = ' '.repeat(4);
+        }
+
+        result.push(key + ' = ' + value);
+        continue;
+      }
+
+      // Array continuation
+      if (inArray) {
+        result.push(' '.repeat(4) + trimmed);
+        if (trimmed.endsWith(']')) inArray = false;
+        continue;
+      }
+
+      result.push(line);
+    }
+
+    return result.join('\n');
+  }
+
+  function validateTOML(tomlStr) {
+    const errors = [];
+    const lines = tomlStr.split('\n');
+    let inArray = false;
+    let hasRootTable = false;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line === '' || line.startsWith('#')) continue;
+
+      // Check bracket matching in array values
+      if (!inArray) {
+        const eqIdx = line.indexOf('=');
+        if (eqIdx !== -1) {
+          const val = line.substring(eqIdx + 1).trim();
+          if (val.startsWith('[') && !line.endsWith(']')) {
+            inArray = true;
+          }
+        }
+      } else {
+        if (line.endsWith(']')) inArray = false;
+        continue;
+      }
+
+      // Check section headers
+      if (line.startsWith('[')) {
+        const closeBracket = line.lastIndexOf(']');
+        if (closeBracket === -1) {
+          errors.push('第 ' + (i + 1) + ' 行：表头括号不匹配');
+        }
+        continue;
+      }
+
+      // Check key=value lines
+      if (!line.startsWith('[')) {
+        const eqIdx = line.indexOf('=');
+        if (eqIdx === -1) {
+          errors.push('第 ' + (i + 1) + ' 行：缺少等号');
+          continue;
+        }
+        let key = line.substring(0, eqIdx).trim();
+        if (!key) {
+          errors.push('第 ' + (i + 1) + ' 行：键名为空');
+        }
+
+        // Check quoted keys
+        if ((key.startsWith('"') && !key.endsWith('"')) ||
+            (key.startsWith("'") && !key.endsWith("'"))) {
+          errors.push('第 ' + (i + 1) + ' 行：引号不匹配');
+        }
+      }
+    }
+
+    if (inArray) {
+      errors.push('数组值未闭合（缺少 ]）');
+    }
+
+    return errors;
+  }
+
+  document.getElementById('tf-format-btn').addEventListener('click', () => {
+    hideError();
+    const raw = input.value;
+    if (!raw.trim()) { showError('请输入 TOML 数据'); return; }
+    try {
+      const formatted = formatTOML(raw);
+      showResult(formatted, new Blob([raw]).size);
+    } catch(e) {
+      showError('格式化失败：' + e.message);
+    }
+  });
+
+  document.getElementById('tf-validate-btn').addEventListener('click', () => {
+    hideError();
+    const raw = input.value;
+    if (!raw.trim()) { showError('请输入 TOML 数据'); return; }
+    const errors = validateTOML(raw);
+    if (errors.length === 0) {
+      errorDiv.style.color = 'var(--color-success,#38a169)';
+      showError('校验通过，TOML 语法正确');
+    } else {
+      errorDiv.style.color = 'var(--color-error,#e53e3e)';
+      showError('发现 ' + errors.length + ' 个问题：\n' + errors.join('\n'));
+      errorDiv.style.whiteSpace = 'pre-wrap';
+    }
+  });
+
+  document.getElementById('tf-clear-btn').addEventListener('click', () => {
+    input.value = '';
+    result.textContent = '';
+    outputArea.style.display = 'none';
+    statsDiv.style.display = 'none';
+    hideError();
+  });
+
+  document.getElementById('tf-copy-btn').addEventListener('click', () => {
+    const text = result.textContent;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('tf-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const btn = document.getElementById('tf-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    });
+  });
+})();
+</script>

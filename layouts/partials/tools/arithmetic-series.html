@@ -1,0 +1,55 @@
+<div class="tool-section">
+  <div class="tool-title"><i class="fa-solid fa-arrow-trend-up"></i> 等差/等比数列</div>
+  <div class="tool-tabs">
+    <button class="tool-tab-btn active" onclick="switchSeriesTab('arith',this)">等差数列</button>
+    <button class="tool-tab-btn" onclick="switchSeriesTab('geo',this)">等比数列</button>
+  </div>
+  <div id="series-tab-arith" class="series-tab-content active">
+    <div class="tool-row">
+      <div class="tool-input-group" style="flex:1"><label class="tool-label">首项 a₁</label><input type="number" class="tool-input" id="arith-a1" value="1"></div>
+      <div class="tool-input-group" style="flex:1"><label class="tool-label">公差 d</label><input type="number" class="tool-input" id="arith-d" value="2"></div>
+      <div class="tool-input-group" style="flex:1"><label class="tool-label">项数 n</label><input type="number" class="tool-input" id="arith-n" min="1" value="10"></div>
+    </div>
+    <div class="tool-btn-group">
+      <button class="tool-btn tool-btn-primary" onclick="genArith()"><i class="fa-solid fa-play"></i> 生成数列</button>
+      <button class="tool-btn" onclick="calcArithSum()"><i class="fa-solid fa-calculator"></i> 求和</button>
+    </div>
+    <div id="arith-result" style="margin-top:12px"></div>
+  </div>
+  <div id="series-tab-geo" class="series-tab-content" style="display:none">
+    <div class="tool-row">
+      <div class="tool-input-group" style="flex:1"><label class="tool-label">首项 a₁</label><input type="number" class="tool-input" id="geo-a1" value="1"></div>
+      <div class="tool-input-group" style="flex:1"><label class="tool-label">公比 r</label><input type="number" class="tool-input" id="geo-r" value="2" step="any"></div>
+      <div class="tool-input-group" style="flex:1"><label class="tool-label">项数 n</label><input type="number" class="tool-input" id="geo-n" min="1" value="10"></div>
+    </div>
+    <div class="tool-btn-group">
+      <button class="tool-btn tool-btn-primary" onclick="genGeo()"><i class="fa-solid fa-play"></i> 生成数列</button>
+      <button class="tool-btn" onclick="calcGeoSum()"><i class="fa-solid fa-calculator"></i> 求和</button>
+    </div>
+    <div id="geo-result" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<style>.series-tab-content{padding:8px 0}</style>
+
+<script>
+var seriesTab='arith';
+window.switchSeriesTab=function(tab,btn){seriesTab=tab;document.querySelectorAll('.tool-tab-btn').forEach(function(b){b.classList.remove('active')});btn.classList.add('active');document.querySelectorAll('.series-tab-content').forEach(function(c){c.style.display='none'});document.getElementById('series-tab-'+tab).style.display='block';};
+window.genArith=function(){
+  var a1=parseFloat(document.getElementById('arith-a1').value)||0,d=parseFloat(document.getElementById('arith-d').value)||0,n=parseInt(document.getElementById('arith-n').value)||10;
+  var terms=[],sum=0;
+  for(var i=0;i<n;i++){var t=a1+i*d;terms.push(t);sum+=t;}
+  var an=a1+(n-1)*d;
+  document.getElementById('arith-result').innerHTML='<div style="margin-bottom:8px"><b>数列:</b> '+terms.map(function(t,i){return 'a<sub>'+(i+1)+'</sub>='+t;}).join(', ')+'</div><div><b>通项公式:</b> a<sub>n</sub> = '+a1+' + (n-1)×'+d+'</div><div><b>第 '+n+' 项:</b> a<sub>'+n+'</sub> = '+an+'</div><div><b>前 '+n+' 项和:</b> S<sub>'+n+'</sub> = '+sum+' <span style="color:var(--text-secondary);font-size:.85rem">(公式: n(a₁+aₙ)/2 = '+n+'×('+a1+'+'+an+')/2)</span></div>';
+};
+window.calcArithSum=window.genArith;
+window.genGeo=function(){
+  var a1=parseFloat(document.getElementById('geo-a1').value)||0,r=parseFloat(document.getElementById('geo-r').value)||0,n=parseInt(document.getElementById('geo-n').value)||10;
+  var terms=[],sum=0;
+  for(var i=0;i<n;i++){var t=a1*Math.pow(r,i);terms.push(t);sum+=t;}
+  var an=a1*Math.pow(r,n-1);
+  var formulaSum=r===1?n*a1:a1*(1-Math.pow(r,n))/(1-r);
+  document.getElementById('geo-result').innerHTML='<div style="margin-bottom:8px"><b>数列:</b> '+terms.map(function(t,i){return 'a<sub>'+(i+1)+'</sub>='+t;}).join(', ')+'</div><div><b>通项公式:</b> a<sub>n</sub> = '+a1+' × '+r+'<sup>n-1</sup></div><div><b>第 '+n+' 项:</b> a<sub>'+n+'</sub> = '+an+'</div><div><b>前 '+n+' 项和:</b> S<sub>'+n+'</sub> = '+sum+'</div>';
+};
+window.calcGeoSum=window.genGeo;
+</script>

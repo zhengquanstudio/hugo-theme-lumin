@@ -1,0 +1,114 @@
+<div class="tool-tabs" id="ro-tabs">
+  <button class="tool-tab active" data-tab="ro-rot13">ROT13</button>
+  <button class="tool-tab" data-tab="ro-rot5">ROT5</button>
+  <button class="tool-tab" data-tab="ro-rot18">ROT18</button>
+  <button class="tool-tab" data-tab="ro-rot47">ROT47</button>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">输入文本</label>
+  <textarea class="tool-textarea" id="ro-input" rows="6" placeholder="请输入文本，将实时转换...">Hello World! The quick brown fox jumps over the lazy dog. ROT13 is fun!</textarea>
+</div>
+
+<div class="tool-output" id="ro-output-area" style="display:none;">
+  <div class="tool-result" id="ro-result"></div>
+  <button class="tool-copy-btn" id="ro-copy-btn">复制结果</button>
+</div>
+
+<script>
+(function(){
+  const input = document.getElementById('ro-input');
+  const result = document.getElementById('ro-result');
+  const outputArea = document.getElementById('ro-output-area');
+  const tabs = document.querySelectorAll('#ro-tabs .tool-tab');
+
+  let currentTab = 'ro-rot13';
+
+  function switchTab(tabId) {
+    currentTab = tabId;
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
+    updateConversion();
+  }
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+  });
+
+  // ROT13: 字母偏移13位
+  function rot13(text) {
+    return text.replace(/[a-zA-Z]/g, ch => {
+      const base = ch <= 'Z' ? 65 : 97;
+      return String.fromCharCode(((ch.charCodeAt(0) - base + 13) % 26) + base);
+    });
+  }
+
+  // ROT5: 数字偏移5位
+  function rot5(text) {
+    return text.replace(/[0-9]/g, ch => {
+      return String.fromCharCode(((ch.charCodeAt(0) - 48 + 5) % 10) + 48);
+    });
+  }
+
+  // ROT18: ROT13 + ROT5
+  function rot18(text) {
+    return text.replace(/[a-zA-Z0-9]/g, ch => {
+      if (/[0-9]/.test(ch)) {
+        return String.fromCharCode(((ch.charCodeAt(0) - 48 + 5) % 10) + 48);
+      }
+      const base = ch <= 'Z' ? 65 : 97;
+      return String.fromCharCode(((ch.charCodeAt(0) - base + 13) % 26) + base);
+    });
+  }
+
+  // ROT47: 可打印ASCII字符偏移47位
+  function rot47(text) {
+    return text.replace(/[\x21-\x7E]/g, ch => {
+      return String.fromCharCode(33 + ((ch.charCodeAt(0) - 33 + 47) % 94));
+    });
+  }
+
+  function updateConversion() {
+    const text = input.value;
+    if (!text.trim()) {
+      outputArea.style.display = 'none';
+      return;
+    }
+
+    let output = '';
+    switch(currentTab) {
+      case 'ro-rot13': output = rot13(text); break;
+      case 'ro-rot5': output = rot5(text); break;
+      case 'ro-rot18': output = rot18(text); break;
+      case 'ro-rot47': output = rot47(text); break;
+    }
+
+    result.textContent = output;
+    outputArea.style.display = 'block';
+  }
+
+  input.addEventListener('input', updateConversion);
+
+  document.getElementById('ro-copy-btn').addEventListener('click', () => {
+    const text = result.textContent;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('ro-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const btn = document.getElementById('ro-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    });
+  });
+
+  // 初始状态
+  updateConversion();
+})();
+</script>

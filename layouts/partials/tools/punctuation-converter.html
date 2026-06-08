@@ -1,0 +1,31 @@
+<div class="tool-section">
+  <div class="tool-title"><i class="fa-solid fa-quote-right"></i> 中英文符号转换</div>
+  <div class="tool-row">
+    <div class="tool-input-group" style="flex:1">
+      <label class="tool-label">输入文本</label>
+      <textarea id="punc-input" class="tool-textarea" rows="6" placeholder="请输入需要转换标点符号的文本...">他说："这是一个测试，对吗？"她回答说："是的！这很有趣……"（备注：中文标点示例）</textarea>
+    </div>
+    <div class="tool-input-group" style="flex:1">
+      <label class="tool-label">转换后</label>
+      <textarea id="punc-output" class="tool-textarea" rows="6" readonly placeholder="转换结果显示..."></textarea>
+    </div>
+  </div>
+  <div class="tool-btn-group">
+    <button class="tool-btn tool-btn-primary" onclick="puncConvert('cn2en')"><i class="fa-solid fa-arrow-right"></i> 中文 → 英文</button>
+    <button class="tool-btn tool-btn-primary" onclick="puncConvert('en2cn')"><i class="fa-solid fa-arrow-left"></i> 英文 → 中文</button>
+    <button class="tool-btn" onclick="puncCopy()"><i class="fa-solid fa-copy"></i> 复制</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var cn2en={'\u201c':'"','\u201d':'"','\u2018':"'",'\u2019':"'",'\uff1a':':','\uff1b':';','\uff0c':',','\u3002':'.','\uff1f':'?','\uff01':'!','\uff08':'(','\uff09':')','\u300a':'<','\u300b':'>','\u3010':'[','\u3011':']','\u2014':'-','\u2026':'...','\u00b7':'`','\u3001':','};
+  var en2cn={'"':'\u201c',"'":'\u2018',':':'\uff1a',';':'\uff1b',',':'\uff0c','.':'\u3002','?':'...','!':'...','(':'\uff08',')':'\uff09','<':'\u300a','>':'\u300b','[':'\u3010',']':'\u3011','-':'\u2014','...':'...','`':'\u00b7'};
+  window.puncConvert=function(dir){
+    var input=document.getElementById('punc-input').value,map=dir==='cn2en'?cn2en:en2cn,output='';
+    for(var i=0;i<input.length;i++){var ch=input[i];if(map[ch])output+=map[ch];else output+=ch;}
+    document.getElementById('punc-output').value=output;
+  };
+  window.puncCopy=function(){var ta=document.getElementById('punc-output');ta.select();document.execCommand('copy');};
+})();
+</script>

@@ -1,0 +1,50 @@
+{{ if and site.Params.widgets.newestComments site.Params.comments.twikoo.envId }}
+<div class="widget widget-newest-comments">
+  <h4 class="widget-title">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+    </svg>
+    最新评论
+  </h4>
+  <div class="newest-comments-card">
+    <div id="recent-comments-list" class="comments-list">
+      <!-- 加载中状态 -->
+      <div class="comments-loading">
+        <div class="loading-spinner"></div>
+        <span>加载中...</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 传递环境配置给 JavaScript -->
+<script id="recent-comments-config" type="application/json">
+{
+  "envId": "{{ site.Params.comments.twikoo.envId }}",
+  "pageSize": {{ site.Params.widgets.newestCommentsCount | default 5 }},
+  "totalSize": {{ site.Params.widgets.newestCommentsTotalSize | default 50 }}
+}
+</script>
+
+<!-- 加载 Twikoo 库（如果尚未加载） -->
+<script>
+(function() {
+  if (typeof twikoo === 'undefined') {
+    var script = document.createElement('script');
+    script.src = '/libs/twikoo/twikoo.all.min.js';
+    script.onload = function() {
+      // Twikoo 加载完成后，动态加载 recent-comments.js
+      var rcScript = document.createElement('script');
+      rcScript.src = '/js/recent-comments.js';
+      document.body.appendChild(rcScript);
+    };
+    document.head.appendChild(script);
+  } else {
+    // Twikoo 已加载，直接加载 recent-comments.js
+    var rcScript = document.createElement('script');
+    rcScript.src = '/js/recent-comments.js';
+    document.body.appendChild(rcScript);
+  }
+})();
+</script>
+{{ end }}

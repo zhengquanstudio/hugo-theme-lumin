@@ -1,0 +1,117 @@
+<div style="display:flex;gap:28px;flex-wrap:wrap;">
+  <div style="flex:1;min-width:280px;">
+    <div class="tool-input-group">
+      <label class="tool-switch">
+        <input type="checkbox" id="brg-unified" checked>
+        <span class="tool-switch-track"></span>
+        <span>统一调节</span>
+      </label>
+    </div>
+
+    <div class="tool-range-group">
+      <label class="tool-label" style="margin-bottom:0;min-width:72px;">左上角</label>
+      <input class="tool-range" type="range" id="brg-tl" min="0" max="200" value="16">
+      <span class="tool-range-value" id="brg-tl-val">16px</span>
+    </div>
+
+    <div class="tool-range-group">
+      <label class="tool-label" style="margin-bottom:0;min-width:72px;">右上角</label>
+      <input class="tool-range" type="range" id="brg-tr" min="0" max="200" value="16">
+      <span class="tool-range-value" id="brg-tr-val">16px</span>
+    </div>
+
+    <div class="tool-range-group">
+      <label class="tool-label" style="margin-bottom:0;min-width:72px;">右下角</label>
+      <input class="tool-range" type="range" id="brg-br" min="0" max="200" value="16">
+      <span class="tool-range-value" id="brg-br-val">16px</span>
+    </div>
+
+    <div class="tool-range-group">
+      <label class="tool-label" style="margin-bottom:0;min-width:72px;">左下角</label>
+      <input class="tool-range" type="range" id="brg-bl" min="0" max="200" value="16">
+      <span class="tool-range-value" id="brg-bl-val">16px</span>
+    </div>
+  </div>
+
+  <div style="flex:1;min-width:280px;display:flex;align-items:center;justify-content:center;">
+    <div id="brg-preview" style="width:200px;height:200px;background:linear-gradient(135deg,#667eea,#764ba2);"></div>
+  </div>
+</div>
+
+<div class="tool-output">
+  <label class="tool-label">CSS 代码</label>
+  <div class="tool-result" id="brg-code">border-radius: 16px;</div>
+  <button class="tool-copy-btn" id="brg-copy">复制 CSS</button>
+</div>
+
+<script>
+(function(){
+  var unified = document.getElementById('brg-unified');
+  var tlInput = document.getElementById('brg-tl');
+  var trInput = document.getElementById('brg-tr');
+  var brInput = document.getElementById('brg-br');
+  var blInput = document.getElementById('brg-bl');
+  
+  var tlVal = document.getElementById('brg-tl-val');
+  var trVal = document.getElementById('brg-tr-val');
+  var brVal = document.getElementById('brg-br-val');
+  var blVal = document.getElementById('brg-bl-val');
+
+  var preview = document.getElementById('brg-preview');
+  var codeEl = document.getElementById('brg-code');
+  var copyBtn = document.getElementById('brg-copy');
+
+  var locked = true;
+
+  unified.addEventListener('change', function(){
+    locked = unified.checked;
+  });
+
+  tlInput.addEventListener('input', function(){
+    var v = parseInt(tlInput.value);
+    tlVal.textContent = v + 'px';
+    if(locked){
+      trInput.value = v; trVal.textContent = v + 'px';
+      brInput.value = v; brVal.textContent = v + 'px';
+      blInput.value = v; blVal.textContent = v + 'px';
+    }
+    update();
+  });
+
+  [trInput, brInput, blInput].forEach(function(input, i){
+    input.addEventListener('input', function(){
+      var v = parseInt(input.value);
+      var labels = [trVal, brVal, blVal];
+      labels[i].textContent = v + 'px';
+      update();
+    });
+  });
+
+  function update(){
+    var tl = parseInt(tlInput.value);
+    var tr = parseInt(trInput.value);
+    var br = parseInt(brInput.value);
+    var bl = parseInt(blInput.value);
+
+    preview.style.borderRadius = tl + 'px ' + tr + 'px ' + br + 'px ' + bl + 'px';
+
+    var parts = [tl, tr, br, bl];
+    if(parts[0] === parts[1] && parts[1] === parts[2] && parts[2] === parts[3]){
+      codeEl.textContent = 'border-radius: ' + tl + 'px;';
+    } else if(tl === br && tr === bl && tl !== tr){
+      codeEl.textContent = 'border-radius: ' + tl + 'px ' + tr + 'px;';
+    } else {
+      codeEl.textContent = 'border-radius: ' + tl + 'px ' + tr + 'px ' + br + 'px ' + bl + 'px;';
+    }
+  }
+
+  copyBtn.addEventListener('click', function(){
+    navigator.clipboard.writeText(codeEl.textContent).then(function(){
+      copyBtn.textContent = '已复制';
+      setTimeout(function(){ copyBtn.textContent = '复制 CSS'; }, 1500);
+    });
+  });
+
+  update();
+})();
+</script>

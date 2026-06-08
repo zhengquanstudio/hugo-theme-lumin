@@ -1,0 +1,82 @@
+{{- define "main" -}}
+{{- if ne .Kind "term" -}}
+  <div class="list-page">
+    {{- with .Content }}{{ . }}{{ end -}}
+  </div>
+  {{- return -}}
+{{- end -}}
+
+{{- $topicPage := site.GetPage (printf "/%s/%s" .Data.Plural .Data.Term) -}}
+{{- $cover := $topicPage.Params.cover | default "" -}}
+{{- $desc := $topicPage.Description | default .Description -}}
+{{- $colors := slice "#667eea" "#764ba2" "#e74c3c" "#27ae60" "#f39c12" "#2980b9" "#16a085" "#8e44ad" -}}
+{{- $accent := index $colors (mod (len .Data.Term) (len $colors)) -}}
+
+<nav class="breadcrumb" aria-label="面包屑导航">
+  <ol class="breadcrumb-list">
+    <li class="breadcrumb-item"><a href="{{ site.BaseURL }}"><i class="fas fa-home" style="font-size:0.9em;margin-right:2px;"></i> 首页</a></li>
+    <li class="breadcrumb-item"><a href="/topics/"><i class="fas fa-book-open" style="font-size:0.85em;margin-right:4px;opacity:0.8;"></i>专题</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{- $topicPage.Title | default .Data.Term -}}</li>
+  </ol>
+</nav>
+
+<div class="list-page topic-page">
+
+  <header class="topic-hero">
+    <div class="topic-hero-bg" style="{{- if $cover -}}background-image:url({{- $cover | relURL -}}){{- end -}}">
+      <div class="topic-hero-gradient" style="background:linear-gradient(135deg, {{ $accent }}ee 0%, {{ $accent }}66 100%)"></div>
+    </div>
+    <div class="topic-hero-body">
+      <div class="topic-hero-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+      </div>
+      <h1 class="topic-hero-title">{{- $topicPage.Title | default .Data.Term -}}</h1>
+      {{- with $desc -}}
+      <p class="topic-hero-desc">{{- . -}}</p>
+      {{- end -}}
+      <div class="topic-hero-meta">
+        <span class="topic-hero-stat">
+          <strong>{{ len .Pages }}</strong> 篇文章
+        </span>
+      </div>
+    </div>
+  </header>
+
+  {{- if .Pages -}}
+  <div class="topic-article-grid">
+    {{- range .Pages -}}
+    <a href="{{- .RelPermalink -}}" class="topic-article-card">
+      <div class="topic-article-thumb">
+        {{- $img := .Params.featured_image | default .Params.image | default (site.Params.article.defaultFeaturedImage | default "/images/default-cover.webp") -}}
+        <img src="{{- $img | relURL -}}" alt="{{- .Title -}}" loading="lazy">
+      </div>
+      <div class="topic-article-body">
+        <div class="topic-article-meta">
+          <time class="topic-article-date">{{- .Date.Format "2006-01-02" -}}</time>
+          {{- with index .Params.categories 0 -}}
+          <span class="topic-article-cat">{{- partial "category-display-name.html" (dict "Site" $.Site "Slug" .) -}}</span>
+          {{- end -}}
+          {{- with .ReadingTime -}}
+          <span class="topic-article-rt">{{- . -}} 分钟</span>
+          {{- end -}}
+          {{- with .WordCount -}}
+          <span class="topic-article-wc">{{- . -}} 字</span>
+          {{- end -}}
+        </div>
+        <h2 class="topic-article-title">{{- .Title -}}</h2>
+        {{- $articleDesc := .Description | default (.Plain | truncate 80 "…") -}}
+        {{- if $articleDesc -}}
+        <p class="topic-article-desc">{{- $articleDesc -}}</p>
+        {{- end -}}
+      </div>
+    </a>
+    {{- end -}}
+  </div>
+  {{- else -}}
+  <div class="topic-empty">
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    <p>这个专题还没有文章</p>
+  </div>
+  {{- end -}}
+</div>
+{{- end -}}

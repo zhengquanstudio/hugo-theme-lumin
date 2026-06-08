@@ -1,0 +1,14 @@
+{{/* Scripts Libs - 依赖库（全部本地化加载） */}}
+
+{{/* Fancybox - 图片灯箱（本地化） */}}
+{{ if site.Params.fancybox.enable }}
+<link rel="stylesheet" href="/libs/fancybox/fancybox.css" />
+<script src="/libs/fancybox/fancybox.umd.js"></script>
+{{ end }}
+
+{{/* Mermaid - 图表渲染（本地化） */}}
+{{ if site.Params.mermaid.enable }}
+<script src="/js/mermaid.min.js"></script>
+{{ end }}
+
+{{/* KaTeX - 由 katex.html 异步按需加载，此处不再重复加载 */}}

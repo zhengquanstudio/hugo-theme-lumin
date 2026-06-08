@@ -1,0 +1,125 @@
+<div class="tool-input-group">
+  <label class="tool-label">源文本</label>
+  <textarea class="tool-textarea" id="textReplaceInput" rows="8" placeholder="输入源文本...">2024年1月，公司在北京成立。2024年3月，公司在上海开设分部。2024年6月，公司将总部迁至北京朝阳区。</textarea>
+</div>
+
+<div style="display:flex;gap:12px;flex-wrap:wrap;">
+  <div class="tool-input-group" style="flex:1;min-width:200px;">
+    <label class="tool-label">查找</label>
+    <input class="tool-input" type="text" id="textReplaceFind" placeholder="查找内容..." value="北京">
+  </div>
+  <div class="tool-input-group" style="flex:1;min-width:200px;">
+    <label class="tool-label">替换为</label>
+    <input class="tool-input" type="text" id="textReplaceReplace" placeholder="替换内容..." value="深圳">
+  </div>
+</div>
+
+<div style="display:flex;flex-wrap:wrap;gap:16px;margin:12px 0;">
+  <label class="tool-switch">
+    <input type="checkbox" id="textReplaceRegex">
+    <span>使用正则表达式</span>
+  </label>
+  <label class="tool-switch">
+    <input type="checkbox" id="textReplaceIgnoreCase">
+    <span>忽略大小写</span>
+  </label>
+  <label class="tool-switch">
+    <input type="checkbox" id="textReplaceGlobal" checked>
+    <span>全局替换</span>
+  </label>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="textReplaceBtn">替换</button>
+  <button class="tool-btn" id="textReplaceClearBtn">清空</button>
+</div>
+
+<div class="tool-stats" id="textReplaceStats" style="display:none;">
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="textReplaceMatchCount">0</span>
+    <span class="tool-stat-label">匹配数</span>
+  </div>
+</div>
+
+<div class="tool-output" id="textReplaceOutput" style="display:none;">
+  <label class="tool-label">结果</label>
+  <div class="tool-result" id="textReplaceResult"></div>
+  <button class="tool-copy-btn" id="textReplaceCopyBtn">复制</button>
+</div>
+
+<script>
+(function(){
+  var input = document.getElementById('textReplaceInput');
+  var findInput = document.getElementById('textReplaceFind');
+  var replaceInput = document.getElementById('textReplaceReplace');
+  var useRegex = document.getElementById('textReplaceRegex');
+  var ignoreCase = document.getElementById('textReplaceIgnoreCase');
+  var globalMode = document.getElementById('textReplaceGlobal');
+  var btn = document.getElementById('textReplaceBtn');
+  var clearBtn = document.getElementById('textReplaceClearBtn');
+  var output = document.getElementById('textReplaceOutput');
+  var result = document.getElementById('textReplaceResult');
+  var copyBtn = document.getElementById('textReplaceCopyBtn');
+  var statsEl = document.getElementById('textReplaceStats');
+  var matchCountEl = document.getElementById('textReplaceMatchCount');
+
+  btn.addEventListener('click', function(){
+    var text = input.value;
+    var find = findInput.value;
+    var replace = replaceInput.value;
+
+    if(!text || !find){
+      output.style.display = 'none';
+      statsEl.style.display = 'none';
+      return;
+    }
+
+    var matchCount = 0;
+
+    try{
+      if(useRegex.checked){
+        var flags = '';
+        if(ignoreCase.checked) flags += 'i';
+        if(globalMode.checked) flags += 'g';
+        var regex = new RegExp(find, flags);
+        var matches = text.match(regex);
+        matchCount = matches ? matches.length : 0;
+        var res = text.replace(regex, replace);
+      }else{
+        var escaped = find.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        var flags2 = '';
+        if(ignoreCase.checked) flags2 += 'i';
+        if(globalMode.checked) flags2 += 'g';
+        var regex2 = new RegExp(escaped, flags2);
+        var matches2 = text.match(regex2);
+        matchCount = matches2 ? matches2.length : 0;
+        var res = text.replace(regex2, replace);
+      }
+
+      result.textContent = res;
+      output.style.display = '';
+      statsEl.style.display = '';
+      matchCountEl.textContent = matchCount;
+    }catch(e){
+      result.textContent = '正则表达式错误：' + e.message;
+      output.style.display = '';
+      statsEl.style.display = 'none';
+    }
+  });
+
+  clearBtn.addEventListener('click', function(){
+    input.value = '';
+    findInput.value = '';
+    replaceInput.value = '';
+    output.style.display = 'none';
+    statsEl.style.display = 'none';
+  });
+
+  copyBtn.addEventListener('click', function(){
+    navigator.clipboard.writeText(result.textContent).then(function(){
+      copyBtn.textContent = '已复制';
+      setTimeout(function(){ copyBtn.textContent = '复制'; }, 1500);
+    });
+  });
+})();
+</script>

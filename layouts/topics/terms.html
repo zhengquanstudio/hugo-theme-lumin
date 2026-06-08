@@ -1,0 +1,78 @@
+{{- define "main" -}}
+{{- $topics := .Data.Terms.Alphabetical -}}
+{{- $totalArticles := 0 -}}
+{{- range $topics -}}
+  {{- $totalArticles = add $totalArticles (len .Pages) -}}
+{{- end -}}
+
+<nav class="breadcrumb" aria-label="面包屑导航">
+  <ol class="breadcrumb-list">
+    <li class="breadcrumb-item"><a href="{{ site.BaseURL }}"><i class="fas fa-home" style="font-size:0.9em;margin-right:2px;"></i> 首页</a></li>
+    <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-book-open" style="font-size:0.85em;margin-right:4px;opacity:0.8;"></i>专题</li>
+  </ol>
+</nav>
+
+<div class="list-page topics-hub-page">
+
+  <header class="topics-hero">
+    <div class="topics-hero-content">
+      <div class="topics-hero-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+      </div>
+      <h1 class="topics-hero-title">{{- .Title | default "专题" -}}</h1>
+      <p class="topics-hero-desc">{{- .Description | default "精选专题，系统化阅读，深入探索每一个主题" -}}</p>
+      <div class="topics-hero-stats">
+        <span class="topics-hero-stat">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+          <strong>{{ len $topics }}</strong> 个专题
+        </span>
+        <span class="topics-hero-stat">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <strong>{{ $totalArticles }}</strong> 篇文章
+        </span>
+      </div>
+    </div>
+  </header>
+
+  {{- if $topics -}}
+  <div class="topics-grid">
+    {{- range $topic := $topics -}}
+      {{- $termPage := site.GetPage (printf "/%s/%s" $.Data.Plural $topic.Term) -}}
+      {{- $cover := "" -}}
+      {{- $desc := "" -}}
+      {{- with $termPage -}}
+        {{- $cover = .Params.cover | default "" -}}
+        {{- $desc = .Description | default "" -}}
+      {{- end -}}
+      {{- $colors := slice "#667eea" "#764ba2" "#e74c3c" "#27ae60" "#f39c12" "#2980b9" "#16a085" "#8e44ad" "#d35400" "#2c3e50" -}}
+      {{- $colorIdx := mod (len $topic.Pages) (len $colors) -}}
+      {{- $accent := index $colors $colorIdx -}}
+      <a href="{{- $topic.Page.RelPermalink -}}" class="topic-card">
+        <div class="topic-card-cover" style="{{- if $cover -}}background-image:url({{- $cover | relURL -}}){{- end -}}">
+          <div class="topic-card-overlay" style="background:linear-gradient(135deg, {{ $accent }}dd, {{ $accent }}88)"></div>
+          <div class="topic-card-count">
+            <span class="topic-card-count-num">{{ len $topic.Pages }}</span>
+            <span class="topic-card-count-label">篇</span>
+          </div>
+        </div>
+        <div class="topic-card-body">
+          <h2 class="topic-card-title">{{- $termPage.Title | default $topic.Term -}}</h2>
+          {{- if $desc -}}
+          <p class="topic-card-desc">{{- $desc | truncate 60 -}}</p>
+          {{- end -}}
+          <div class="topic-card-footer">
+            <span class="topic-card-action">浏览专题</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </div>
+        </div>
+      </a>
+    {{- end -}}
+  </div>
+  {{- else -}}
+  <div class="topics-empty">
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+    <p>还没有创建任何专题，请为文章添加 <code>topics</code> 字段</p>
+  </div>
+  {{- end -}}
+</div>
+{{- end -}}

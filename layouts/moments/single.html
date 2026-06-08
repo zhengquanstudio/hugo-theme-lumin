@@ -1,0 +1,571 @@
+{{ define "main" }}
+<div class="moments-single-page" id="moments-single-page">
+  
+  <!-- 返回导航 -->
+  <nav class="ms-back-nav">
+    <a href="/moments/" class="ms-back-link">
+      <i class="fas fa-arrow-left"></i>
+      <span>返回说说列表</span>
+    </a>
+    <div class="ms-breadcrumb">
+      <i class="fas fa-clock"></i>
+      <span>{{ .Date.Format "2006年01月02日 星期一" }}</span>
+      <span class="ms-time">{{ .Date.Format "15:04" }}</span>
+    </div>
+  </nav>
+
+  <!-- 单条说说卡片 -->
+  <article class="moment-single-card">
+    
+    <!-- 左侧时间线装饰 -->
+    <div class="ms-timeline">
+      <div class="ms-dot"></div>
+      <div class="ms-line"></div>
+    </div>
+
+    <!-- 内容区 -->
+    <div class="ms-body">
+      
+      <!-- 内容 -->
+      <div class="ms-content">
+        {{- if .Params.content -}}
+          {{ .Params.content | safeHTML }}
+        {{- else -}}
+          {{ .Content | safeHTML }}
+        {{- end -}}
+      </div>
+
+      <!-- 图片网格 -->
+      {{ $momentPictures := .Params.pictures }}
+      {{ if not $momentPictures }}{{ $momentPictures = .Params.images }}{{ end }}
+      {{ with $momentPictures }}
+        {{ $imgCount := len . }}
+        {{ if gt $imgCount 0 }}
+        <div class="ms-images ms-images--count{{ $imgCount }}">
+          {{ range . }}
+          <a href="{{ . }}" data-fancybox="moments-single" data-caption="{{ $.Title }}" class="ms-img-wrap">
+            <img src="{{ . }}" alt="说说图片" onerror="this.style.display='none'" loading="lazy">
+          </a>
+          {{ end }}
+        </div>
+        {{ end }}
+      {{ end }}
+
+      <!-- 元数据 -->
+      <div class="ms-meta">
+        {{ with .Params.mood }}
+        <span class="ms-mood" title="心情">
+          {{ if eq . "happy" }}😊 开心{{ end }}
+          {{ if eq . "sad" }}😢 难过{{ end }}
+          {{ if eq . "angry" }}😠 生气{{ end }}
+          {{ if eq . "surprised" }}😮 惊讶{{ end }}
+          {{ if eq . "love" }}😍 喜爱{{ end }}
+          {{ if eq . "thinking" }}🤔 思考{{ end }}
+          {{ if eq . "tired" }}😴 疲惫{{ end }}
+          {{ if eq . "excited" }}🎉 兴奋{{ end }}
+        </span>
+        {{ end }}
+
+        {{ with .Params.location }}
+        <span class="ms-location" title="位置">📍 <span>{{ . }}</span></span>
+        {{ end }}
+
+        {{ with .Params.tags }}
+        <span class="ms-tags" title="标签">🏷️
+          {{ range . }}<span class="ms-tag">{{ . }}</span>{{ end }}
+        </span>
+        {{ end }}
+
+        {{ with .Params.link }}
+        <a href="{{ . | replaceRE "^https?//" "${0}://" }}" target="_blank" rel="noopener noreferrer" class="ms-link" title="分享链接">
+          🔗 {{ if $.Params.linkText }}{{ $.Params.linkText }}{{ else }}查看链接{{ end }}
+        </a>
+        {{ end }}
+      </div>
+
+      <!-- 上一条 / 下一条 导航 -->
+      <nav class="ms-pn-nav">
+        {{ with .PrevInSection }}
+        <a href="{{ .Permalink }}" class="ms-pn-link ms-pn-prev">
+          <span class="ms-pn-arrow"><i class="fas fa-chevron-left"></i></span>
+          <span class="ms-pn-text">
+            <span class="ms-pn-label">上一条</span>
+            <span class="ms-pn-title">{{ (.Params.content | default .Content) | plainify | truncate 30 }}</span>
+          </span>
+        </a>
+        {{ else }}
+        <span class="ms-pn-link ms-pn-disabled"></span>
+        {{ end }}
+        {{ with .NextInSection }}
+        <a href="{{ .Permalink }}" class="ms-pn-link ms-pn-next">
+          <span class="ms-pn-text ms-pn-text-right">
+            <span class="ms-pn-label">下一条</span>
+            <span class="ms-pn-title">{{ (.Params.content | default .Content) | plainify | truncate 30 }}</span>
+          </span>
+          <span class="ms-pn-arrow"><i class="fas fa-chevron-right"></i></span>
+        </a>
+        {{ else }}
+        <span class="ms-pn-link ms-pn-disabled"></span>
+        {{ end }}
+      </nav>
+
+      <!-- 底部操作栏 -->
+      <div class="ms-footer">
+        <span class="ms-published">
+          <i class="far fa-clock"></i>
+          发布于 {{ .Date.Format "2006-01-02 15:04:05" }}
+        </span>
+        
+        <!-- 评论按钮（默认激活） -->
+        <button class="ms-comment-btn active" onclick="toggleSingleComment(event, this)" data-path="{{ .File.Path }}">
+          <i class="far fa-comment"></i>
+          评论
+        </button>
+      </div>
+
+      <!-- 评论区（默认展开） -->
+      <div class="ms-comment-box" style="display:block;">
+        <div class="moments-comments-section" id="single-comments"></div>
+      </div>
+
+    </div>
+  </article>
+
+  <!-- 返回列表 -->
+  <div class="ms-bottom-nav">
+    <a href="/moments/" class="ms-prev-link">
+      <i class="fas fa-bolt"></i>
+      <span>返回说说列表</span>
+    </a>
+  </div>
+
+</div>
+
+<!-- 评论系统脚本 - 修复版 -->
+<script data-swup-reload-script>
+function toggleSingleComment(ev, btn) {
+  if (ev) ev.stopPropagation();
+  var box = btn.closest('.ms-body').querySelector('.ms-comment-box');
+  var isVisible = box.style.display !== 'none';
+  box.style.display = isVisible ? 'none' : 'block';
+  btn.classList.toggle('active', !isVisible);
+  if (!isVisible) {
+    var commentContainer = box.querySelector('.moments-comments-section');
+    {{/* 使用全局函数或直接初始化 */}}
+    if (typeof window.initMomentsComment === 'function') {
+      window.initMomentsComment(commentContainer, btn.dataset.path);
+    } else {
+      initSinglePageComment(commentContainer, btn.dataset.path);
+    }
+  }
+}
+
+{{/* 单页评论初始化（独立实现，不依赖 list.html） */}}
+function initSinglePageComment(container, path) {
+  if (!container || container.dataset.loaded === 'true' || container.dataset.loaded === 'loading') return;
+
+  var commentType = '{{ site.Params.comments.type | default "twikoo" }}';
+
+  container.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:16px;font-size:13px;">⏳ 评论加载中...</p>';
+  container.dataset.loaded = 'loading';
+
+  if (commentType === 'twikoo') {
+    var envId = '{{ site.Params.comments.twikoo.envId }}';
+
+    if (typeof twikoo !== 'undefined') {
+      initTwikooForSingle(container, envId, path);
+    } else {
+      var script = document.createElement('script');
+      script.src = '/libs/twikoo/twikoo.all.min.js';
+      script.onload = function() { initTwikooForSingle(container, envId, path); };
+      script.onerror = function() {
+        container.innerHTML = '<p style="color:#ef4444;text-align:center;padding:16px;font-size:13px;">❌ 评论库加载失败</p>';
+        container.dataset.loaded = 'error';
+      };
+      document.head.appendChild(script);
+    }
+  }
+  else if (commentType === 'waline') {
+    var serverURL = '{{ site.Params.comments.waline.serverURL }}';
+
+    import('/libs/waline/waline.mjs').then(function({ init }) {
+      container.innerHTML = '';
+      var wrapper = document.createElement('div');
+      wrapper.id = 'single-waline-' + Date.now();
+      container.appendChild(wrapper);
+
+      return init({
+        el: wrapper,
+        serverURL: serverURL,
+        path: path || location.pathname
+      });
+    }).then(function() {
+      container.dataset.loaded = 'true';
+      // Waline 评论初始化完成
+    }).catch(function(err) {
+      console.error('[Moments-Single] Waline 初始化失败:', err);
+      container.innerHTML = '<p style="color:#ef4444;text-align:center;padding:16px;font-size:13px;">❌ 评论加载失败</p>';
+      container.dataset.loaded = 'error';
+    });
+  }
+  else {
+    container.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:16px;font-size:13px;">💬 暂未配置评论系统</p>';
+    container.dataset.loaded = 'true';
+  }
+}
+
+function initTwikooForSingle(container, envId, path) {
+  container.innerHTML = '';
+  var wrapper = document.createElement('div');
+  wrapper.id = 'single-twikoo-' + Date.now();
+  container.appendChild(wrapper);
+
+  twikoo.init({
+    envId: envId,
+    el: wrapper,
+    path: path || location.pathname,
+    // 使用 Cravatar 加速头像加载（替代 thirdqq.qlogo.cn）
+    cra: {
+      server: 'https://cravatar.cn',
+      default: 'mp',
+      force: true
+    }
+  }).then(function() {
+    container.dataset.loaded = 'true';
+    // Twikoo 评论初始化完成
+  }).catch(function(err) {
+    console.error('[Moments-Single] Twikoo 初始化失败:', err);
+    container.innerHTML = '<p style="color:#ef4444;text-align:center;padding:16px;font-size:13px;">❌ 评论加载失败</p>';
+    container.dataset.loaded = 'error';
+  });
+}
+</script>
+
+<!-- 页面加载时自动展开评论区 -->
+<script data-swup-reload-script>
+(function() {
+  var container = document.querySelector('#single-comments');
+  if (!container) return;
+  var btn = document.querySelector('.ms-comment-btn');
+  var path = btn ? btn.dataset.path : location.pathname;
+  // 直接调 initSinglePageComment（它内部会处理重复加载判断）
+  if (typeof initSinglePageComment === 'function') {
+    initSinglePageComment(container, path);
+  }
+})();
+</script>
+
+<!-- Fancybox 灯箱 -->
+<script data-swup-reload-script>
+(function() {
+  var css = document.createElement('link');
+  css.rel = 'stylesheet';
+  css.href = '/libs/fancybox/fancybox.css';
+  document.head.appendChild(css);
+
+  var js = document.createElement('script');
+  js.src = '/libs/fancybox/fancybox.umd.js';
+  js.onload = function() {
+    var links = document.querySelectorAll('#moments-single-page a[data-fancybox]');
+    if (links.length > 0) {
+      try { Fancybox.bind('[data-fancybox^="moments-single"]', {}); } catch(e) {}
+      // 说说单页灯箱初始化完成
+    }
+  };
+  document.head.appendChild(js);
+})();
+</script>
+
+<style>
+/* ====== 说说单页布局 ====== */
+.fullwidth-page:has(#moments-single-page) .container{max-width:100%!important;padding-left:40px!important;padding-right:40px!important;}
+.fullwidth-page:has(#moments-single-page) .layout-grid{grid-template-columns:1fr!important;max-width:1500px;margin:0 auto;}
+.fullwidth-page:has(#moments-single-page) aside.sidebar,
+.fullwidth-page:has(#moments-single-page) .post-toc-sidebar{display:none!important;}
+
+.moments-single-page{
+  max-width:900px;margin:24px auto;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  min-height:100vh;background:linear-gradient(180deg,#f8fafc 0%,#f1f5f9 50%,#e2e8f0 100%);
+}
+[data-theme="dark"] .moments-single-page{background:linear-gradient(180deg,rgba(15,23,42,.95) 0%,rgba(30,41,59,.9) 50%,rgba(15,23,42,.95) 100%);}
+
+/* 返回导航 */
+.ms-back-nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 24px;margin-bottom:20px;
+  background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+  border-radius:16px;box-shadow:0 4px 20px rgba(102,126,234,.2);
+}
+.ms-back-link{
+  display:inline-flex;align-items:center;gap:8px;
+  color:#fff;font-size:.92rem;font-weight:600;text-decoration:none;
+  padding:8px 16px;border-radius:10px;background:rgba(255,255,255,.15);
+  transition:all .25s ease;border:1px solid rgba(255,255,255,.2);
+}
+.ms-back-link:hover{background:rgba(255,255,255,.25);transform:translateX(-3px);}
+.ms-back-link i{font-size:.85rem;}
+.ms-breadcrumb{
+  display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.85);
+  font-size:.82rem;}
+.ms-breadcrumb i{font-size:.8rem;}
+.ms-time{font-weight:600;color:#fff;}
+
+[data-theme="dark"] .ms-back-nav{background:linear-gradient(135deg,#4c1d95 0%,#7c3aed 100%);}
+
+/* 单条卡片 */
+.moment-single-card{
+  display:flex;gap:20px;position:relative;
+  background:transparent;
+}
+
+/* 时间线装饰 */
+.ms-timeline{
+  display:flex;flex-direction:column;align-items:center;
+  flex-shrink:0;width:30px;padding-top:24px;
+}
+.ms-dot{
+  width:20px;height:20px;border-radius:50%;
+  background:linear-gradient(135deg,#a78bfa,#ec4899);
+  box-shadow:0 0 0 4px rgba(168,139,250,.18),0 2px 8px rgba(168,139,250,.3);
+  z-index:2;flex-shrink:0;
+}
+.ms-line{
+  width:2px;flex:1;
+  background:linear-gradient(180deg,#c084fc,#e879f9,#38bdf8);
+  opacity:.45;margin-top:8px;border-radius:2px;
+}
+
+/* 内容区 */
+.ms-body{
+  flex:1;min-width:0;
+  background:#fff;border-radius:18px;padding:24px 26px 20px;
+  box-shadow:0 2px 12px rgba(0,0,0,.06),0 4px 20px rgba(0,0,0,.04);
+  border:1px solid rgba(226,232,240,.8);
+  transition:all .3s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"] .ms-body{
+  background:rgba(51,65,85,.6);border-color:rgba(71,85,105,.35);
+}
+
+/* 正文内容 */
+.ms-content{
+  font-size:1rem;line-height:1.8;color:#334155;
+  word-break:break-word;margin-bottom:18px;
+}
+.ms-content p{margin:0 0 12px;}
+.ms-content p:last-child{margin-bottom:0;}
+[data-theme="dark"] .ms-content{color:#cbd5e1;}
+
+/* 图片网格 */
+.ms-images{display:grid;gap:8px;margin-top:16px;}
+.ms-images--count1{grid-template-columns:1fr;}
+.ms-images--count2{grid-template-columns:1fr 1fr;}
+.ms-images--count3{grid-template-columns:1fr 1fr 1fr;}
+.ms-images--count4{grid-template-columns:1fr 1fr;grid-template-rows:repeat(2,auto);}
+.ms-images--count5{grid-template-columns:repeat(3,1fr);}
+.ms-images--count6,.ms-images--count7,.ms-images--count8,.ms-images--count9{grid-template-columns:repeat(3,1fr);}
+
+.ms-img-wrap{
+  position:relative;overflow:hidden;border-radius:12px;
+  aspect-ratio:4/3;cursor:pointer;background:#f1f5f9;
+}
+[data-theme="dark"] .ms-img-wrap{background:#334155;}
+.ms-img-wrap img{
+  width:100%;height:100%;object-fit:cover;
+  transition:transform .35s;display:block;
+}
+.ms-img-wrap:hover img{transform:scale(1.06);}
+
+/* 元数据 */
+.ms-meta{
+  display:flex;flex-wrap:wrap;align-items:center;gap:12px;
+  margin-top:16px;padding-top:14px;
+  border-top:2px dashed #e2e8f0;
+}
+[data-theme="dark"] .ms-meta{border-top-color:rgba(71,85,105,.3);}
+
+/* 心情/位置/标签/链接 */
+.ms-mood{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:.85rem;color:#6366f1;font-weight:600;
+  background:linear-gradient(135deg,#eef2ff,#e0e7ff);
+  padding:5px 12px;border-radius:22px;white-space:nowrap;
+  transition:all .25s ease;
+}
+.ms-mood:hover{transform:scale(1.05);box-shadow:0 2px 10px rgba(99,102,241,.2);}
+[data-theme="dark"] .ms-mood{color:#a5b4fc;background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(139,92,246,.1));}
+
+.ms-location{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:.83rem;color:#0891b2;font-weight:500;
+  background:linear-gradient(135deg,#ecfeff,#cffafe);
+  padding:5px 12px;border-radius:22px;white-space:nowrap;
+  transition:all .25s ease;
+}
+.ms-location span{max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ms-location:hover{transform:scale(1.05);box-shadow:0 2px 10px rgba(8,145,178,.2);}
+[data-theme="dark"] .ms-location{color:#67e8f9;background:linear-gradient(135deg,rgba(8,145,178,.15),rgba(6,182,212,.1));}
+
+.ms-tags{display:inline-flex;align-items:center;gap:7px;font-size:.83rem;color:#059669;flex-wrap:wrap;}
+.ms-tag{
+  display:inline-block;
+  background:linear-gradient(135deg,#ecfdf5,#d1fae5);color:#059669;
+  padding:4px 12px;border-radius:14px;font-size:.76rem;text-decoration:none;
+  transition:all .2s;white-space:nowrap;font-weight:600;
+}
+.ms-tag:hover{
+  background:linear-gradient(135deg,#d1fae5,#a7f3d0);
+  transform:translateY(-2px);box-shadow:0 3px 10px rgba(5,150,105,.15);
+}
+[data-theme="dark"] .ms-tags{color:#34d399;}
+[data-theme="dark"] .ms-tag{background:linear-gradient(135deg,rgba(5,150,105,.15),rgba(16,185,129,.1));color:#34d399;}
+[data-theme="dark"] .ms-tag:hover{background:linear-gradient(135deg,rgba(16,185,129,.2),rgba(52,211,153,.15));}
+
+.ms-link{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:.83rem;color:#dc2626;font-weight:600;
+  background:linear-gradient(135deg,#fef2f2,#fee2e2);
+  padding:5px 14px;border-radius:22px;text-decoration:none;
+  transition:all .25s;white-space:nowrap;
+}
+.ms-link:hover{
+  background:linear-gradient(135deg,#fee2e2,#fecaca);
+  transform:scale(1.05);box-shadow:0 2px 10px rgba(220,38,38,.2);color:#b91c1c;
+}
+[data-theme="dark"] .ms-link{color:#fca5a5;background:linear-gradient(135deg,rgba(220,38,38,.12),rgba(248,113,113,.08));}
+[data-theme="dark"] .ms-link:hover{color:#f87171;background:linear-gradient(135deg,rgba(248,113,113,.18),rgba(251,146,146,.12));}
+
+/* 底部操作栏 */
+.ms-footer{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:14px;padding-top:12px;
+  border-top:1px solid #f1f5f9;
+}
+[data-theme="dark"] .ms-footer{border-top-color:rgba(71,85,105,.3);}
+
+.ms-published{
+  font-size:.78rem;color:#94a3b8;
+  display:flex;align-items:center;gap:5px;
+}
+.ms-published i{font-size:12px;}
+[data-theme="dark"] .ms-published{color:#475569;}
+
+.ms-comment-btn{
+  display:flex;align-items:center;gap:5px;
+  font-size:.78rem;color:#94a3b8;cursor:pointer;
+  padding:6px 14px;border-radius:14px;
+  transition:all .25s;background:transparent;border:none;
+  font-weight:500;
+}
+.ms-comment-btn:hover{color:#8b5cf6;background:rgba(139,92,246,.08);}
+.ms-comment-btn.active{color:#7c3aed;background:rgba(124,58,237,.12);}
+.ms-comment-btn i{font-size:13px;}
+
+/* 评论框 */
+.ms-comment-box{margin-top:16px;animation:slideDown .3s ease-out;}
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulse{0%,100%{opacity:.4;}50%{opacity:1;}}
+
+.ms-comment-box .moments-comments-section{
+  max-width:100%;min-height:100px;margin:0;padding:20px 18px 16px;
+  background:linear-gradient(135deg,#fafafa 0%,#f5f5f5 100%);
+  border-radius:14px;border:1px solid #e5e7eb;box-sizing:border-box;
+}
+[data-theme="dark"] .ms-comment-box .moments-comments-section{
+  background:linear-gradient(135deg,rgba(30,41,59,.55) 0%,rgba(15,23,42,.45) 100%);
+  border-color:rgba(71,85,105,.25);
+}
+
+/* 上一条 / 下一条 导航 */
+.ms-pn-nav{
+  display:flex;justify-content:space-between;gap:16px;
+  margin:20px 0 18px;padding-top:18px;
+  border-top:1px dashed #e2e8f0;max-width:100%;
+}
+.ms-pn-link{
+  flex:1;display:flex;align-items:center;gap:12px;
+  padding:14px 20px;border-radius:14px;
+  background:#fff;border:1px solid rgba(226,232,240,.8);
+  text-decoration:none;transition:all .3s ease;
+  box-shadow:0 1px 4px rgba(0,0,0,.04);
+}
+.ms-pn-link:hover{
+  border-color:rgba(167,139,250,.3);
+  box-shadow:0 4px 16px rgba(168,139,250,.12);
+  transform:translateY(-2px);
+}
+.ms-pn-disabled{visibility:hidden;}
+.ms-pn-next{text-align:right;justify-content:flex-end;}
+.ms-pn-arrow{
+  flex-shrink:0;width:36px;height:36px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#ede9fe,#ddd6fe);
+  color:#8b5cf6;font-size:.85rem;
+  transition:all .25s;
+}
+.ms-pn-link:hover .ms-pn-arrow{
+  background:linear-gradient(135deg,#ddd6fe,#c4b5fd);
+  transform:scale(1.1);
+}
+.ms-pn-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;}
+.ms-pn-text-right{align-items:flex-end;}
+.ms-pn-label{font-size:.72rem;color:#94a3b8;font-weight:500;}
+.ms-pn-title{font-size:.85rem;color:#334155;font-weight:600;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;}
+[data-theme="dark"] .ms-pn-link{background:rgba(51,65,85,.55);border-color:rgba(71,85,105,.35);}
+[data-theme="dark"] .ms-pn-nav{border-top-color:rgba(71,85,105,.3);}
+[data-theme="dark"] .ms-pn-link:hover{background:rgba(51,65,85,.72);border-color:rgba(167,139,250,.2);}
+[data-theme="dark"] .ms-pn-label{color:#64748b;}
+[data-theme="dark"] .ms-pn-title{color:#cbd5e1;}
+[data-theme="dark"] .ms-pn-arrow{background:linear-gradient(135deg,rgba(139,92,246,.12),rgba(124,58,237,.08));color:#a78bfa;}
+[data-theme="dark"] .ms-pn-link:hover .ms-pn-arrow{background:linear-gradient(135deg,rgba(124,58,237,.18),rgba(139,92,246,.12));}
+
+/* 底部导航 */
+.ms-bottom-nav{text-align:center;padding:32px 20px 48px;}
+.ms-prev-link{
+  display:inline-flex;align-items:center;gap:10px;
+  color:#8b5cf6;font-size:.92rem;font-weight:600;text-decoration:none;
+  padding:12px 28px;border-radius:14px;
+  background:linear-gradient(135deg,#ede9fe,#ddd6fe);
+  border:1px solid rgba(139,92,246,.2);
+  transition:all .3s ease;
+}
+.ms-prev-link:hover{
+  background:linear-gradient(135deg,#ddd6fe,#c4b5fd);
+  transform:translateY(-2px);box-shadow:0 4px 15px rgba(139,92,246,.2);
+}
+.ms-prev-link i{font-size:1rem;}
+[data-theme="dark"] .ms-prev-link{color:#a78bfa;background:linear-gradient(135deg,rgba(139,92,246,.12),rgba(124,58,237,.08));border-color:rgba(139,92,246,.2);}
+[data-theme="dark"] .ms-prev-link:hover{background:linear-gradient(135deg,rgba(124,58,237,.18),rgba(139,92,246,.12));}
+
+/* 响应式设计 */
+@media(max-width:768px){
+  .moments-single-page{margin:12px auto;padding:0 12px;}
+  
+  .ms-back-nav{
+    flex-direction:column;gap:12px;text-align:center;
+    padding:14px 16px;border-radius:12px;margin-bottom:16px;
+  }
+  .ms-breadcrumb{justify-content:center;}
+  
+  .moment-single-card{gap:14px;}
+  .ms-timeline{width:24px;padding-top:20px;}
+  .ms-dot{width:16px;height:16px;}
+  
+  .ms-body{padding:18px 16px 14px;border-radius:14px;}
+  .ms-content{font-size:.94rem;line-height:1.7;}
+  
+  .ms-images--count4,.ms-images--count5,.ms-images--count6{
+    grid-template-columns:1fr 1fr!important;
+  }
+  
+  .ms-meta{gap:8px;margin-top:12px;padding-top:10px;}
+  .ms-mood,.ms-location,.ms-tag,.ms-link{font-size:.76rem;padding:4px 10px;}
+  
+  .ms-footer{flex-direction:column;gap:8px;text-align:center;}
+  .ms-pn-nav{flex-direction:column;gap:8px;}
+  .ms-pn-title{max-width:140px;}
+  .ms-bottom-nav{padding:24px 16px 36px;}
+}
+</style>
+{{ end }}

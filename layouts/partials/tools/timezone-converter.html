@@ -1,0 +1,105 @@
+<div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:18px;">
+  <div class="tool-input-group" style="margin:0;flex:1;min-width:200px;">
+    <label class="tool-label">选择参考时间</label>
+    <input type="datetime-local" class="tool-input" id="tz-input">
+  </div>
+  <div class="tool-input-group" style="margin:0;">
+    <label class="tool-label">来源时区</label>
+    <select class="tool-select" id="tz-from" style="min-width:200px;"></select>
+  </div>
+  <button class="tool-btn" id="tz-now-btn" style="margin-bottom:1px;"><i class="fas fa-clock"></i> 当前时间</button>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="tz-convert-btn"><i class="fas fa-earth-asia"></i> 转换所有时区</button>
+</div>
+
+<div id="tz-output" style="display:none;margin-top:18px;">
+  <div class="tool-output-label" style="margin-bottom:12px;">
+    <span class="tool-output-title">各时区对照</span>
+  </div>
+  <div id="tz-results" style="display:flex;flex-direction:column;gap:8px;"></div>
+</div>
+
+<script>
+(function(){
+  const zones = [
+    {name:'UTC (协调世界时)', tz:'UTC'},
+    {name:'GMT+8 北京/上海', tz:'Asia/Shanghai'},
+    {name:'GMT+9 东京/首尔', tz:'Asia/Tokyo'},
+    {name:'GMT+5:30 孟买', tz:'Asia/Kolkata'},
+    {name:'GMT+3 莫斯科', tz:'Europe/Moscow'},
+    {name:'GMT+2 开罗/赫尔辛基', tz:'Africa/Cairo'},
+    {name:'GMT+1 巴黎/柏林', tz:'Europe/Paris'},
+    {name:'GMT+0 伦敦', tz:'Europe/London'},
+    {name:'GMT-5 纽约/多伦多', tz:'America/New_York'},
+    {name:'GMT-6 芝加哥', tz:'America/Chicago'},
+    {name:'GMT-7 丹佛', tz:'America/Denver'},
+    {name:'GMT-8 洛杉矶/西雅图', tz:'America/Los_Angeles'},
+    {name:'GMT-3 圣保罗/布宜诺斯艾利斯', tz:'America/Sao_Paulo'},
+    {name:'GMT+10 悉尼', tz:'Australia/Sydney'},
+    {name:'GMT+12 奥克兰', tz:'Pacific/Auckland'},
+    {name:'GMT+7 曼谷/雅加达', tz:'Asia/Bangkok'},
+    {name:'GMT+8 香港, 中国', tz:'Asia/Hong_Kong'},
+    {name:'GMT+8 中国台湾 台北', tz:'Asia/Taipei'},
+    {name:'GMT+4 迪拜', tz:'Asia/Dubai'},
+    {name:'GMT+5 卡拉奇', tz:'Asia/Karachi'},
+  ];
+
+  const fromSel = document.getElementById('tz-from');
+  const tzInput = document.getElementById('tz-input');
+
+  zones.forEach(z => {
+    const opt = document.createElement('option');
+    opt.value = z.tz;
+    opt.textContent = z.name;
+    if(z.tz === 'Asia/Shanghai') opt.selected = true;
+    fromSel.appendChild(opt);
+  });
+
+  function setNow() {
+    const now = new Date();
+    const offset = now.getTimezoneOffset() * 60000;
+    tzInput.value = new Date(now.getTime() - offset).toISOString().slice(0,16);
+  }
+  setNow();
+
+  document.getElementById('tz-now-btn').addEventListener('click', setNow);
+
+  document.getElementById('tz-convert-btn').addEventListener('click', () => {
+    const val = tzInput.value;
+    if(!val){alert('请选择日期时间');return;}
+    const fromTz = fromSel.value;
+    // Parse the datetime-local as if it's in the fromTz
+    // We use Intl to get offset
+    const inputDate = new Date(val);
+    const results = document.getElementById('tz-results');
+    results.innerHTML = '';
+
+    // Get offset from fromTz
+    function getOffset(date, tz) {
+      const utcDate = new Date(date.toLocaleString('en-US', {timeZone: 'UTC'}));
+      const tzDate = new Date(date.toLocaleString('en-US', {timeZone: tz}));
+      return utcDate - tzDate;
+    }
+
+    const inputAsUtc = new Date(inputDate.getTime() + getOffset(inputDate, fromTz));
+
+    zones.forEach(z => {
+      const timeStr = inputAsUtc.toLocaleString('zh-CN', {
+        timeZone: z.tz,
+        year:'numeric', month:'2-digit', day:'2-digit',
+        hour:'2-digit', minute:'2-digit', second:'2-digit',
+        hour12: false
+      });
+      const row = document.createElement('div');
+      const isFrom = z.tz === fromTz;
+      row.style.cssText = `display:flex;align-items:center;gap:12px;padding:10px 14px;background:${isFrom?'rgba(102,126,234,.08)':'var(--bg-secondary,#f9fafb)'};border:1px solid ${isFrom?'rgba(102,126,234,.3)':'var(--border-color,#e5e7eb)'};border-radius:10px;`;
+      row.innerHTML = `<div style="font-size:.78rem;color:var(--text-muted,#6b7280);min-width:200px;flex-shrink:0;">${z.name}${isFrom?' <b style=color:#667eea>（来源）</b>':''}</div>
+        <div style="flex:1;font-family:monospace;font-size:.9rem;font-weight:600;color:var(--text-primary,#1f2937);">${timeStr}</div>`;
+      results.appendChild(row);
+    });
+    document.getElementById('tz-output').style.display = '';
+  });
+})();
+</script>

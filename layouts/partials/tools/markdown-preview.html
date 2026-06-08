@@ -1,0 +1,200 @@
+<div class="tool-input-group">
+  <label class="tool-label">Markdown 编辑器</label>
+</div>
+
+<div style="display:flex;gap:16px;min-height:400px;">
+  <textarea class="tool-textarea" id="md-editor" placeholder="输入 Markdown 内容，实时预览渲染效果…" style="flex:1;resize:none;min-height:360px;"># Markdown 预览
+
+## 欢迎使用
+
+这是一个 **Markdown** 实时预览工具，支持 *斜体*、`代码` 和 [链接](https://example.com)。
+
+### 功能列表
+- 实时预览
+- 代码高亮
+- 表格支持
+
+| 功能 | 状态 |
+|------|------|
+| 标题 | ✅ |
+| 列表 | ✅ |
+| 代码块 | ✅ |
+
+> 引用块示例：**Hugo** 是一款静态网站生成器。
+
+```js
+function hello(name) {
+  return `Hello, ${name}!`;
+}
+console.log(hello("World"));
+```
+
+---
+
+**加粗**，~~删除线~~，上标 X^2^，分割线如上。
+</textarea>
+
+  <div id="md-preview" style="flex:1;border:1.5px solid var(--border-color,#e5e7eb);border-radius:12px;padding:20px;overflow-y:auto;background:var(--bg-primary,#fff);min-height:360px;line-height:1.8;">
+    <div id="md-preview-content"><p style="color:var(--text-muted,#9ca3af);font-size:.88rem;">正在加载渲染引擎…</p></div>
+  </div>
+</div>
+
+<div class="tool-btn-row" style="margin-top:16px;">
+  <button class="tool-btn tool-btn-primary" id="md-render-btn">渲染</button>
+  <button class="tool-btn" id="md-clear-btn">清空</button>
+  <button class="tool-btn" id="md-copy-btn">复制 HTML</button>
+</div>
+
+<div id="md-error" style="display:none;color:var(--color-error,#e53e3e);margin-top:8px;"></div>
+
+<script>
+(function(){
+  var editor = document.getElementById('md-editor');
+  var previewContent = document.getElementById('md-preview-content');
+  var renderBtn = document.getElementById('md-render-btn');
+  var clearBtn = document.getElementById('md-clear-btn');
+  var copyBtn = document.getElementById('md-copy-btn');
+  var errorEl = document.getElementById('md-error');
+
+  // Fallback simple markdown renderer (no external deps)
+  function simpleRender(md) {
+    var html = md;
+    // Headers
+    html = html.replace(/^#{6}\s(.+)$/mg,'<h6>$1</h6>');
+    html = html.replace(/^#{5}\s(.+)$/mg,'<h5>$1</h5>');
+    html = html.replace(/^#{4}\s(.+)$/mg,'<h4>$1</h4>');
+    html = html.replace(/^#{3}\s(.+)$/mg,'<h3>$1</h3>');
+    html = html.replace(/^#{2}\s(.+)$/mg,'<h2>$1</h2>');
+    html = html.replace(/^#{1}\s(.+)$/mg,'<h1>$1</h1>');
+    // Code blocks
+    html = html.replace(/```[\w]*\n([\s\S]*?)```/g, function(m, code) {
+      return '<pre><code>' + code.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</code></pre>';
+    });
+    // Inline code
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    // Bold, italic, strikethrough
+    html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    html = html.replace(/~~(.+?)~~/g, '<del>$1</del>');
+    // HR
+    html = html.replace(/^---+$/mg, '<hr>');
+    // Blockquote
+    html = html.replace(/^>\s(.+)$/mg, '<blockquote>$1</blockquote>');
+    // Tables
+    html = html.replace(/(\|.+\|\n)(\|[-: |]+\|\n)((\|.+\|\n?)+)/g, function(m, header, sep, body) {
+      var ths = header.trim().split('|').filter(function(c){return c.trim();});
+      var rows = body.trim().split('\n');
+      var thead = '<tr>' + ths.map(function(c){return '<th>'+c.trim()+'</th>';}).join('') + '</tr>';
+      var tbody = rows.map(function(r){
+        var cells = r.split('|').filter(function(c){return c.trim()!==undefined && r.indexOf('|')>=0;});
+        cells = cells.slice(1, cells.length-1);
+        return '<tr>' + cells.map(function(c){return '<td>'+c.trim()+'</td>';}).join('') + '</tr>';
+      }).join('');
+      return '<table><thead>'+thead+'</thead><tbody>'+tbody+'</tbody></table>';
+    });
+    // Unordered list
+    html = html.replace(/(^[\-\*]\s.+$\n?)+/mg, function(block) {
+      var items = block.trim().split('\n').map(function(l){return '<li>'+l.replace(/^[\-\*]\s/,'')+'</li>';}).join('');
+      return '<ul>' + items + '</ul>';
+    });
+    // Ordered list
+    html = html.replace(/(^\d+\.\s.+$\n?)+/mg, function(block) {
+      var items = block.trim().split('\n').map(function(l){return '<li>'+l.replace(/^\d+\.\s/,'')+'</li>';}).join('');
+      return '<ol>' + items + '</ol>';
+    });
+    // Links & images
+    html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+    // Paragraphs
+    html = html.replace(/\n{2,}/g, '\n\n');
+    var lines = html.split('\n\n');
+    html = lines.map(function(block) {
+      block = block.trim();
+      if (!block) return '';
+      if (/^<(h[1-6]|ul|ol|li|pre|blockquote|table|hr)/.test(block)) return block;
+      return '<p>' + block.replace(/\n/g,'<br>') + '</p>';
+    }).join('\n');
+    return html;
+  }
+
+  function render(){
+    errorEl.style.display = 'none';
+    var md = editor.value;
+    if (!md.trim()) { previewContent.innerHTML = ''; return; }
+    if (typeof marked !== 'undefined') {
+      try {
+        previewContent.innerHTML = marked.parse(md);
+      } catch(e) {
+        previewContent.innerHTML = simpleRender(md);
+      }
+    } else {
+      previewContent.innerHTML = simpleRender(md);
+    }
+  }
+
+  // Load marked.js with multiple fallback sources
+  function loadMarked(urls, idx) {
+    if (idx >= urls.length) {
+      render(); // fallback to simple renderer
+      return;
+    }
+    var s = document.createElement('script');
+    s.src = urls[idx];
+    s.onload = function() { render(); };
+    s.onerror = function() { loadMarked(urls, idx + 1); };
+    document.head.appendChild(s);
+  }
+
+  loadMarked([
+    'https://cdn.jsdelivr.net/npm/marked@9/marked.min.js',
+    'https://unpkg.com/marked@9/marked.min.js',
+    'https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/marked/4.0.12/marked.min.js'
+  ], 0);
+
+  // Real-time rendering with debounce
+  var debounceTimer;
+  editor.addEventListener('input', function(){
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(render, 300);
+  });
+
+  renderBtn.addEventListener('click', render);
+
+  clearBtn.addEventListener('click', function(){
+    editor.value = '';
+    previewContent.innerHTML = '';
+  });
+
+  copyBtn.addEventListener('click', function(){
+    navigator.clipboard.writeText(previewContent.innerHTML).then(function(){
+      copyBtn.textContent = '已复制!';
+      setTimeout(function(){ copyBtn.textContent = '复制 HTML'; }, 1500);
+    });
+  });
+})();
+</script>
+
+<style>
+#md-preview-content h1 { font-size:1.8rem; font-weight:700; margin:16px 0 12px; color:var(--text-primary,#1f2937); border-bottom:2px solid var(--border-color,#e5e7eb); padding-bottom:8px; }
+#md-preview-content h2 { font-size:1.4rem; font-weight:700; margin:14px 0 10px; color:var(--text-primary,#1f2937); }
+#md-preview-content h3 { font-size:1.15rem; font-weight:700; margin:12px 0 8px; color:var(--text-primary,#1f2937); }
+#md-preview-content p { margin:8px 0; color:var(--text-primary,#1f2937); }
+#md-preview-content ul, #md-preview-content ol { padding-left:24px; margin:8px 0; }
+#md-preview-content li { margin:4px 0; color:var(--text-primary,#1f2937); }
+#md-preview-content code { background:var(--bg-secondary,#f1f5f9); padding:2px 6px; border-radius:4px; font-family:'Cascadia Code',Consolas,monospace; font-size:.88em; }
+#md-preview-content pre { background:var(--bg-secondary,#1e293b); color:#e2e8f0; padding:16px; border-radius:8px; overflow-x:auto; margin:12px 0; }
+#md-preview-content pre code { background:none; padding:0; color:inherit; }
+#md-preview-content blockquote { border-left:4px solid #667eea; padding:8px 16px; margin:12px 0; background:rgba(102,126,234,.05); border-radius:0 8px 8px 0; color:var(--text-muted,#6b7280); }
+#md-preview-content table { border-collapse:collapse; width:100%; margin:12px 0; }
+#md-preview-content th { background:var(--bg-secondary,#f1f5f9); padding:8px 12px; text-align:left; border:1px solid var(--border-color,#e5e7eb); font-weight:600; }
+#md-preview-content td { padding:8px 12px; border:1px solid var(--border-color,#e5e7eb); }
+#md-preview-content a { color:#667eea; text-decoration:underline; }
+#md-preview-content hr { border:none; border-top:1px solid var(--border-color,#e5e7eb); margin:16px 0; }
+#md-preview-content img { max-width:100%; border-radius:8px; }
+#md-preview-content del { text-decoration:line-through; color:var(--text-muted,#6b7280); }
+
+[data-theme="dark"] #md-preview-content pre { background:#0f172a; }
+[data-theme="dark"] #md-preview-content code { background:#1e293b; }
+[data-theme="dark"] #md-preview-content blockquote { background:rgba(129,140,248,.08); }
+</style>

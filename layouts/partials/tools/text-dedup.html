@@ -1,0 +1,166 @@
+<div class="tool-input-group">
+  <label class="tool-label">输入文本（每行一条）</label>
+  <textarea class="tool-textarea" id="dd-input" placeholder="每行输入一条内容，将自动去除重复行..." style="min-height:180px;">苹果
+香蕉
+苹果
+橙子
+香蕉
+葡萄
+橙子
+西瓜</textarea>
+</div>
+
+<div class="tool-input-group" style="display:flex;flex-wrap:wrap;gap:20px;">
+  <label class="tool-switch">
+    <input type="checkbox" id="dd-remove-empty" checked>
+    <span class="tool-switch-track"></span>
+    去除空行
+  </label>
+  <label class="tool-switch">
+    <input type="checkbox" id="dd-trim" checked>
+    <span class="tool-switch-track"></span>
+    去除首尾空格
+  </label>
+  <label class="tool-switch">
+    <input type="checkbox" id="dd-ignore-case">
+    <span class="tool-switch-track"></span>
+    忽略大小写
+  </label>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">排序方式</label>
+  <select class="tool-select" id="dd-sort">
+    <option value="none">不排序</option>
+    <option value="asc">正序（A→Z）</option>
+    <option value="desc">倒序（Z→A）</option>
+  </select>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="dd-process-btn">🔄 去重处理</button>
+  <button class="tool-btn tool-btn-danger" id="dd-clear-btn">🗑️ 清空</button>
+</div>
+
+<div class="tool-stats" id="dd-stats" style="display:none;">
+  <div class="tool-stat">
+    <div class="tool-stat-value" id="dd-stat-original">0</div>
+    <div class="tool-stat-label">原始行数</div>
+  </div>
+  <div class="tool-stat">
+    <div class="tool-stat-value" id="dd-stat-after">0</div>
+    <div class="tool-stat-label">去重后行数</div>
+  </div>
+  <div class="tool-stat">
+    <div class="tool-stat-value" id="dd-stat-removed">0</div>
+    <div class="tool-stat-label">移除行数</div>
+  </div>
+</div>
+
+<div class="tool-output" id="dd-output" style="display:none;">
+  <div class="tool-output-label">
+    <span class="tool-output-title">去重结果</span>
+    <button class="tool-copy-btn" id="dd-copy-btn">📋 复制</button>
+  </div>
+  <div class="tool-result" id="dd-result"></div>
+</div>
+
+<script>
+(function(){
+  const input = document.getElementById('dd-input');
+  const removeEmpty = document.getElementById('dd-remove-empty');
+  const trimSwitch = document.getElementById('dd-trim');
+  const ignoreCase = document.getElementById('dd-ignore-case');
+  const sortSelect = document.getElementById('dd-sort');
+  const processBtn = document.getElementById('dd-process-btn');
+  const clearBtn = document.getElementById('dd-clear-btn');
+  const statsEl = document.getElementById('dd-stats');
+  const statOriginal = document.getElementById('dd-stat-original');
+  const statAfter = document.getElementById('dd-stat-after');
+  const statRemoved = document.getElementById('dd-stat-removed');
+  const output = document.getElementById('dd-output');
+  const result = document.getElementById('dd-result');
+  const copyBtn = document.getElementById('dd-copy-btn');
+
+  let lastResult = '';
+
+  function copyText(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+      const orig = btn.innerHTML;
+      btn.innerHTML = '✅ 已复制'; btn.classList.add('copied');
+      setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('copied'); }, 1500);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+      document.body.removeChild(ta);
+      const orig = btn.innerHTML;
+      btn.innerHTML = '✅ 已复制'; btn.classList.add('copied');
+      setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('copied'); }, 1500);
+    });
+  }
+
+  processBtn.addEventListener('click', () => {
+    const text = input.value;
+    if (!text.trim()) return;
+
+    let lines = text.split('\n');
+    const originalCount = lines.length;
+
+    // Trim whitespace
+    if (trimSwitch.checked) {
+      lines = lines.map(l => l.trim());
+    }
+
+    // Remove empty lines
+    if (removeEmpty.checked) {
+      lines = lines.filter(l => l.trim() !== '');
+    }
+
+    // Deduplicate
+    const seen = new Set();
+    const deduped = [];
+    for (const line of lines) {
+      const key = ignoreCase.checked ? line.toLowerCase() : line;
+      if (!seen.has(key)) {
+        seen.add(key);
+        deduped.push(line);
+      }
+    }
+
+    // Sort
+    const sortMode = sortSelect.value;
+    if (sortMode === 'asc') {
+      deduped.sort((a, b) => a.localeCompare(b, 'zh-CN'));
+    } else if (sortMode === 'desc') {
+      deduped.sort((a, b) => b.localeCompare(a, 'zh-CN'));
+    }
+
+    const afterCount = deduped.length;
+    const removedCount = originalCount - afterCount;
+
+    lastResult = deduped.join('\n');
+    result.textContent = lastResult;
+
+    statOriginal.textContent = originalCount;
+    statAfter.textContent = afterCount;
+    statRemoved.textContent = removedCount;
+
+    statsEl.style.display = '';
+    output.style.display = '';
+  });
+
+  copyBtn.addEventListener('click', () => {
+    if (!lastResult) return;
+    copyText(lastResult, copyBtn);
+  });
+
+  clearBtn.addEventListener('click', () => {
+    input.value = '';
+    result.textContent = '';
+    lastResult = '';
+    statsEl.style.display = 'none';
+    output.style.display = 'none';
+  });
+})();
+</script>

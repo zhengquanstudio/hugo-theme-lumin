@@ -1,0 +1,55 @@
+{{- if .Params.topics -}}
+{{- $sd := partialCached "series-data.html" . .RelPermalink -}}
+{{- with $sd -}}
+{{- $topicPage := .topicPage -}}
+{{- $topicTitle := .topicTitle -}}
+{{- $sorted := .sorted -}}
+{{- $currentIndex := .currentIndex -}}
+{{- $total := .total -}}
+
+{{- $prevPage := "" -}}
+{{- $nextPage := "" -}}
+{{- range $idx, $item := $sorted -}}
+  {{- if eq $item.page.RelPermalink $.RelPermalink -}}
+    {{- if gt $idx 0 -}}
+      {{- $prevItem := index $sorted (sub $idx 1) -}}
+      {{- $prevPage = $prevItem.page -}}
+    {{- end -}}
+    {{- if lt $idx (sub $total 1) -}}
+      {{- $nextItem := index $sorted (add $idx 1) -}}
+      {{- $nextPage = $nextItem.page -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- if or $prevPage $nextPage -}}
+<nav class="series-nav series-nav--bottom">
+  <div class="series-nav-header">
+    <span class="series-nav-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+    </span>
+    <span class="series-nav-title">{{ $topicTitle }}</span>
+    <span class="series-nav-progress">{{ $currentIndex }} / {{ $total }}</span>
+  </div>
+  <div class="series-nav-inner">
+    {{- with $prevPage -}}
+    <a href="{{ .RelPermalink }}" class="series-nav-item prev">
+      <span class="nav-label">← 上一篇</span>
+      <span class="nav-title">{{ .Title }}</span>
+    </a>
+    {{- else -}}
+    <span class="series-nav-item placeholder"></span>
+    {{- end -}}
+    {{- with $nextPage -}}
+    <a href="{{ .RelPermalink }}" class="series-nav-item next">
+      <span class="nav-label">下一篇 →</span>
+      <span class="nav-title">{{ .Title }}</span>
+    </a>
+    {{- else -}}
+    <span class="series-nav-item placeholder"></span>
+    {{- end -}}
+  </div>
+</nav>
+{{- end -}}
+{{- end -}}
+{{- end -}}

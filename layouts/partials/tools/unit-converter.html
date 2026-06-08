@@ -1,0 +1,239 @@
+<div id="uc-tool">
+  <div class="tool-tabs" id="uc-tabs">
+    <button class="tool-tab active" data-cat="length">长度</button>
+    <button class="tool-tab" data-cat="weight">重量</button>
+    <button class="tool-tab" data-cat="temperature">温度</button>
+    <button class="tool-tab" data-cat="area">面积</button>
+    <button class="tool-tab" data-cat="volume">体积</button>
+    <button class="tool-tab" data-cat="speed">速度</button>
+  </div>
+
+  <div class="tool-input-group">
+    <label class="tool-label">从</label>
+    <div style="display:flex;gap:8px;">
+      <input type="number" id="uc-from-val" class="tool-input" value="1" style="flex:1;">
+      <select id="uc-from-unit" class="tool-select" style="min-width:120px;"></select>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin:8px 0;">
+    <button class="tool-btn" onclick="ucSwap()" title="交换单位">⇅ 交换</button>
+  </div>
+
+  <div class="tool-input-group">
+    <label class="tool-label">到</label>
+    <div style="display:flex;gap:8px;">
+      <input type="number" id="uc-to-val" class="tool-input" readonly style="flex:1;background:var(--bg-alt,#f5f5f5);">
+      <select id="uc-to-unit" class="tool-select" style="min-width:120px;"></select>
+    </div>
+  </div>
+
+  <div class="tool-input-group">
+    <label class="tool-label">常用转换</label>
+    <div id="uc-quick" class="tool-btn-row" style="flex-wrap:wrap;"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+
+  const categories = {
+    length: {
+      units: [
+        { id: 'mm', name: '毫米', factor: 0.001 },
+        { id: 'cm', name: '厘米', factor: 0.01 },
+        { id: 'm', name: '米', factor: 1 },
+        { id: 'km', name: '千米', factor: 1000 },
+        { id: 'in', name: '英寸', factor: 0.0254 },
+        { id: 'ft', name: '英尺', factor: 0.3048 },
+        { id: 'yd', name: '码', factor: 0.9144 },
+        { id: 'mi', name: '英里', factor: 1609.344 }
+      ],
+      quick: [
+        { from: 'km', to: 'mi', label: '千米→英里' },
+        { from: 'mi', to: 'km', label: '英里→千米' },
+        { from: 'cm', to: 'in', label: '厘米→英寸' },
+        { from: 'in', to: 'cm', label: '英寸→厘米' },
+        { from: 'm', to: 'ft', label: '米→英尺' },
+        { from: 'ft', to: 'm', label: '英尺→米' }
+      ]
+    },
+    weight: {
+      units: [
+        { id: 'mg', name: '毫克', factor: 0.000001 },
+        { id: 'g', name: '克', factor: 0.001 },
+        { id: 'kg', name: '千克', factor: 1 },
+        { id: 't', name: '吨', factor: 1000 },
+        { id: 'oz', name: '盎司', factor: 0.0283495 },
+        { id: 'lb', name: '磅', factor: 0.453592 }
+      ],
+      quick: [
+        { from: 'kg', to: 'lb', label: '千克→磅' },
+        { from: 'lb', to: 'kg', label: '磅→千克' },
+        { from: 'g', to: 'oz', label: '克→盎司' },
+        { from: 'oz', to: 'g', label: '盎司→克' }
+      ]
+    },
+    temperature: {
+      units: [
+        { id: 'c', name: '摄氏度' },
+        { id: 'f', name: '华氏度' },
+        { id: 'k', name: '开尔文' }
+      ],
+      quick: [
+        { from: 'c', to: 'f', label: '摄氏→华氏' },
+        { from: 'f', to: 'c', label: '华氏→摄氏' },
+        { from: 'c', to: 'k', label: '摄氏→开尔文' },
+        { from: 'k', to: 'c', label: '开尔文→摄氏' }
+      ],
+      custom: true
+    },
+    area: {
+      units: [
+        { id: 'cm2', name: '平方厘米', factor: 0.0001 },
+        { id: 'm2', name: '平方米', factor: 1 },
+        { id: 'km2', name: '平方千米', factor: 1000000 },
+        { id: 'ft2', name: '平方英尺', factor: 0.092903 },
+        { id: 'acre', name: '英亩', factor: 4046.86 },
+        { id: 'ha', name: '公顷', factor: 10000 }
+      ],
+      quick: [
+        { from: 'm2', to: 'ft2', label: '平方米→平方英尺' },
+        { from: 'ft2', to: 'm2', label: '平方英尺→平方米' },
+        { from: 'km2', to: 'acre', label: '平方千米→英亩' },
+        { from: 'ha', to: 'acre', label: '公顷→英亩' }
+      ]
+    },
+    volume: {
+      units: [
+        { id: 'ml', name: '毫升', factor: 0.000001 },
+        { id: 'l', name: '升', factor: 0.001 },
+        { id: 'gal', name: '加仑', factor: 0.00378541 },
+        { id: 'cm3', name: '立方厘米', factor: 0.000001 },
+        { id: 'm3', name: '立方米', factor: 1 }
+      ],
+      quick: [
+        { from: 'l', to: 'gal', label: '升→加仑' },
+        { from: 'gal', to: 'l', label: '加仑→升' },
+        { from: 'ml', to: 'oz', label: '毫升→盎司' }
+      ]
+    },
+    speed: {
+      units: [
+        { id: 'ms', name: '米/秒', factor: 1 },
+        { id: 'kmh', name: '千米/时', factor: 0.277778 },
+        { id: 'mph', name: '英里/时', factor: 0.44704 },
+        { id: 'kn', name: '节', factor: 0.514444 }
+      ],
+      quick: [
+        { from: 'kmh', to: 'mph', label: '千米/时→英里/时' },
+        { from: 'mph', to: 'kmh', label: '英里/时→千米/时' },
+        { from: 'kn', to: 'kmh', label: '节→千米/时' }
+      ]
+    }
+  };
+
+  let currentCat = 'length';
+
+  function convertTemp(val, from, to) {
+    let c;
+    switch (from) {
+      case 'c': c = val; break;
+      case 'f': c = (val - 32) * 5 / 9; break;
+      case 'k': c = val - 273.15; break;
+    }
+    switch (to) {
+      case 'c': return c;
+      case 'f': return c * 9 / 5 + 32;
+      case 'k': return c + 273.15;
+    }
+  }
+
+  function populateUnits() {
+    const cat = categories[currentCat];
+    const fromSel = $('uc-from-unit');
+    const toSel = $('uc-to-unit');
+    fromSel.innerHTML = '';
+    toSel.innerHTML = '';
+    cat.units.forEach((u, i) => {
+      fromSel.innerHTML += `<option value="${u.id}">${u.name}</option>`;
+      toSel.innerHTML += `<option value="${u.id}">${u.name}</option>`;
+    });
+    if (cat.units.length > 1) toSel.value = cat.units[1].id;
+
+    // 快捷按钮
+    const quickEl = $('uc-quick');
+    quickEl.innerHTML = '';
+    (cat.quick || []).forEach(q => {
+      const btn = document.createElement('button');
+      btn.className = 'tool-btn';
+      btn.textContent = q.label;
+      btn.addEventListener('click', () => {
+        fromSel.value = q.from;
+        toSel.value = q.to;
+        doConvert();
+      });
+      quickEl.appendChild(btn);
+    });
+
+    doConvert();
+  }
+
+  function doConvert() {
+    const cat = categories[currentCat];
+    const val = parseFloat($('uc-from-val').value);
+    if (isNaN(val)) { $('uc-to-val').value = ''; return; }
+
+    const fromId = $('uc-from-unit').value;
+    const toId = $('uc-to-unit').value;
+
+    let result;
+    if (cat.custom) {
+      result = convertTemp(val, fromId, toId);
+    } else {
+      const fromUnit = cat.units.find(u => u.id === fromId);
+      const toUnit = cat.units.find(u => u.id === toId);
+      const baseVal = val * fromUnit.factor;
+      result = baseVal / toUnit.factor;
+    }
+
+    // 智能格式化
+    const abs = Math.abs(result);
+    let formatted;
+    if (abs === 0) formatted = '0';
+    else if (abs >= 1e10 || (abs < 1e-6 && abs > 0)) formatted = result.toExponential(8);
+    else formatted = parseFloat(result.toPrecision(12)).toString();
+
+    $('uc-to-val').value = formatted;
+  }
+
+  // Tab 切换
+  $('uc-tabs').addEventListener('click', e => {
+    if (!e.target.classList.contains('tool-tab')) return;
+    $('uc-tabs').querySelectorAll('.tool-tab').forEach(t => t.classList.remove('active'));
+    e.target.classList.add('active');
+    currentCat = e.target.dataset.cat;
+    $('uc-from-val').value = 1;
+    populateUnits();
+  });
+
+  $('uc-from-val').addEventListener('input', doConvert);
+  $('uc-from-unit').addEventListener('change', doConvert);
+  $('uc-to-unit').addEventListener('change', doConvert);
+
+  window.ucSwap = function() {
+    const fromSel = $('uc-from-unit');
+    const toSel = $('uc-to-unit');
+    const fromVal = $('uc-from-val').value;
+    const toVal = $('uc-to-val').value;
+    const tmpUnit = fromSel.value;
+    fromSel.value = toSel.value;
+    toSel.value = tmpUnit;
+    $('uc-from-val').value = toVal;
+    doConvert();
+  };
+
+  populateUnits();
+})();
+</script>

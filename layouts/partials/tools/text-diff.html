@@ -1,0 +1,109 @@
+<div style="display:flex;gap:16px;flex-wrap:wrap;">
+  <div class="tool-input-group" style="flex:1;min-width:280px;">
+    <label class="tool-label">原始文本</label>
+    <textarea class="tool-textarea" id="textDiffLeft" rows="10" placeholder="输入原始文本...">这是第一行文本
+这是第二行，内容相同
+这行内容将被修改
+这行将被删除
+这是最后一行</textarea>
+  </div>
+  <div class="tool-input-group" style="flex:1;min-width:280px;">
+    <label class="tool-label">修改文本</label>
+    <textarea class="tool-textarea" id="textDiffRight" rows="10" placeholder="输入修改文本...">这是第一行文本
+这是第二行，内容相同
+这行内容已被修改为新文本
+这行是新增的内容
+这是最后一行</textarea>
+  </div>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="textDiffBtn">对比</button>
+  <button class="tool-btn" id="textDiffClearBtn">清空</button>
+</div>
+
+<div class="tool-stats" id="textDiffStats" style="display:none;">
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="textDiffAdded" style="color:#38a169;">0</span>
+    <span class="tool-stat-label">新增行</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="textDiffRemoved" style="color:#e53e3e;">0</span>
+    <span class="tool-stat-label">删除行</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="textDiffUnchanged">0</span>
+    <span class="tool-stat-label">未变行</span>
+  </div>
+</div>
+
+<div class="tool-output" id="textDiffOutput" style="display:none;">
+  <label class="tool-label">对比结果</label>
+  <div id="textDiffResult" style="font-family:monospace;font-size:13px;line-height:1.6;white-space:pre-wrap;overflow-x:auto;"></div>
+</div>
+
+<script>
+(function(){
+  var leftEl = document.getElementById('textDiffLeft');
+  var rightEl = document.getElementById('textDiffRight');
+  var btn = document.getElementById('textDiffBtn');
+  var clearBtn = document.getElementById('textDiffClearBtn');
+  var output = document.getElementById('textDiffOutput');
+  var resultEl = document.getElementById('textDiffResult');
+  var statsEl = document.getElementById('textDiffStats');
+  var addedEl = document.getElementById('textDiffAdded');
+  var removedEl = document.getElementById('textDiffRemoved');
+  var unchangedEl = document.getElementById('textDiffUnchanged');
+
+  function escapeHTML(str){
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  btn.addEventListener('click', function(){
+    var leftLines = leftEl.value.split('\n');
+    var rightLines = rightEl.value.split('\n');
+    var maxLen = Math.max(leftLines.length, rightLines.length);
+
+    var added = 0, removed = 0, unchanged = 0;
+    var html = '';
+
+    for(var i = 0; i < maxLen; i++){
+      var left = i < leftLines.length ? leftLines[i] : undefined;
+      var right = i < rightLines.length ? rightLines[i] : undefined;
+      var lineNum = i + 1;
+      var padLen = String(maxLen).length;
+      var numStr = String(lineNum).padStart(padLen, ' ');
+
+      if(left === undefined && right !== undefined){
+        added++;
+        html += '<div style="background:#f0fff4;color:#276749;padding:2px 8px;border-left:3px solid #38a169;"><span style="opacity:0.5;margin-right:8px;">'+numStr+'</span>+ '+escapeHTML(right)+'</div>';
+      }else if(left !== undefined && right === undefined){
+        removed++;
+        html += '<div style="background:#fff5f5;color:#9b2c2c;padding:2px 8px;border-left:3px solid #e53e3e;"><span style="opacity:0.5;margin-right:8px;">'+numStr+'</span>- '+escapeHTML(left)+'</div>';
+      }else if(left !== right){
+        removed++;
+        added++;
+        html += '<div style="background:#fff5f5;color:#9b2c2c;padding:2px 8px;border-left:3px solid #e53e3e;"><span style="opacity:0.5;margin-right:8px;">'+numStr+'</span>- '+escapeHTML(left)+'</div>';
+        html += '<div style="background:#f0fff4;color:#276749;padding:2px 8px;border-left:3px solid #38a169;"><span style="opacity:0.5;margin-right:8px;">'+numStr+'</span>+ '+escapeHTML(right)+'</div>';
+      }else{
+        unchanged++;
+        html += '<div style="padding:2px 8px;border-left:3px solid transparent;"><span style="opacity:0.5;margin-right:8px;">'+numStr+'</span>&nbsp; '+escapeHTML(left)+'</div>';
+      }
+    }
+
+    resultEl.innerHTML = html;
+    output.style.display = '';
+    statsEl.style.display = '';
+    addedEl.textContent = added;
+    removedEl.textContent = removed;
+    unchangedEl.textContent = unchanged;
+  });
+
+  clearBtn.addEventListener('click', function(){
+    leftEl.value = '';
+    rightEl.value = '';
+    output.style.display = 'none';
+    statsEl.style.display = 'none';
+  });
+})();
+</script>

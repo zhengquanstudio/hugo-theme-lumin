@@ -1,0 +1,166 @@
+<div class="tool-input-group">
+  <label class="tool-label">输入 JSON 数据</label>
+  <textarea class="tool-textarea" id="jt-input" rows="10" placeholder='请输入 JSON 数据，例如：
+{
+  "id": 1,
+  "name": "张三",
+  "email": "zhangsan@example.com",
+  "tags": ["admin", "editor"],
+  "profile": {
+    "age": 25,
+    "city": "北京"
+  }
+}'></textarea>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="jt-generate-btn">生成 TypeScript 类型</button>
+  <button class="tool-btn" id="jt-clear-btn">清空</button>
+</div>
+
+<div id="jt-error" style="display:none;color:var(--color-error,#e53e3e);margin-top:8px;"></div>
+
+<div class="tool-output" id="jt-output-area" style="display:none;">
+  <div class="tool-result" id="jt-result"></div>
+  <button class="tool-copy-btn" id="jt-copy-btn">复制结果</button>
+</div>
+
+<script>
+(function(){
+  const input = document.getElementById('jt-input');
+  const result = document.getElementById('jt-result');
+  const outputArea = document.getElementById('jt-output-area');
+  const errorDiv = document.getElementById('jt-error');
+
+  function showError(msg) {
+    errorDiv.textContent = msg;
+    errorDiv.style.display = 'block';
+    outputArea.style.display = 'none';
+  }
+
+  function hideError() {
+    errorDiv.style.display = 'none';
+  }
+
+  function inferType(value, name, depth) {
+    if (value === null) return 'null';
+    if (value === undefined) return 'undefined';
+
+    const type = typeof value;
+
+    if (type === 'string') return 'string';
+    if (type === 'number') {
+      if (Number.isInteger(value)) return 'number';
+      return 'number';
+    }
+    if (type === 'boolean') return 'boolean';
+
+    if (Array.isArray(value)) {
+      if (value.length === 0) return 'any[]';
+      // 收集数组中所有元素的类型
+      const types = new Set();
+      for (const item of value) {
+        types.add(inferType(item, null, depth));
+      }
+      const typeList = Array.from(types);
+      if (typeList.length === 1) return typeList[0] + '[]';
+      return '(' + typeList.join(' | ') + ')[]';
+    }
+
+    if (type === 'object') {
+      return '__OBJECT__';
+    }
+
+    return 'any';
+  }
+
+  function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  function toCamelCase(str) {
+    return str.replace(/[-_ ](.)/g, (_, c) => c.toUpperCase())
+      .replace(/^[^a-zA-Z]/g, '');
+  }
+
+  function generateInterfaces(json, rootName) {
+    const interfaces = {};
+    const queue = [{ obj: json, name: rootName }];
+    const processed = new Set();
+
+    while (queue.length > 0) {
+      const { obj, name } = queue.shift();
+      if (processed.has(name)) continue;
+      processed.add(name);
+
+      if (typeof obj !== 'object' || obj === null) continue;
+
+      const lines = [];
+      lines.push('export interface ' + name + ' {');
+
+      for (const [key, value] of Object.entries(obj)) {
+        const propName = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key)
+          ? key
+          : '"' + key + '"';
+        const inferred = inferType(value, key, 0);
+
+        if (inferred === '__OBJECT__' && value !== null) {
+          const nestedName = name + capitalize(toCamelCase(key));
+          lines.push('  ' + propName + ': ' + nestedName + ';');
+          queue.push({ obj: value, name: nestedName });
+        } else if (inferred === 'null') {
+          lines.push('  ' + propName + ': null;');
+        } else {
+          lines.push('  ' + propName + ': ' + inferred + ';');
+        }
+      }
+
+      lines.push('}');
+      interfaces[name] = lines.join('\n');
+    }
+
+    return Object.values(interfaces).join('\n\n');
+  }
+
+  document.getElementById('jt-generate-btn').addEventListener('click', () => {
+    hideError();
+    const raw = input.value.trim();
+    if (!raw) { showError('请输入 JSON 数据'); return; }
+    try {
+      const obj = JSON.parse(raw);
+      const ts = generateInterfaces(obj, 'Root');
+      result.textContent = ts;
+      outputArea.style.display = 'block';
+    } catch(e) {
+      showError('JSON 解析失败：' + e.message);
+    }
+  });
+
+  document.getElementById('jt-clear-btn').addEventListener('click', () => {
+    input.value = '';
+    result.textContent = '';
+    outputArea.style.display = 'none';
+    hideError();
+  });
+
+  document.getElementById('jt-copy-btn').addEventListener('click', () => {
+    const text = result.textContent;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('jt-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const btn = document.getElementById('jt-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    });
+  });
+})();
+</script>

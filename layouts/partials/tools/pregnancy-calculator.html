@@ -1,0 +1,73 @@
+<div class="tool-input-group">
+  <label class="tool-label">末次月经日期</label>
+  <input class="tool-input" type="date" id="pc-lmp" value="">
+</div>
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="pc-calc">计算预产期</button>
+</div>
+<div class="tool-result" id="pc-result"></div>
+
+<script>
+(function() {
+  document.getElementById('pc-lmp').value = new Date().toISOString().split('T')[0];
+
+  document.getElementById('pc-calc').addEventListener('click', function() {
+    var lmpStr = document.getElementById('pc-lmp').value;
+    var result = document.getElementById('pc-result');
+
+    if (!lmpStr) {
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">错误</div><p>请选择末次月经日期。</p></div>';
+      return;
+    }
+
+    var lmp = new Date(lmpStr + 'T00:00:00');
+    var edd = new Date(lmp);
+    edd.setDate(lmp.getDate() + 280);
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var diffMs = today - lmp;
+    var diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) { diffDays = 0; }
+
+    var weeks = Math.floor(diffDays / 7);
+    var days = diffDays % 7;
+    var remainingDays = Math.floor((edd - today) / (1000 * 60 * 60 * 24));
+
+    var trimester;
+    if (weeks < 13) trimester = '孕早期（第一孕期）';
+    else if (weeks < 27) trimester = '孕中期（第二孕期）';
+    else trimester = '孕晚期（第三孕期）';
+
+    var html = '<div class="tool-output"><div class="tool-output-title">孕期计算</div>';
+    html += '<div class="tool-stats"><div class="tool-stat"><div class="tool-stat-value">' + formatDate(edd) + '</div><div class="tool-stat-label">预产期</div></div>';
+    html += '<div class="tool-stat"><div class="tool-stat-value">' + weeks + '周' + days + '天</div><div class="tool-stat-label">当前孕周</div></div>';
+    html += '<div class="tool-stat"><div class="tool-stat-value">' + remainingDays + '天</div><div class="tool-stat-label">距离预产期</div></div></div>';
+
+    html += '<p style="margin-top:12px;font-size:13px;">当前阶段：<strong>' + trimester + '</strong></p>';
+
+    html += '<h4 style="margin:15px 0 8px;">孕期时间线</h4>';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:12px;">';
+    html += '<tr style="background:#f5f5f5;"><th style="padding:6px;text-align:left;">阶段</th><th style="padding:6px;text-align:left;">时间</th><th style="padding:6px;text-align:left;">预计日期</th></tr>';
+
+    var t1Start = new Date(lmp);
+    var t1End = new Date(lmp); t1End.setDate(lmp.getDate() + 91);
+    var t2Start = new Date(t1End); t2Start.setDate(t1End.getDate() + 1);
+    var t2End = new Date(t2Start); t2End.setDate(t2Start.getDate() + 97);
+    var t3Start = new Date(t2End); t3Start.setDate(t2End.getDate() + 1);
+
+    html += '<tr style="border-bottom:1px solid #eee;' + (trimester.indexOf('早期') > -1 ? 'background:#fff3cd;' : '') + '"><td style="padding:6px;">孕早期</td><td style="padding:6px;">0-13周</td><td style="padding:6px;">' + formatDate(t1Start) + ' ~ ' + formatDate(t1End) + '</td></tr>';
+    html += '<tr style="border-bottom:1px solid #eee;' + (trimester.indexOf('中期') > -1 ? 'background:#fff3cd;' : '') + '"><td style="padding:6px;">孕中期</td><td style="padding:6px;">14-27周</td><td style="padding:6px;">' + formatDate(t2Start) + ' ~ ' + formatDate(t2End) + '</td></tr>';
+    html += '<tr style="border-bottom:1px solid #eee;' + (trimester.indexOf('晚期') > -1 ? 'background:#fff3cd;' : '') + '"><td style="padding:6px;">孕晚期</td><td style="padding:6px;">28-40周</td><td style="padding:6px;">' + formatDate(t3Start) + ' ~ ' + formatDate(edd) + '</td></tr>';
+    html += '</table></div>';
+
+    result.innerHTML = html;
+  });
+
+  function formatDate(d) {
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  document.getElementById('pc-calc').click();
+})();
+</script>

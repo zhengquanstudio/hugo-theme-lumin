@@ -1,0 +1,86 @@
+<div class="tool-input-group">
+  <label class="tool-label">方程 ax² + bx + c = 0</label>
+  <div class="tool-row">
+    <div style="flex:1;min-width:80px;">
+      <label class="tool-label" style="font-size:12px;">a (二次项系数)</label>
+      <input class="tool-input" type="number" id="qs-a" value="1" step="any" placeholder="a">
+    </div>
+    <div style="flex:1;min-width:80px;">
+      <label class="tool-label" style="font-size:12px;">b (一次项系数)</label>
+      <input class="tool-input" type="number" id="qs-b" value="-3" step="any" placeholder="b">
+    </div>
+    <div style="flex:1;min-width:80px;">
+      <label class="tool-label" style="font-size:12px;">c (常数项)</label>
+      <input class="tool-input" type="number" id="qs-c" value="2" step="any" placeholder="c">
+    </div>
+  </div>
+</div>
+<div class="tool-btn-group">
+  <button class="tool-btn tool-btn-primary" id="qs-calc">求解</button>
+</div>
+<div class="tool-result" id="qs-result"></div>
+
+<script>
+(function() {
+  function parseNum(val) {
+    var n = parseFloat(val);
+    return isNaN(n) ? 0 : n;
+  }
+
+  document.getElementById('qs-calc').addEventListener('click', function() {
+    var a = parseNum(document.getElementById('qs-a').value);
+    var b = parseNum(document.getElementById('qs-b').value);
+    var c = parseNum(document.getElementById('qs-c').value);
+    var result = document.getElementById('qs-result');
+
+    if (a === 0) {
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">错误</div><p>a不能为0，这不是二次方程。</p></div>';
+      return;
+    }
+
+    var delta = b * b - 4 * a * c;
+    var steps = [];
+    steps.push('<p><strong>判别式 Δ = b² - 4ac = ' + b.toFixed(2) + '² - 4×' + a.toFixed(2) + '×' + c.toFixed(2) + ' = ' + delta.toFixed(4) + '</strong></p>');
+
+    var rootType, x1, x2, x1Imag, x2Imag;
+
+    if (delta > 0) {
+      rootType = '两个不相等的实根';
+      var sqrtDelta = Math.sqrt(delta);
+      x1 = (-b + sqrtDelta) / (2 * a);
+      x2 = (-b - sqrtDelta) / (2 * a);
+      steps.push('<p>Δ &gt; 0，方程有两个不相等的实根。</p>');
+      steps.push('<p>x₁ = (-b + √Δ) / (2a) = (' + (-b).toFixed(2) + ' + ' + sqrtDelta.toFixed(4) + ') / ' + (2*a).toFixed(2) + ' = <strong>' + x1.toFixed(6) + '</strong></p>');
+      steps.push('<p>x₂ = (-b - √Δ) / (2a) = (' + (-b).toFixed(2) + ' - ' + sqrtDelta.toFixed(4) + ') / ' + (2*a).toFixed(2) + ' = <strong>' + x2.toFixed(6) + '</strong></p>');
+    } else if (delta === 0) {
+      rootType = '重根（两个相等实根）';
+      x1 = x2 = -b / (2 * a);
+      steps.push('<p>Δ = 0，方程有重根。</p>');
+      steps.push('<p>x₁ = x₂ = -b / (2a) = ' + (-b).toFixed(2) + ' / ' + (2*a).toFixed(2) + ' = <strong>' + x1.toFixed(6) + '</strong></p>');
+    } else {
+      rootType = '两个共轭虚根';
+      var realPart = -b / (2 * a);
+      var imagPart = Math.sqrt(-delta) / (2 * a);
+      x1 = realPart;
+      x1Imag = imagPart;
+      x2 = realPart;
+      x2Imag = -imagPart;
+      steps.push('<p>Δ &lt; 0，方程有两个共轭虚根。</p>');
+      steps.push('<p>x₁ = (-b + i√|Δ|) / (2a) = <strong>' + realPart.toFixed(6) + ' + ' + imagPart.toFixed(6) + 'i</strong></p>');
+      steps.push('<p>x₂ = (-b - i√|Δ|) / (2a) = <strong>' + realPart.toFixed(6) + ' - ' + imagPart.toFixed(6) + 'i</strong></p>');
+    }
+
+    var html = '<div class="tool-output"><div class="tool-output-title">求解结果</div>';
+    html += '<div class="tool-stats"><div class="tool-stat"><div class="tool-stat-value">' + delta.toFixed(4) + '</div><div class="tool-stat-label">Δ 判别式</div></div>';
+    html += '<div class="tool-stat"><div class="tool-stat-value" style="font-size:14px;">' + rootType + '</div><div class="tool-stat-label">根的类型</div></div></div>';
+
+    html += '<h4 style="margin:15px 0 8px;">求解步骤：</h4>';
+    html += steps.join('');
+    html += '</div>';
+
+    result.innerHTML = html;
+  });
+
+  document.getElementById('qs-calc').click();
+})();
+</script>

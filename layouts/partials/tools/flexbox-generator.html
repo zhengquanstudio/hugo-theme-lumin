@@ -1,0 +1,145 @@
+<div style="display:flex;gap:24px;flex-wrap:wrap;">
+  <div style="flex:0 0 280px;">
+    <div class="tool-input-group">
+      <label class="tool-label">flex-direction</label>
+      <select class="tool-select" id="fbg-direction" style="width:100%;">
+        <option value="row" selected>row</option>
+        <option value="row-reverse">row-reverse</option>
+        <option value="column">column</option>
+        <option value="column-reverse">column-reverse</option>
+      </select>
+    </div>
+
+    <div class="tool-input-group">
+      <label class="tool-label">justify-content</label>
+      <select class="tool-select" id="fbg-justify" style="width:100%;">
+        <option value="flex-start" selected>flex-start</option>
+        <option value="flex-end">flex-end</option>
+        <option value="center">center</option>
+        <option value="space-between">space-between</option>
+        <option value="space-around">space-around</option>
+        <option value="space-evenly">space-evenly</option>
+      </select>
+    </div>
+
+    <div class="tool-input-group">
+      <label class="tool-label">align-items</label>
+      <select class="tool-select" id="fbg-align-items" style="width:100%;">
+        <option value="stretch" selected>stretch</option>
+        <option value="flex-start">flex-start</option>
+        <option value="flex-end">flex-end</option>
+        <option value="center">center</option>
+        <option value="baseline">baseline</option>
+      </select>
+    </div>
+
+    <div class="tool-input-group">
+      <label class="tool-label">flex-wrap</label>
+      <select class="tool-select" id="fbg-wrap" style="width:100%;">
+        <option value="nowrap" selected>nowrap</option>
+        <option value="wrap">wrap</option>
+        <option value="wrap-reverse">wrap-reverse</option>
+      </select>
+    </div>
+
+    <div class="tool-input-group">
+      <label class="tool-label">align-content</label>
+      <select class="tool-select" id="fbg-align-content" style="width:100%;">
+        <option value="stretch" selected>stretch</option>
+        <option value="flex-start">flex-start</option>
+        <option value="flex-end">flex-end</option>
+        <option value="center">center</option>
+        <option value="space-between">space-between</option>
+        <option value="space-around">space-around</option>
+      </select>
+    </div>
+
+    <div class="tool-range-group">
+      <label class="tool-label" style="margin-bottom:0;min-width:50px;">gap</label>
+      <input class="tool-range" type="range" id="fbg-gap" min="0" max="40" value="8">
+      <span class="tool-range-value" id="fbg-gap-val">8px</span>
+    </div>
+  </div>
+
+  <div style="flex:1;min-width:320px;">
+    <div class="tool-label">预览</div>
+    <div id="fbg-preview" style="border:2px dashed var(--border-color,#d1d5db);border-radius:12px;padding:12px;min-height:240px;display:flex;">
+      <div style="background:#667eea;border-radius:8px;min-width:60px;min-height:60px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.85rem;">1</div>
+      <div style="background:#764ba2;border-radius:8px;min-width:70px;min-height:70px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.85rem;">2</div>
+      <div style="background:#f093fb;border-radius:8px;min-width:50px;min-height:50px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.85rem;">3</div>
+      <div style="background:#f5576c;border-radius:8px;min-width:80px;min-height:80px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.85rem;">4</div>
+      <div style="background:#f5af19;border-radius:8px;min-width:55px;min-height:55px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.85rem;">5</div>
+    </div>
+  </div>
+</div>
+
+<div class="tool-output">
+  <label class="tool-label">CSS 代码</label>
+  <div class="tool-result" id="fbg-code">display: flex;
+flex-direction: row;
+justify-content: flex-start;
+align-items: stretch;
+flex-wrap: nowrap;
+align-content: stretch;
+gap: 8px;</div>
+  <button class="tool-copy-btn" id="fbg-copy">复制 CSS</button>
+</div>
+
+<script>
+(function(){
+  var direction = document.getElementById('fbg-direction');
+  var justify = document.getElementById('fbg-justify');
+  var alignItems = document.getElementById('fbg-align-items');
+  var wrap = document.getElementById('fbg-wrap');
+  var alignContent = document.getElementById('fbg-align-content');
+  var gapInput = document.getElementById('fbg-gap');
+  var preview = document.getElementById('fbg-preview');
+  var codeEl = document.getElementById('fbg-code');
+  var copyBtn = document.getElementById('fbg-copy');
+  var gapVal = document.getElementById('fbg-gap-val');
+
+  function update(){
+    var d = direction.value;
+    var j = justify.value;
+    var ai = alignItems.value;
+    var w = wrap.value;
+    var ac = alignContent.value;
+    var g = parseInt(gapInput.value);
+
+    gapVal.textContent = g + 'px';
+
+    preview.style.flexDirection = d;
+    preview.style.justifyContent = j;
+    preview.style.alignItems = ai === 'stretch' ? 'normal' : ai;
+    preview.style.flexWrap = w;
+    preview.style.alignContent = ac === 'stretch' ? 'normal' : ac;
+    preview.style.gap = g + 'px';
+
+    var css = [];
+    css.push('display: flex;');
+    if(d !== 'row') css.push('flex-direction: ' + d + ';');
+    if(j !== 'flex-start') css.push('justify-content: ' + j + ';');
+    if(ai !== 'stretch') css.push('align-items: ' + ai + ';');
+    else css.push('align-items: stretch;');
+    if(w !== 'nowrap') css.push('flex-wrap: ' + w + ';');
+    if(ac !== 'stretch') css.push('align-content: ' + ac + ';');
+    if(g !== 0) css.push('gap: ' + g + 'px;');
+
+    codeEl.textContent = css.join('\n');
+  }
+
+  [direction, justify, alignItems, wrap, alignContent, gapInput].forEach(function(el){
+    el.addEventListener('input', update);
+    el.addEventListener('change', update);
+  });
+
+  copyBtn.addEventListener('click', function(){
+    navigator.clipboard.writeText(codeEl.textContent).then(function(){
+      copyBtn.textContent = '已复制';
+      setTimeout(function(){ copyBtn.textContent = '复制 CSS'; }, 1500);
+    });
+  });
+
+  update();
+})();
+</script>

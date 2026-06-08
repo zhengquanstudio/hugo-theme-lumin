@@ -1,0 +1,4 @@
+{{/* 列表页文章间广告 - 由 render-ad.html 处理，此 partial 仅做容器 */}}
+{{ if .widgetEnabled }}
+{{ partial "ads/render-ad.html" (dict "positionId" "list_between" "idSuffix" (.idSuffix | default "0")) }}
+{{ end }}

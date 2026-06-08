@@ -1,0 +1,83 @@
+<div class="tool-input-group">
+  <label class="tool-label">身高（cm）</label>
+  <input class="tool-input" type="number" id="iw-height" value="170" step="0.1" min="50" max="280">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">性别</label>
+  <select class="tool-select" id="iw-gender">
+    <option value="male">男</option>
+    <option value="female">女</option>
+  </select>
+</div>
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="iw-calc">计算理想体重</button>
+</div>
+<div class="tool-result" id="iw-result"></div>
+
+<script>
+(function() {
+  document.getElementById('iw-calc').addEventListener('click', function() {
+    var height = parseFloat(document.getElementById('iw-height').value);
+    var gender = document.getElementById('iw-gender').value;
+    var result = document.getElementById('iw-result');
+
+    if (isNaN(height) || height < 50 || height > 280) {
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">错误</div><p>请输入有效的身高（50-280 cm）。</p></div>';
+      return;
+    }
+
+    var h = height / 100;
+    var results = [];
+
+    // BMI法 (BMI 18.5-24)
+    var bmiMin = 18.5 * h * h;
+    var bmiMax = 24.0 * h * h;
+    var bmiAvg = (bmiMin + bmiMax) / 2;
+    results.push({ method: 'BMI法 (18.5-24)', low: bmiMin.toFixed(1), high: bmiMax.toFixed(1), avg: bmiAvg.toFixed(1) });
+
+    // Devine公式
+    var devine;
+    if (gender === 'male') {
+      devine = 50 + 2.3 * (height - 152.4) / 2.54;
+    } else {
+      devine = 45.5 + 2.3 * (height - 152.4) / 2.54;
+    }
+    results.push({ method: 'Devine公式', low: (devine * 0.9).toFixed(1), high: (devine * 1.1).toFixed(1), avg: devine.toFixed(1) });
+
+    // Robinson公式
+    var robinson;
+    if (gender === 'male') {
+      robinson = 52 + 1.9 * (height - 152.4) / 2.54;
+    } else {
+      robinson = 49 + 1.7 * (height - 152.4) / 2.54;
+    }
+    results.push({ method: 'Robinson公式', low: (robinson * 0.9).toFixed(1), high: (robinson * 1.1).toFixed(1), avg: robinson.toFixed(1) });
+
+    // Miller公式
+    var miller;
+    if (gender === 'male') {
+      miller = 56.2 + 1.41 * (height - 152.4) / 2.54;
+    } else {
+      miller = 53.1 + 1.36 * (height - 152.4) / 2.54;
+    }
+    results.push({ method: 'Miller公式', low: (miller * 0.9).toFixed(1), high: (miller * 1.1).toFixed(1), avg: miller.toFixed(1) });
+
+    // 综合平均
+    var totalAvg = 0;
+    for (var i = 0; i < results.length; i++) totalAvg += parseFloat(results[i].avg);
+    var overall = totalAvg / results.length;
+
+    var html = '<div class="tool-output"><div class="tool-output-title">理想体重参考（' + (gender === 'male' ? '男' : '女') + '，身高 ' + height + ' cm）</div>';
+    html += '<div class="tool-stats"><div class="tool-stat"><div class="tool-stat-value">' + overall.toFixed(1) + ' kg</div><div class="tool-stat-label">综合平均</div></div></div>';
+    html += '<table style="width:100%;border-collapse:collapse;margin-top:12px;font-size:13px;">';
+    html += '<tr style="background:#f5f5f5;"><th style="padding:8px;text-align:left;">公式</th><th style="padding:8px;text-align:right;">下限 (kg)</th><th style="padding:8px;text-align:right;">上限 (kg)</th><th style="padding:8px;text-align:right;">理想值 (kg)</th></tr>';
+    for (var i = 0; i < results.length; i++) {
+      html += '<tr style="border-bottom:1px solid #eee;"><td style="padding:8px;">' + results[i].method + '</td><td style="padding:8px;text-align:right;font-family:monospace;">' + results[i].low + '</td><td style="padding:8px;text-align:right;font-family:monospace;">' + results[i].high + '</td><td style="padding:8px;text-align:right;font-family:monospace;">' + results[i].avg + '</td></tr>';
+    }
+    html += '</table></div>';
+    result.innerHTML = html;
+  });
+
+  document.getElementById('iw-calc').click();
+})();
+</script>

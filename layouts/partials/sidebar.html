@@ -1,0 +1,40 @@
+<div class="sidebar-widgets">
+  {{ $order := site.Params.widgets.order }}
+  {{ $hidden := site.Params.widgets.hidden | default slice }}
+  {{ if $order }}
+    {{ range $order }}
+      {{ $name := . }}
+      {{ if not (in $hidden $name) }}
+      {{ if eq $name "profile" }}{{ partial "widgets/profile.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
+      {{ if eq $name "weather" }}{{ partial "widgets/weather.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
+      {{ if eq $name "visitor" }}{{ partial "widgets/visitor.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
+      {{ if eq $name "announcement" }}{{ partial "widgets/announcement.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
+      {{ if eq $name "calendar" }}{{ partial "widgets/calendar.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
+      {{ if eq $name "countdown" }}{{ partial "widgets/countdown.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
+      {{ if eq $name "recentPosts" }}{{ partial "widgets/recent-posts.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
+      {{ if eq $name "newestComments" }}{{ partial "widgets/newest-comments.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
+      {{ if eq $name "categories" }}{{ partialCached "widgets/categories.html" (dict "Site" $.Site "widgetEnabled" true) "sidebar-categories" }}{{ end }}
+      {{ if eq $name "tags" }}{{ partialCached "widgets/tags.html" (dict "Site" $.Site "widgetEnabled" true) "sidebar-tags" }}{{ end }}
+      {{ if eq $name "reward" }}{{ partial "widgets/reward.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
+      {{ if eq $name "statistics" }}{{ partialCached "widgets/statistics.html" (dict "Site" $.Site "widgetEnabled" true) "sidebar-statistics" }}{{ end }}
+      {{ if eq $name "qrcode" }}{{ partial "widgets/qrcode.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
+      {{ if eq $name "advertisement" }}{{ partial "ads/sidebar-widget.html" (dict "Page" $.Page "Site" $.Site "widgetEnabled" true) }}{{ end }}
+      {{ end }}
+    {{ end }}
+  {{ else }}
+    {{ partial "widgets/profile.html" . }}
+    {{ partial "widgets/weather.html" . }}
+    {{ partial "widgets/announcement.html" . }}
+    {{ partial "widgets/calendar.html" . }}
+    {{ partial "widgets/countdown.html" . }}
+    {{ partial "widgets/recent-posts.html" . }}
+    {{ partial "widgets/newest-comments.html" . }}
+    {{ partialCached "widgets/categories.html" (dict "Site" site "widgetEnabled" true) "sidebar-categories" }}
+    {{ partialCached "widgets/tags.html" (dict "Site" site "widgetEnabled" true) "sidebar-tags" }}
+
+    {{ partialCached "widgets/reward.html" . }}
+    {{ partialCached "widgets/statistics.html" (dict "Site" site "widgetEnabled" true) "sidebar-statistics" }}
+    {{ partial "widgets/qrcode.html" . }}
+    {{ partial "ads/sidebar-widget.html" (dict "Page" . "Site" . "widgetEnabled" true) }}
+  {{ end }}
+</div>

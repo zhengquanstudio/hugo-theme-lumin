@@ -1,0 +1,158 @@
+<div style="display:flex;flex-wrap:wrap;gap:16px;margin-bottom:18px;">
+  <div class="tool-input-group" style="flex:1;min-width:160px;">
+    <label class="tool-label">贷款金额（元）</label>
+    <input type="number" class="tool-input" id="lc-amount" value="1000000" min="1000" step="10000">
+  </div>
+  <div class="tool-input-group" style="flex:1;min-width:160px;">
+    <label class="tool-label">年利率（%）</label>
+    <input type="number" class="tool-input" id="lc-rate" value="4.2" min="0.1" step="0.01">
+  </div>
+  <div class="tool-input-group" style="flex:1;min-width:160px;">
+    <label class="tool-label">贷款期限（年）</label>
+    <input type="number" class="tool-input" id="lc-years" value="30" min="1" max="50">
+  </div>
+</div>
+
+<div class="tool-input-group" style="max-width:320px;">
+  <label class="tool-label">还款方式</label>
+  <div style="display:flex;gap:16px;margin-top:6px;">
+    <label class="tool-switch"><input type="radio" name="lc-type" id="lc-equal-payment" value="equal-payment" checked style="display:none;"><span class="tool-switch-track"></span>等额本息</label>
+    <label class="tool-switch"><input type="radio" name="lc-type" id="lc-equal-principal" value="equal-principal" style="display:none;"><span class="tool-switch-track"></span>等额本金</label>
+  </div>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="lc-calc-btn"><i class="fas fa-calculator"></i> 计算月供</button>
+  <button class="tool-btn tool-btn-danger" id="lc-clear-btn"><i class="fas fa-trash"></i> 重置</button>
+</div>
+
+<div id="lc-output" style="display:none;">
+  <div class="tool-stats" style="margin-bottom:18px;">
+    <div class="tool-stat">
+      <div class="tool-stat-value" id="lc-monthly" style="color:#667eea;font-size:1.3rem;"></div>
+      <div class="tool-stat-label" id="lc-monthly-label">月供（元）</div>
+    </div>
+    <div class="tool-stat">
+      <div class="tool-stat-value" id="lc-total-payment" style="font-size:1.3rem;"></div>
+      <div class="tool-stat-label">还款总额（元）</div>
+    </div>
+    <div class="tool-stat">
+      <div class="tool-stat-value" id="lc-total-interest" style="color:#ef4444;font-size:1.3rem;"></div>
+      <div class="tool-stat-label">总利息（元）</div>
+    </div>
+    <div class="tool-stat">
+      <div class="tool-stat-value" id="lc-interest-ratio" style="font-size:1.3rem;"></div>
+      <div class="tool-stat-label">利息/本金比</div>
+    </div>
+  </div>
+
+  <details>
+    <summary style="cursor:pointer;font-size:.88rem;font-weight:600;color:#667eea;margin-bottom:10px;user-select:none;">📋 查看还款计划表（前24期）</summary>
+    <div style="overflow-x:auto;margin-top:10px;">
+      <table style="width:100%;border-collapse:collapse;font-size:.8rem;">
+        <thead>
+          <tr style="background:var(--bg-secondary,#f9fafb);">
+            <th style="padding:7px 10px;text-align:left;border:1px solid var(--border-color,#e5e7eb);color:var(--text-muted,#6b7280);">期数</th>
+            <th style="padding:7px 10px;text-align:right;border:1px solid var(--border-color,#e5e7eb);color:var(--text-muted,#6b7280);">月供</th>
+            <th style="padding:7px 10px;text-align:right;border:1px solid var(--border-color,#e5e7eb);color:var(--text-muted,#6b7280);">还本金</th>
+            <th style="padding:7px 10px;text-align:right;border:1px solid var(--border-color,#e5e7eb);color:var(--text-muted,#6b7280);">还利息</th>
+            <th style="padding:7px 10px;text-align:right;border:1px solid var(--border-color,#e5e7eb);color:var(--text-muted,#6b7280);">剩余本金</th>
+          </tr>
+        </thead>
+        <tbody id="lc-table-body"></tbody>
+      </table>
+    </div>
+  </details>
+</div>
+
+<script>
+(function(){
+  function fmt(n){return n.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});}
+
+  document.getElementById('lc-calc-btn').addEventListener('click',()=>{
+    const amount=parseFloat(document.getElementById('lc-amount').value)||0;
+    const annualRate=parseFloat(document.getElementById('lc-rate').value)||0;
+    const years=parseInt(document.getElementById('lc-years').value)||1;
+    const isEqualPayment=document.getElementById('lc-equal-payment').checked;
+
+    const r=annualRate/100/12;
+    const n=years*12;
+
+    if(amount<=0||annualRate<=0||years<=0){alert('请输入有效数值');return;}
+
+    const tbody=document.getElementById('lc-table-body');
+    tbody.innerHTML='';
+
+    let totalPayment=0, totalInterest=0;
+
+    if(isEqualPayment){
+      // 等额本息
+      const monthly=amount*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1);
+      totalPayment=monthly*n;
+      totalInterest=totalPayment-amount;
+
+      document.getElementById('lc-monthly').textContent='¥'+fmt(monthly);
+      document.getElementById('lc-monthly-label').textContent='每月固定月供（元）';
+
+      let remaining=amount;
+      const showRows=Math.min(24,n);
+      for(let i=1;i<=showRows;i++){
+        const interestPart=remaining*r;
+        const principalPart=monthly-interestPart;
+        remaining-=principalPart;
+        const tr=document.createElement('tr');
+        tr.style.cssText=i%2?'':'background:var(--bg-secondary,#f9fafb);';
+        tr.innerHTML=`<td style="padding:6px 10px;border:1px solid var(--border-color,#e5e7eb);">第 ${i} 期</td>
+          <td style="padding:6px 10px;border:1px solid var(--border-color,#e5e7eb);text-align:right;font-weight:600;">¥${fmt(monthly)}</td>
+          <td style="padding:6px 10px;border:1px solid var(--border-color,#e5e7eb);text-align:right;color:#22c55e;">¥${fmt(principalPart)}</td>
+          <td style="padding:6px 10px;border:1px solid var(--border-color,#e5e7eb);text-align:right;color:#ef4444;">¥${fmt(interestPart)}</td>
+          <td style="padding:6px 10px;border:1px solid var(--border-color,#e5e7eb);text-align:right;color:#667eea;">¥${fmt(Math.max(0,remaining))}</td>`;
+        tbody.appendChild(tr);
+      }
+      if(n>24){const tr=document.createElement('tr');tr.innerHTML=`<td colspan="5" style="padding:8px;text-align:center;color:var(--text-muted,#9ca3af);border:1px solid var(--border-color,#e5e7eb);font-size:.78rem;">... 还有 ${n-24} 期（共 ${n} 期）</td>`;tbody.appendChild(tr);}
+
+    } else {
+      // 等额本金
+      const principalPerMonth=amount/n;
+      let firstMonthly=0;
+      let remaining=amount;
+      const showRows=Math.min(24,n);
+      for(let i=1;i<=n;i++){
+        const interestPart=remaining*r;
+        const monthly=principalPart+interestPart;
+        if(i===1) firstMonthly=monthly;
+        totalPayment+=monthly;
+        totalInterest+=interestPart;
+        remaining-=principalPart;
+        if(i<=showRows){
+          const tr=document.createElement('tr');
+          tr.style.cssText=i%2?'':'background:var(--bg-secondary,#f9fafb);';
+          tr.innerHTML=`<td style="padding:6px 10px;border:1px solid var(--border-color,#e5e7eb);">第 ${i} 期</td>
+            <td style="padding:6px 10px;border:1px solid var(--border-color,#e5e7eb);text-align:right;font-weight:600;">¥${fmt(monthly)}</td>
+            <td style="padding:6px 10px;border:1px solid var(--border-color,#e5e7eb);text-align:right;color:#22c55e;">¥${fmt(principalPart)}</td>
+            <td style="padding:6px 10px;border:1px solid var(--border-color,#e5e7eb);text-align:right;color:#ef4444;">¥${fmt(interestPart)}</td>
+            <td style="padding:6px 10px;border:1px solid var(--border-color,#e5e7eb);text-align:right;color:#667eea;">¥${fmt(Math.max(0,remaining))}</td>`;
+          tbody.appendChild(tr);
+        }
+      }
+      if(n>24){const tr=document.createElement('tr');tr.innerHTML=`<td colspan="5" style="padding:8px;text-align:center;color:var(--text-muted,#9ca3af);border:1px solid var(--border-color,#e5e7eb);font-size:.78rem;">... 还有 ${n-24} 期（共 ${n} 期）</td>`;tbody.appendChild(tr);}
+
+      document.getElementById('lc-monthly').textContent='¥'+fmt(firstMonthly);
+      document.getElementById('lc-monthly-label').textContent='首月月供（逐月递减）';
+      var principalPart=principalPerMonth; // fix scope
+    }
+
+    document.getElementById('lc-total-payment').textContent='¥'+fmt(totalPayment);
+    document.getElementById('lc-total-interest').textContent='¥'+fmt(totalInterest);
+    document.getElementById('lc-interest-ratio').textContent=(totalInterest/amount*100).toFixed(1)+'%';
+    document.getElementById('lc-output').style.display='';
+  });
+
+  document.getElementById('lc-clear-btn').addEventListener('click',()=>{
+    document.getElementById('lc-amount').value='1000000';
+    document.getElementById('lc-rate').value='4.2';
+    document.getElementById('lc-years').value='30';
+    document.getElementById('lc-output').style.display='none';
+  });
+})();
+</script>

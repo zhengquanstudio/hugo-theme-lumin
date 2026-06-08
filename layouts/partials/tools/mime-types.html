@@ -1,0 +1,150 @@
+<div class="tool-input-group">
+  <label class="tool-label">搜索 MIME 类型</label>
+  <input class="tool-input" type="text" id="mt-search" placeholder="输入关键词搜索，如 text, json, image...">
+</div>
+<div class="tool-result" id="mt-result"></div>
+
+<script>
+(function() {
+  var mimeTypes = [
+    { type:'text/plain', cat:'文本', ext:'.txt', desc:'纯文本文件' },
+    { type:'text/html', cat:'文本', ext:'.html/.htm', desc:'HTML网页' },
+    { type:'text/css', cat:'文本', ext:'.css', desc:'CSS样式表' },
+    { type:'text/csv', cat:'文本', ext:'.csv', desc:'逗号分隔值' },
+    { type:'text/xml', cat:'文本', ext:'.xml', desc:'XML文档' },
+    { type:'text/javascript', cat:'文本', ext:'.js', desc:'JavaScript脚本' },
+    { type:'text/markdown', cat:'文本', ext:'.md', desc:'Markdown文档' },
+    { type:'text/calendar', cat:'文本', ext:'.ics', desc:'iCalendar日历' },
+    { type:'text/vcard', cat:'文本', ext:'.vcf', desc:'vCard名片' },
+    { type:'image/jpeg', cat:'图片', ext:'.jpg/.jpeg', desc:'JPEG图像' },
+    { type:'image/png', cat:'图片', ext:'.png', desc:'PNG图像' },
+    { type:'image/gif', cat:'图片', ext:'.gif', desc:'GIF动画图像' },
+    { type:'image/webp', cat:'图片', ext:'.webp', desc:'WebP图像' },
+    { type:'image/svg+xml', cat:'图片', ext:'.svg', desc:'SVG矢量图' },
+    { type:'image/bmp', cat:'图片', ext:'.bmp', desc:'BMP位图' },
+    { type:'image/tiff', cat:'图片', ext:'.tiff/.tif', desc:'TIFF图像' },
+    { type:'image/x-icon', cat:'图片', ext:'.ico', desc:'ICO图标' },
+    { type:'image/avif', cat:'图片', ext:'.avif', desc:'AVIF图像' },
+    { type:'image/heic', cat:'图片', ext:'.heic', desc:'HEIC图像' },
+    { type:'audio/mpeg', cat:'音频', ext:'.mp3', desc:'MP3音频' },
+    { type:'audio/wav', cat:'音频', ext:'.wav', desc:'WAV音频' },
+    { type:'audio/ogg', cat:'音频', ext:'.ogg', desc:'OGG音频' },
+    { type:'audio/aac', cat:'音频', ext:'.aac', desc:'AAC音频' },
+    { type:'audio/flac', cat:'音频', ext:'.flac', desc:'FLAC无损音频' },
+    { type:'audio/webm', cat:'音频', ext:'.weba', desc:'WebM音频' },
+    { type:'audio/midi', cat:'音频', ext:'.mid/.midi', desc:'MIDI音频' },
+    { type:'audio/x-wav', cat:'音频', ext:'.wav', desc:'WAV音频(旧)' },
+    { type:'video/mp4', cat:'视频', ext:'.mp4', desc:'MP4视频' },
+    { type:'video/webm', cat:'视频', ext:'.webm', desc:'WebM视频' },
+    { type:'video/ogg', cat:'视频', ext:'.ogv', desc:'OGG视频' },
+    { type:'video/x-msvideo', cat:'视频', ext:'.avi', desc:'AVI视频' },
+    { type:'video/quicktime', cat:'视频', ext:'.mov', desc:'QuickTime视频' },
+    { type:'video/x-matroska', cat:'视频', ext:'.mkv', desc:'Matroska视频' },
+    { type:'video/x-flv', cat:'视频', ext:'.flv', desc:'Flash视频' },
+    { type:'video/mpeg', cat:'视频', ext:'.mpeg/.mpg', desc:'MPEG视频' },
+    { type:'video/3gpp', cat:'视频', ext:'.3gp', desc:'3GPP视频' },
+    { type:'application/json', cat:'应用', ext:'.json', desc:'JSON数据' },
+    { type:'application/xml', cat:'应用', ext:'.xml', desc:'XML数据' },
+    { type:'application/javascript', cat:'应用', ext:'.js', desc:'JavaScript' },
+    { type:'application/pdf', cat:'文档', ext:'.pdf', desc:'PDF文档' },
+    { type:'application/zip', cat:'应用', ext:'.zip', desc:'ZIP压缩包' },
+    { type:'application/gzip', cat:'应用', ext:'.gz', desc:'GZIP压缩' },
+    { type:'application/x-7z-compressed', cat:'应用', ext:'.7z', desc:'7-Zip压缩' },
+    { type:'application/x-rar-compressed', cat:'应用', ext:'.rar', desc:'RAR压缩' },
+    { type:'application/x-tar', cat:'应用', ext:'.tar', desc:'TAR归档' },
+    { type:'application/x-bzip2', cat:'应用', ext:'.bz2', desc:'BZIP2压缩' },
+    { type:'application/msword', cat:'文档', ext:'.doc', desc:'Word文档(旧)' },
+    { type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document', cat:'文档', ext:'.docx', desc:'Word文档' },
+    { type:'application/vnd.ms-excel', cat:'文档', ext:'.xls', desc:'Excel表格(旧)' },
+    { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', cat:'文档', ext:'.xlsx', desc:'Excel表格' },
+    { type:'application/vnd.ms-powerpoint', cat:'文档', ext:'.ppt', desc:'PPT演示(旧)' },
+    { type:'application/vnd.openxmlformats-officedocument.presentationml.presentation', cat:'文档', ext:'.pptx', desc:'PPT演示' },
+    { type:'application/octet-stream', cat:'应用', ext:'通用', desc:'二进制流' },
+    { type:'application/x-www-form-urlencoded', cat:'应用', ext:'表单', desc:'URL编码表单' },
+    { type:'multipart/form-data', cat:'应用', ext:'表单', desc:'文件上传表单' },
+    { type:'application/rtf', cat:'文档', ext:'.rtf', desc:'富文本格式' },
+    { type:'application/epub+zip', cat:'文档', ext:'.epub', desc:'电子书' },
+    { type:'application/x-shockwave-flash', cat:'应用', ext:'.swf', desc:'Flash' },
+    { type:'application/ld+json', cat:'应用', ext:'.jsonld', desc:'JSON-LD' },
+    { type:'application/wasm', cat:'应用', ext:'.wasm', desc:'WebAssembly' },
+    { type:'application/font-woff', cat:'应用', ext:'.woff', desc:'WOFF字体' },
+    { type:'application/font-woff2', cat:'应用', ext:'.woff2', desc:'WOFF2字体' },
+    { type:'font/ttf', cat:'应用', ext:'.ttf', desc:'TrueType字体' },
+    { type:'font/otf', cat:'应用', ext:'.otf', desc:'OpenType字体' },
+    { type:'font/woff', cat:'应用', ext:'.woff', desc:'WOFF字体' },
+    { type:'font/woff2', cat:'应用', ext:'.woff2', desc:'WOFF2字体' },
+    { type:'application/x-httpd-php', cat:'应用', ext:'.php', desc:'PHP脚本' },
+    { type:'application/x-python-code', cat:'应用', ext:'.py', desc:'Python脚本' },
+    { type:'application/sql', cat:'应用', ext:'.sql', desc:'SQL脚本' },
+    { type:'application/yaml', cat:'应用', ext:'.yaml/.yml', desc:'YAML配置' },
+    { type:'application/toml', cat:'应用', ext:'.toml', desc:'TOML配置' },
+    { type:'application/x-iso9660-image', cat:'应用', ext:'.iso', desc:'光盘镜像' },
+    { type:'application/vnd.android.package-archive', cat:'应用', ext:'.apk', desc:'Android应用包' },
+    { type:'application/x-apple-diskimage', cat:'应用', ext:'.dmg', desc:'macOS磁盘镜像' },
+    { type:'application/x-msdownload', cat:'应用', ext:'.exe/.dll', desc:'Windows可执行文件' },
+    { type:'application/x-pkcs12', cat:'应用', ext:'.p12/.pfx', desc:'PKCS#12证书' },
+    { type:'application/x-pem-file', cat:'应用', ext:'.pem', desc:'PEM证书' },
+    { type:'application/pkcs8', cat:'应用', ext:'.p8', desc:'PKCS#8密钥' },
+    { type:'application/graphql', cat:'应用', ext:'', desc:'GraphQL查询' },
+    { type:'application/x-ndjson', cat:'应用', ext:'.ndjson', desc:'换行分隔JSON' },
+    { type:'application/vnd.api+json', cat:'应用', ext:'.json', desc:'JSON API' },
+    { type:'message/http', cat:'应用', ext:'', desc:'HTTP消息' },
+    { type:'message/rfc822', cat:'应用', ext:'.eml', desc:'邮件消息' },
+    { type:'model/gltf+json', cat:'应用', ext:'.gltf', desc:'3D模型(JSON)' },
+    { type:'model/gltf-binary', cat:'应用', ext:'.glb', desc:'3D模型(二进制)' },
+    { type:'model/stl', cat:'应用', ext:'.stl', desc:'STL 3D模型' },
+    { type:'model/obj', cat:'应用', ext:'.obj', desc:'OBJ 3D模型' }
+  ];
+
+  var categories = ['全部', '文本', '图片', '音频', '视频', '文档', '应用'];
+
+  function render(search) {
+    search = (search || '').toLowerCase();
+    var filtered = mimeTypes.filter(function(m) {
+      return !search || m.type.toLowerCase().indexOf(search) >= 0 || m.ext.toLowerCase().indexOf(search) >= 0 || m.desc.toLowerCase().indexOf(search) >= 0 || m.cat.indexOf(search) >= 0;
+    });
+
+    var catTabs = categories.map(function(c){ return '<button class="tool-tab' + (c === '全部' ? ' active' : '') + '" data-cat="' + c + '" style="padding:6px 14px;border:1px solid ' + (c==='全部'?'#4a90d9':'#ddd') + ';background:' + (c==='全部'?'#e8f0fe':'#fff') + ';border-radius:4px;cursor:pointer;margin:0 4px 4px 0;">' + c + '</button>'; }).join('');
+
+    var html = '<div class="tool-output"><div class="tool-output-title">MIME 类型参考（共 ' + filtered.length + ' 条）</div>';
+    html += '<div style="margin-bottom:10px;display:flex;flex-wrap:wrap;">' + catTabs + '</div>';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+    html += '<tr style="background:#f5f5f5;"><th style="padding:6px;text-align:left;">MIME 类型</th><th style="padding:6px;text-align:left;">扩展名</th><th style="padding:6px;text-align:left;">分类</th><th style="padding:6px;text-align:left;">描述</th><th style="padding:6px;text-align:center;">复制</th></tr>';
+
+    for (var i = 0; i < filtered.length; i++) {
+      html += '<tr style="border-bottom:1px solid #eee;" data-category="' + filtered[i].cat + '"><td style="padding:6px;font-family:monospace;font-size:12px;">' + filtered[i].type + '</td><td style="padding:6px;font-size:12px;">' + filtered[i].ext + '</td><td style="padding:6px;font-size:12px;">' + filtered[i].cat + '</td><td style="padding:6px;font-size:12px;">' + filtered[i].desc + '</td><td style="padding:6px;text-align:center;"><button class="tool-copy-btn" data-val="' + filtered[i].type + '" style="padding:2px 8px;border:1px solid #ddd;background:#fff;cursor:pointer;border-radius:3px;font-size:11px;">复制</button></td></tr>';
+    }
+    html += '</table></div>';
+    document.getElementById('mt-result').innerHTML = html;
+
+    // category tabs
+    var tabBtns = document.querySelectorAll('#mt-result .tool-tab');
+    for (var j = 0; j < tabBtns.length; j++) {
+      tabBtns[j].addEventListener('click', function() {
+        var cat = this.dataset.cat;
+        for (var k = 0; k < tabBtns.length; k++) { tabBtns[k].style.background = '#fff'; tabBtns[k].style.border = '1px solid #ddd'; }
+        this.style.background = '#e8f0fe';
+        this.style.border = '1px solid #4a90d9';
+        var rows = document.querySelectorAll('#mt-result tr[data-category]');
+        if (cat === '全部') { for (var r = 0; r < rows.length; r++) rows[r].style.display = ''; return; }
+        for (var r = 0; r < rows.length; r++) { rows[r].style.display = rows[r].dataset.category === cat ? '' : 'none'; }
+      });
+    }
+
+    // copy buttons
+    var copyBtns = document.querySelectorAll('#mt-result .tool-copy-btn');
+    for (var c = 0; c < copyBtns.length; c++) {
+      copyBtns[c].addEventListener('click', function() {
+        navigator.clipboard.writeText(this.dataset.val).then(function() {
+          this.textContent = '已复制!';
+          var that = this;
+          setTimeout(function(){ that.textContent = '复制'; }, 1500);
+        }.bind(this));
+      });
+    }
+  }
+
+  document.getElementById('mt-search').addEventListener('input', function(){ render(this.value); });
+  render('');
+})();
+</script>

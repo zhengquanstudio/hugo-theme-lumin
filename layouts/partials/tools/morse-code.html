@@ -1,0 +1,186 @@
+<div class="tool-tabs" id="mc-tabs">
+  <button class="tool-tab active" data-tab="mc-encode">文字 → 摩斯密码</button>
+  <button class="tool-tab" data-tab="mc-decode">摩斯密码 → 文字</button>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">输入内容</label>
+  <textarea class="tool-textarea" id="mc-input" rows="8" placeholder="请输入需要转换的内容">HELLO WORLD</textarea>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="mc-convert-btn">转换</button>
+  <button class="tool-btn" id="mc-clear-btn">清空</button>
+</div>
+
+<div id="mc-error" style="display:none;color:var(--color-error,#e53e3e);margin-top:8px;"></div>
+
+<div class="tool-output" id="mc-output-area" style="display:none;">
+  <div class="tool-result" id="mc-result"></div>
+  <button class="tool-copy-btn" id="mc-copy-btn">复制结果</button>
+</div>
+
+<div class="tool-stats" id="mc-stats" style="display:none;">
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="mc-stat-chars">0</span>
+    <span class="tool-stat-label">字符数</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="mc-stat-length">0</span>
+    <span class="tool-stat-label">输出长度</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  const input = document.getElementById('mc-input');
+  const result = document.getElementById('mc-result');
+  const outputArea = document.getElementById('mc-output-area');
+  const errorDiv = document.getElementById('mc-error');
+  const statsDiv = document.getElementById('mc-stats');
+  const tabs = document.querySelectorAll('#mc-tabs .tool-tab');
+
+  let currentTab = 'mc-encode';
+
+  function switchTab(tabId) {
+    currentTab = tabId;
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
+    // 更新 tab 的文字提示
+    const placeholder = tabId === 'mc-encode'
+      ? '请输入需要转换为摩斯密码的文字'
+      : '请输入摩斯密码（使用 / 分隔字母，// 分隔单词）';
+    input.placeholder = placeholder;
+  }
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+  });
+
+  function showError(msg) {
+    errorDiv.textContent = msg;
+    errorDiv.style.display = 'block';
+    outputArea.style.display = 'none';
+    statsDiv.style.display = 'none';
+  }
+
+  function hideError() {
+    errorDiv.style.display = 'none';
+  }
+
+  // 摩斯密码对照表
+  const MORSE_MAP = {
+    'A': '.-',     'B': '-...',   'C': '-.-.',   'D': '-..',
+    'E': '.',      'F': '..-.',   'G': '--.',    'H': '....',
+    'I': '..',     'J': '.---',   'K': '-.-',    'L': '.-..',
+    'M': '--',     'N': '-.',     'O': '---',    'P': '.--.',
+    'Q': '--.-',   'R': '.-.',    'S': '...',    'T': '-',
+    'U': '..-',    'V': '...-',   'W': '.--',    'X': '-..-',
+    'Y': '-.--',   'Z': '--..',
+    '0': '-----',  '1': '.----',  '2': '..---',  '3': '...--',
+    '4': '....-',  '5': '.....',  '6': '-....',  '7': '--...',
+    '8': '---..',  '9': '----.',
+    '.': '.-.-.-', ',': '--..--', '?': '..--..',  "'": '.----.',
+    '!': '-.-.--', '/': '-..-.',  '(': '-.--.',   ')': '-.--.-',
+    '&': '.-...',  ':': '---...', ';': '-.-.-.',  '=': '-...-',
+    '+': '.-.-.',  '-': '-....-', '_': '..--.-',  '"': '.-..-.',
+    '$': '...-..-','@': '.--.-.', ' ': ' '
+  };
+
+  // 反向映射
+  const REVERSE_MAP = {};
+  for (const [char, code] of Object.entries(MORSE_MAP)) {
+    if (char !== ' ') REVERSE_MAP[code] = char;
+  }
+
+  function encodeToMorse(text) {
+    const upper = text.toUpperCase();
+    let result = [];
+    const words = upper.split(' ');
+    for (let w = 0; w < words.length; w++) {
+      const word = words[w];
+      const letters = [];
+      for (const ch of word) {
+        if (MORSE_MAP[ch] !== undefined) {
+          letters.push(MORSE_MAP[ch]);
+        }
+      }
+      if (letters.length > 0) result.push(letters.join(' / '));
+    }
+    return result.join(' // ');
+  }
+
+  function decodeFromMorse(morse) {
+    const words = morse.split(/\s*\/\/\s*/);
+    let result = [];
+    for (const word of words) {
+      const letters = word.split(/\s*\/\s*/);
+      let decoded = '';
+      for (const code of letters) {
+        const trimmed = code.trim();
+        if (REVERSE_MAP[trimmed] !== undefined) {
+          decoded += REVERSE_MAP[trimmed];
+        } else if (trimmed === '') {
+          // skip
+        } else {
+          decoded += '?';
+        }
+      }
+      result.push(decoded);
+    }
+    return result.join(' ');
+  }
+
+  document.getElementById('mc-convert-btn').addEventListener('click', () => {
+    hideError();
+    const raw = input.value.trim();
+    if (!raw) { showError('请输入内容'); return; }
+
+    let output = '';
+    if (currentTab === 'mc-encode') {
+      output = encodeToMorse(raw);
+      document.getElementById('mc-stat-chars').textContent = raw.replace(/\s/g, '').length;
+    } else {
+      try {
+        output = decodeFromMorse(raw);
+        document.getElementById('mc-stat-chars').textContent = (raw.match(/\//g) || []).length;
+      } catch(e) {
+        showError('解码失败：无效的摩斯密码格式');
+        return;
+      }
+    }
+
+    result.textContent = output;
+    document.getElementById('mc-stat-length').textContent = output.length;
+    outputArea.style.display = 'block';
+    statsDiv.style.display = 'flex';
+  });
+
+  document.getElementById('mc-clear-btn').addEventListener('click', () => {
+    input.value = '';
+    result.textContent = '';
+    outputArea.style.display = 'none';
+    statsDiv.style.display = 'none';
+    hideError();
+  });
+
+  document.getElementById('mc-copy-btn').addEventListener('click', () => {
+    const text = result.textContent;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('mc-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const btn = document.getElementById('mc-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    });
+  });
+})();
+</script>

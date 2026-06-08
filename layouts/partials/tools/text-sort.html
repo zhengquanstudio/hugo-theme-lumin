@@ -1,0 +1,131 @@
+<div class="tool-input-group">
+  <label class="tool-label">输入文本</label>
+  <textarea class="tool-textarea" id="textSortInput" rows="8" placeholder="每行一条文本...">香蕉
+苹果
+西瓜
+葡萄
+橙子
+芒果
+草莓</textarea>
+</div>
+
+<div class="tool-btn-row" style="flex-wrap:wrap;gap:8px;">
+  <button class="tool-btn tool-btn-primary" data-sort="asc">正序(A-Z)</button>
+  <button class="tool-btn" data-sort="desc">倒序(Z-A)</button>
+  <button class="tool-btn" data-sort="random">随机打乱</button>
+  <button class="tool-btn" data-sort="reverse">行反转</button>
+</div>
+
+<div style="display:flex;flex-wrap:wrap;gap:16px;margin:12px 0;">
+  <label class="tool-switch">
+    <input type="checkbox" id="textSortTrimEmpty">
+    <span>去除空行</span>
+  </label>
+  <label class="tool-switch">
+    <input type="checkbox" id="textSortTrimSpace">
+    <span>去除首尾空格</span>
+  </label>
+  <label class="tool-switch">
+    <input type="checkbox" id="textSortIgnoreCase">
+    <span>忽略大小写</span>
+  </label>
+</div>
+
+<div class="tool-stats" id="textSortStats" style="display:none;">
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="textSortOrigCount">0</span>
+    <span class="tool-stat-label">原始行数</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="textSortResultCount">0</span>
+    <span class="tool-stat-label">结果行数</span>
+  </div>
+</div>
+
+<div class="tool-output" id="textSortOutput" style="display:none;">
+  <label class="tool-label">结果</label>
+  <div class="tool-result" id="textSortResult"></div>
+  <div style="display:flex;gap:8px;margin-top:8px;">
+    <button class="tool-copy-btn" id="textSortCopyBtn">复制</button>
+    <button class="tool-btn" id="textSortClearBtn">清空</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var input = document.getElementById('textSortInput');
+  var output = document.getElementById('textSortOutput');
+  var result = document.getElementById('textSortResult');
+  var copyBtn = document.getElementById('textSortCopyBtn');
+  var clearBtn = document.getElementById('textSortClearBtn');
+  var statsEl = document.getElementById('textSortStats');
+  var origCount = document.getElementById('textSortOrigCount');
+  var resultCount = document.getElementById('textSortResultCount');
+  var trimEmpty = document.getElementById('textSortTrimEmpty');
+  var trimSpace = document.getElementById('textSortTrimSpace');
+  var ignoreCase = document.getElementById('textSortIgnoreCase');
+
+  var sortBtns = document.querySelectorAll('[data-sort]');
+
+  sortBtns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var val = input.value;
+      if(!val.trim()) return;
+
+      var lines = val.split('\n');
+      var originalLen = lines.length;
+
+      if(trimSpace.checked){
+        lines = lines.map(function(l){ return l.trim(); });
+      }
+      if(trimEmpty.checked){
+        lines = lines.filter(function(l){ return l.trim() !== ''; });
+      }
+
+      var sortType = btn.dataset.sort;
+      var sorted;
+      switch(sortType){
+        case 'asc':
+          sorted = lines.slice().sort(function(a,b){
+            return ignoreCase.checked ? a.toLowerCase().localeCompare(b.toLowerCase()) : a.localeCompare(b);
+          });
+          break;
+        case 'desc':
+          sorted = lines.slice().sort(function(a,b){
+            return ignoreCase.checked ? b.toLowerCase().localeCompare(a.toLowerCase()) : b.localeCompare(a);
+          });
+          break;
+        case 'random':
+          sorted = lines.slice();
+          for(var i = sorted.length - 1; i > 0; i--){
+            var j = Math.floor(Math.random() * (i + 1));
+            var tmp = sorted[i]; sorted[i] = sorted[j]; sorted[j] = tmp;
+          }
+          break;
+        case 'reverse':
+          sorted = lines.slice().reverse();
+          break;
+      }
+
+      result.textContent = sorted.join('\n');
+      output.style.display = '';
+      statsEl.style.display = '';
+      origCount.textContent = originalLen;
+      resultCount.textContent = sorted.length;
+    });
+  });
+
+  clearBtn.addEventListener('click', function(){
+    input.value = '';
+    output.style.display = 'none';
+    statsEl.style.display = 'none';
+  });
+
+  copyBtn.addEventListener('click', function(){
+    navigator.clipboard.writeText(result.textContent).then(function(){
+      copyBtn.textContent = '已复制';
+      setTimeout(function(){ copyBtn.textContent = '复制'; }, 1500);
+    });
+  });
+})();
+</script>

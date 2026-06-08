@@ -1,0 +1,98 @@
+<div class="tool-input-group">
+  <label class="tool-label">选择形状</label>
+  <select class="tool-select" id="area-shape">
+    <option value="circle">圆形</option>
+    <option value="rectangle">矩形</option>
+    <option value="triangle">三角形</option>
+    <option value="trapezoid">梯形</option>
+    <option value="parallelogram">平行四边形</option>
+    <option value="sector">扇形</option>
+    <option value="ellipse">椭圆</option>
+  </select>
+</div>
+<div id="area-inputs"></div>
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="area-calc">计算面积</button>
+</div>
+<div class="tool-result" id="area-result"></div>
+
+<script>
+(function() {
+  var shapeConfig = {
+    circle: { inputs: [{id:'r', label:'半径 r', val:'5'}], formula: 'π × r²' },
+    rectangle: { inputs: [{id:'l', label:'长 l', val:'10'},{id:'w', label:'宽 w', val:'6'}], formula: 'l × w' },
+    triangle: { inputs: [{id:'b', label:'底边 b', val:'10'},{id:'h', label:'高 h', val:'8'}], formula: '½ × b × h' },
+    trapezoid: { inputs: [{id:'a', label:'上底 a', val:'8'},{id:'b', label:'下底 b', val:'12'},{id:'h', label:'高 h', val:'6'}], formula: '½ × (a + b) × h' },
+    parallelogram: { inputs: [{id:'b', label:'底边 b', val:'10'},{id:'h', label:'高 h', val:'7'}], formula: 'b × h' },
+    sector: { inputs: [{id:'r', label:'半径 r', val:'5'},{id:'angle', label:'圆心角 θ(°)', val:'60'}], formula: 'π × r² × θ/360°' },
+    ellipse: { inputs: [{id:'a', label:'长半轴 a', val:'8'},{id:'b', label:'短半轴 b', val:'5'}], formula: 'π × a × b' }
+  };
+
+  function renderInputs() {
+    var shape = document.getElementById('area-shape').value;
+    var cfg = shapeConfig[shape];
+    var html = '';
+    for (var i = 0; i < cfg.inputs.length; i++) {
+      html += '<div class="tool-input-group"><label class="tool-label">' + cfg.inputs[i].label + '</label><input class="tool-input area-param" type="number" id="area-' + cfg.inputs[i].id + '" value="' + cfg.inputs[i].val + '" step="any" min="0"></div>';
+    }
+    document.getElementById('area-inputs').innerHTML = html;
+  }
+
+  document.getElementById('area-shape').addEventListener('change', renderInputs);
+  renderInputs();
+
+  document.getElementById('area-calc').addEventListener('click', function() {
+    var shape = document.getElementById('area-shape').value;
+    var cfg = shapeConfig[shape];
+    var result = document.getElementById('area-result');
+    var area;
+
+    try {
+      if (shape === 'circle') {
+        var r = parseFloat(document.getElementById('area-r').value);
+        if (isNaN(r) || r <= 0) throw '请输入有效的半径。';
+        area = Math.PI * r * r;
+      } else if (shape === 'rectangle') {
+        var l = parseFloat(document.getElementById('area-l').value);
+        var w = parseFloat(document.getElementById('area-w').value);
+        if (isNaN(l) || isNaN(w) || l <= 0 || w <= 0) throw '请输入有效的长宽。';
+        area = l * w;
+      } else if (shape === 'triangle') {
+        var b = parseFloat(document.getElementById('area-b').value);
+        var h = parseFloat(document.getElementById('area-h').value);
+        if (isNaN(b) || isNaN(h) || b <= 0 || h <= 0) throw '请输入有效的底边和高。';
+        area = 0.5 * b * h;
+      } else if (shape === 'trapezoid') {
+        var ta = parseFloat(document.getElementById('area-a').value);
+        var tb = parseFloat(document.getElementById('area-b').value);
+        var th = parseFloat(document.getElementById('area-h').value);
+        if (isNaN(ta) || isNaN(tb) || isNaN(th) || ta <= 0 || tb <= 0 || th <= 0) throw '请输入有效的上下底和高。';
+        area = 0.5 * (ta + tb) * th;
+      } else if (shape === 'parallelogram') {
+        var pb = parseFloat(document.getElementById('area-b').value);
+        var ph = parseFloat(document.getElementById('area-h').value);
+        if (isNaN(pb) || isNaN(ph) || pb <= 0 || ph <= 0) throw '请输入有效的底边和高。';
+        area = pb * ph;
+      } else if (shape === 'sector') {
+        var sr = parseFloat(document.getElementById('area-r').value);
+        var angle = parseFloat(document.getElementById('area-angle').value);
+        if (isNaN(sr) || isNaN(angle) || sr <= 0 || angle <= 0 || angle > 360) throw '请输入有效的半径和角度(0-360)。';
+        area = Math.PI * sr * sr * angle / 360;
+      } else if (shape === 'ellipse') {
+        var ea = parseFloat(document.getElementById('area-a').value);
+        var eb = parseFloat(document.getElementById('area-b').value);
+        if (isNaN(ea) || isNaN(eb) || ea <= 0 || eb <= 0) throw '请输入有效的长半轴和短半轴。';
+        area = Math.PI * ea * eb;
+      }
+
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">面积</div>' +
+        '<div class="tool-stats"><div class="tool-stat"><div class="tool-stat-value" style="font-size:28px;">' + area.toFixed(4) + '</div><div class="tool-stat-label">面积</div></div></div>' +
+        '<p style="margin-top:12px;">公式：<code>' + cfg.formula + '</code></p></div>';
+    } catch(e) {
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">错误</div><p>' + e + '</p></div>';
+    }
+  });
+
+  document.getElementById('area-calc').click();
+})();
+</script>

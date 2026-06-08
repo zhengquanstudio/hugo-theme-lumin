@@ -1,0 +1,18 @@
+# theme.toml template for a Hugo theme
+# See https://github.com/gohugoio/hugoThemes#themetoml for an example
+
+name = "Lumin"
+version = "1.7.1"
+license = "MIT"
+licenselink = "https://github.com/zhengquanstudio/hugo-theme-lumin/blob/main/LICENSE"
+description = "A modern, elegant Hugo blog theme with dark/light mode, sidebar widgets, and rich features"
+homepage = "https://github.com/zhengquanstudio/hugo-theme-lumin"
+demosite = "https://hugo.lumin.zhengquan.xyz"
+tags = ["blog", "responsive", "dark", "light", "sidebar", "multilingual", "search", "gallery", "diary"]
+features = ["dark-mode", "sidebar", "search", "gallery", "diary", "movies", "music", "friends", "comments", "reward"]
+min_version = "0.124.0"
+
+[author]
+  name = "Lumin"
+  homepage = "https://hugo.lumin.zhengquan.xyz"
+

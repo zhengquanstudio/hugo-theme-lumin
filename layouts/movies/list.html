@@ -1,0 +1,233 @@
+{{ define "main" }}
+{{ $movies := hugo.Data.movies.movies | default slice }}
+{{ $total := len $movies }}
+
+<style>
+.main-wrapper:has(#movie-page) .container{max-width:100%!important;padding-left:40px!important;padding-right:40px!important}
+.movie-page{max-width:1480px;margin:0 auto 24px;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+
+.movie-page-header{text-align:center;min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 24px;background:linear-gradient(135deg,#f0fdf4 0%,#dcfce7 50%,#d1fae5 100%);border-radius:20px;margin-bottom:22px;box-shadow:0 4px 20px rgba(0,0,0,.08);position:relative;overflow:hidden;border:1px solid rgba(34,197,94,.12)}
+.movie-page-header::before{content:'';position:absolute;top:-60%;left:-30%;width:200%;height:200%;background:radial-gradient(circle at 30% 40%,rgba(34,197,94,.07) 0%,transparent 55%);pointer-events:none}
+.page-title{font-size:2rem;font-weight:800;color:#1e293b;margin:0 0 8px;display:inline-flex;align-items:center;gap:12px;position:relative;z-index:1}
+.title-icon{font-size:1.4em;color:#22c55e;animation:music-bounce 2.5s ease-in-out infinite;display:inline-block}
+@keyframes music-bounce{0%,100%{transform:scale(1) rotate(-5deg)}50%{transform:scale(1.08) rotate(5deg)}}
+.page-subtitle{font-size:.95rem;color:#475569;margin:0;line-height:1.6;position:relative;z-index:1}
+
+.movie-filter-container{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:28px}
+.movie-filter-tag{padding:8px 20px;border:1.5px solid rgba(128,128,128,.2);border-radius:50px;background:#fff;color:#333;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .25s ease;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.movie-filter-tag:hover:not(.active){border-color:#22c55e;color:#22c55e;transform:translateY(-2px);box-shadow:0 4px 12px rgba(34,197,94,.15)}
+.movie-filter-tag.active{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border-color:transparent;box-shadow:0 4px 16px rgba(34,197,94,.35)}
+
+.movie-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+@media(min-width:600px){.movie-grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:900px){.movie-grid{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:1200px){.movie-grid{grid-template-columns:repeat(5,1fr)}}
+
+.mc{position:relative;display:flex;flex-direction:column;background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:14px;overflow:hidden;transition:transform .35s ease,box-shadow .35s ease;text-decoration:none;color:inherit}
+.mc:hover{transform:translateY(-8px);box-shadow:0 20px 50px rgba(0,0,0,.12),0 6px 16px rgba(0,0,0,.06);border-color:transparent;z-index:2}
+
+.mpw{position:relative;aspect-ratio:2/3;overflow:hidden;background:linear-gradient(135deg,#e8ecf1,#d4dae6)}
+.mpo{width:100%;height:100%;object-fit:cover;transition:transform .45s ease,filter .35s ease}
+.mc:hover .mpo{transform:scale(1.06);filter:brightness(.55)}
+.mpo-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:3rem;color:#bbb}
+
+.mpw-mask{position:absolute;inset:0;background:rgba(0,0,0,0);transition:background .35s ease;pointer-events:none;z-index:1}
+.mc:hover .mpw-mask{background:rgba(0,0,0,.3)}
+
+.sbg{position:absolute;top:10px;left:10px;padding:4px 11px;border-radius:8px;font-size:.7rem;font-weight:700;backdrop-filter:blur(8px);display:inline-flex;align-items:center;gap:4px;z-index:5;transition:opacity .3s}
+.mc:hover .sbg{opacity:0}
+.sbg.watching{background:linear-gradient(135deg,rgba(34,197,94,.92),rgba(22,163,74,.88));color:#fff}
+.sbg.completed{background:linear-gradient(135deg,rgba(59,130,246,.92),rgba(37,99,235,.88));color:#fff}
+.sbg.planned{background:linear-gradient(135deg,rgba(245,158,11,.92),rgba(217,119,6,.88));color:#fff}
+.sbg.onhold{background:linear-gradient(135deg,rgba(168,85,247,.92),rgba(147,51,234,.88));color:#fff}
+
+.rbg{position:absolute;top:10px;right:10px;padding:4px 9px;border-radius:8px;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);color:#fff;font-size:.78rem;font-weight:700;display:flex;align-items:center;gap:4px;z-index:5;transition:opacity .3s}
+.mc:hover .rbg{opacity:0}
+.rbg .st{color:#fbbf24}
+
+.mpw-info{position:absolute;left:0;right:0;bottom:0;z-index:4;padding:14px 12px;background:linear-gradient(to top,rgba(0,0,0,.88) 0%,rgba(0,0,0,.7) 60%,transparent 100%);transform:translateY(100%);transition:transform .4s cubic-bezier(.4,0,.2,1);max-height:90%;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent}
+.mc:hover .mpw-info{transform:translateY(0)}
+.mpw-info::-webkit-scrollbar{width:3px}
+.mpw-info::-webkit-scrollbar-thumb{background:rgba(255,255,255,.25);border-radius:3px}
+
+.mpi-title{font-size:.9rem;font-weight:700;color:#fff;margin-bottom:8px;line-height:1.3}
+.mpi-row{display:flex;gap:6px;font-size:.72rem;color:rgba(255,255,255,.85);margin-bottom:4px;line-height:1.5}
+.mpi-label{color:rgba(255,255,255,.5);flex-shrink:0;min-width:36px}
+.mpi-val{color:rgba(255,255,255,.9);word-break:break-all}
+.mpi-desc{font-size:.72rem;color:rgba(255,255,255,.7);line-height:1.5;margin-top:6px}
+
+.mi{padding:12px 12px 10px;flex:1;display:flex;flex-direction:column}
+.mnm{font-size:.88rem;font-weight:700;color:#1e293b;line-height:1.35;margin:0 0 4px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+
+.mi-brief{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px}
+.mi-year{font-size:.72rem;color:#64748b}
+.mi-type{display:inline-block;padding:1px 7px;border-radius:8px;background:rgba(34,197,94,.1);color:#16a34a;font-size:.62rem;font-weight:600}
+.mi-dur{font-size:.68rem;color:#64748b}
+.mi-country{display:inline-block;padding:1px 7px;border-radius:8px;background:rgba(168,85,247,.1);color:#7c3aed;font-size:.62rem;font-weight:600}
+
+.mds{font-size:.72rem;color:#64748b;line-height:1.5;margin:0 0 6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+.ml{display:flex;flex-wrap:wrap;gap:5px;margin-top:auto;padding-top:6px;border-top:1px solid rgba(0,0,0,.05)}
+.mlt{padding:3px 9px;border-radius:5px;font-size:.65rem;font-weight:600;display:inline-flex;align-items:center;gap:3px;border:1px solid rgba(0,0,0,.08);background:rgba(0,0,0,.03);color:#64748b;text-decoration:none;transition:all .2s}
+.mlt:hover{background:#22c55e;color:#fff;border-color:#22c55e}
+.mlt i{font-size:.6rem}
+
+.mi-douban{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:6px;background:linear-gradient(135deg,rgba(0,128,0,.08),rgba(34,197,94,.06));border:1px solid rgba(34,197,94,.18);font-size:.65rem;font-weight:600;color:#16a34a;text-decoration:none;transition:all .25s}
+.mi-douban:hover{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border-color:transparent;transform:translateY(-1px);box-shadow:0 3px 10px rgba(34,197,94,.25)}
+.mi-douban .db-icon{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:3px;background:rgba(34,197,94,.15);font-size:.55rem;font-weight:800;color:#16a34a;transition:all .25s}
+.mi-douban:hover .db-icon{background:rgba(255,255,255,.2);color:#fff}
+
+.movie-empty{text-align:center;padding:70px 20px;display:none}
+.movie-empty .empty-icon{font-size:4.5rem;margin-bottom:14px}
+.movie-empty h3{font-size:1.3rem;margin-bottom:8px;color:#333}
+.movie-empty p{color:#888;margin:0}
+
+[data-theme="dark"] .mc{background:rgba(30,41,59,.9);border-color:rgba(148,163,184,.15)}
+[data-theme="dark"] .movie-filter-tag{background:rgba(30,41,59,.8);color:#e2e8f0;border-color:rgba(148,163,184,.15)}
+[data-theme="dark"] .mnm{color:#f1f5f9}
+[data-theme="dark"] .mi-type{background:rgba(34,197,94,.15);color:#4ade80}
+[data-theme="dark"] .mi-country{background:rgba(168,85,247,.15);color:#c084fc}
+[data-theme="dark"] .mi-year,[data-theme="dark"] .mi-dur,[data-theme="dark"] .mds{color:#94a3b8}
+[data-theme="dark"] .mpw{background:linear-gradient(135deg,#1e293b,#334155)}
+[data-theme="dark"] .mlt{background:rgba(30,41,59,.6);border-color:rgba(148,163,184,.15);color:#94a3b8}
+[data-theme="dark"] .ml{border-top-color:rgba(148,163,184,.1)}
+[data-theme="dark"] .mlt:hover{background:#22c55e;color:#fff;border-color:#22c55e}
+[data-theme="dark"] .mi-douban{background:linear-gradient(135deg,rgba(34,197,94,.1),rgba(34,197,94,.06));border-color:rgba(34,197,94,.2);color:#4ade80}
+[data-theme="dark"] .mi-douban:hover{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border-color:transparent;box-shadow:0 3px 10px rgba(34,197,94,.3)}
+[data-theme="dark"] .movie-page-header{background:linear-gradient(135deg,#064e3b 0%,#065f46 50%,#047857 100%);border-color:rgba(34,197,94,.15)}
+[data-theme="dark"] .page-title{color:#f1f5f9}
+[data-theme="dark"] .page-subtitle{color:#94a3b8}
+[data-theme="dark"] .mpo-placeholder{color:#475569}
+[data-theme="dark"] .movie-empty h3{color:#e2e8f0}
+[data-theme="dark"] .movie-empty p{color:#64748b}
+
+@media(max-width:640px){
+.movie-page-header{padding:22px 12px 16px}
+.page-title{font-size:1.5rem}
+.movie-grid{grid-template-columns:repeat(2,1fr)!important;gap:12px}
+.mi{padding:10px 8px}
+.mnm{font-size:.82rem}
+}
+</style>
+
+<div class="movie-page" id="movie-page">
+  <div class="movie-page-header">
+    <h1 class="page-title"><span class="title-icon"><i class="fas fa-film"></i></span> 我的观影</h1>
+    <p class="page-subtitle">光影之间，故事流转 · 记录每一部触动心灵的影片</p>
+  </div>
+
+  {{ if gt $total 0 }}
+  <div class="movie-filter-container" id="movie-filters">
+    <button class="movie-filter-tag active" data-status="all"><i class="fas fa-border-all"></i> 全部 ({{ $total }})</button>
+    <button class="movie-filter-tag" data-status="watching"><i class="fas fa-play-circle"></i> 在看 ({{ len (where $movies "status" "watching") }})</button>
+    <button class="movie-filter-tag" data-status="completed"><i class="fas fa-check-circle"></i> 已看 ({{ len (where $movies "status" "completed") }})</button>
+    <button class="movie-filter-tag" data-status="planned"><i class="fas fa-heart"></i> 想看 ({{ len (where $movies "status" "planned") }})</button>
+    <button class="movie-filter-tag" data-status="onhold"><i class="fas fa-pause-circle"></i> 搁置 ({{ len (where $movies "status" "onhold") }})</button>
+  </div>
+
+  <div class="movie-grid" id="movielist">
+    {{ range $idx, $m := $movies }}
+    {{ $stMap := dict "watching" "在看" "completed" "已看" "planned" "想看" "onhold" "搁置" }}
+    {{ $stLabel := index $stMap $m.status | default "未知" }}
+    {{ $stIcon := dict "watching" "▶" "completed" "✓" "planned" "♥" "onhold" "⏸" }}
+    {{ $icon := index $stIcon $m.status | default "" }}
+    {{ $typeText := "" }}
+    {{ if $m.type }}{{ if reflect.IsSlice $m.type }}{{ $typeText = delimit $m.type " / " }}{{ else }}{{ $typeText = $m.type }}{{ end }}{{ end }}
+    {{ $countryText := "" }}
+    {{ if $m.country }}{{ if reflect.IsSlice $m.country }}{{ $countryText = delimit $m.country " / " }}{{ else }}{{ $countryText = $m.country }}{{ end }}{{ end }}
+    {{ $durationText := "" }}
+    {{ if $m.duration }}{{ $durStr := printf "%v" $m.duration }}{{ $durationText = $durStr }}{{ if not (findRE "分钟" $durStr) }}{{ $durationText = printf "%s分钟" $durStr }}{{ end }}{{ end }}
+    <div class="mc" data-status="{{ $m.status }}" data-title="{{ $m.title }}">
+      <div class="mpw">
+        {{ if $m.poster }}
+        <img class="mpo" src="{{ $m.poster }}" alt="{{ $m.title }}" loading="lazy" referrerpolicy="no-referrer"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        {{ end }}
+        <div class="mpo-placeholder"{{ if $m.poster }} style="display:none"{{ end }}><i class="fas fa-film"></i></div>
+        <div class="mpw-mask"></div>
+        <div class="sbg {{ $m.status }}">{{ $icon }} {{ $stLabel }}</div>
+        {{ if $m.rating }}
+        <div class="rbg"><span class="st">★</span> {{ $m.rating }} 分</div>
+        {{ end }}
+        <div class="mpw-info">
+          <div class="mpi-title">{{ $m.title }}</div>
+          {{ if $typeText }}<div class="mpi-row"><span class="mpi-label">类型</span><span class="mpi-val">{{ $typeText }}</span></div>{{ end }}
+          {{ if $m.director }}<div class="mpi-row"><span class="mpi-label">导演</span><span class="mpi-val">{{ $m.director }}</span></div>{{ end }}
+          {{ if $m.writer }}<div class="mpi-row"><span class="mpi-label">编剧</span><span class="mpi-val">{{ $m.writer }}</span></div>{{ end }}
+          {{ if $m.actors }}<div class="mpi-row"><span class="mpi-label">主演</span><span class="mpi-val">{{ $m.actors }}</span></div>{{ end }}
+          {{ if $countryText }}<div class="mpi-row"><span class="mpi-label">国家</span><span class="mpi-val">{{ $countryText }}</span></div>{{ end }}
+          {{ if $m.language }}<div class="mpi-row"><span class="mpi-label">语言</span><span class="mpi-val">{{ $m.language }}</span></div>{{ end }}
+          {{ if $durationText }}<div class="mpi-row"><span class="mpi-label">片长</span><span class="mpi-val">{{ $durationText }}</span></div>{{ end }}
+          {{ if $m.year }}<div class="mpi-row"><span class="mpi-label">年份</span><span class="mpi-val">{{ $m.year }}年</span></div>{{ end }}
+          {{ if $m.desc }}<div class="mpi-desc">{{ $m.desc }}</div>{{ end }}
+        </div>
+      </div>
+      <div class="mi">
+        <h3 class="mnm">{{ $m.title }}</h3>
+        <div class="mi-brief">
+          {{ if $m.year }}<span class="mi-year">{{ $m.year }}年</span>{{ end }}
+          {{ if $typeText }}<span class="mi-type">{{ $typeText }}</span>{{ end }}
+          {{ if $durationText }}<span class="mi-dur">{{ $durationText }}</span>{{ end }}
+          {{ if $countryText }}<span class="mi-country">{{ $countryText }}</span>{{ end }}
+        </div>
+        {{ if $m.desc }}<p class="mds">{{ $m.desc }}</p>{{ end }}
+        <div class="ml">
+          {{ range $m.links }}
+          <a href="{{ .url }}" target="_blank" rel="noopener noreferrer external" class="mlt" title="前往 {{ .name }} 观看">
+            {{ if .icon }}<i class="{{ .icon }}"></i>{{ end }}{{ .name }}
+          </a>
+          {{ end }}
+          {{ if $m.doubanUrl }}
+          <a href="{{ $m.doubanUrl }}" target="_blank" rel="noopener noreferrer external" class="mi-douban" title="豆瓣主页">
+            <span class="db-icon">豆</span> 豆瓣
+          </a>
+          {{ end }}
+        </div>
+      </div>
+    </div>
+    {{ end }}
+  </div>
+
+  <div class="movie-empty" id="empty-state">
+    <div class="empty-icon">🎬</div>
+    <h3>暂无影片</h3>
+    <p>快添加喜欢的电影吧</p>
+  </div>
+  {{ else }}
+  <div class="movie-empty" style="display:block">
+    <div class="empty-icon">🎬</div>
+    <h3>暂无影片数据</h3>
+    <p>请在后台添加电影</p>
+  </div>
+  {{ end }}
+
+  {{ partial "comments.html" . }}
+</div>
+
+<script>
+(function(){
+  var grid = document.getElementById('movielist');
+  var empty = document.getElementById('empty-state');
+  if (!grid) return;
+
+  var filterBtns = document.querySelectorAll('.movie-filter-tag');
+  for (var i = 0; i < filterBtns.length; i++) {
+    (function(btn){
+      btn.addEventListener('click', function(){
+        var status = btn.dataset.status;
+        for (var j = 0; j < filterBtns.length; j++) filterBtns[j].classList.remove('active');
+        btn.classList.add('active');
+        var cards = grid.querySelectorAll('.mc');
+        var visible = 0;
+        for (var k = 0; k < cards.length; k++) {
+          var show = (status === 'all' || cards[k].dataset.status === status);
+          cards[k].style.display = show ? '' : 'none';
+          if (show) visible++;
+        }
+        if (empty) empty.style.display = (visible === 0) ? '' : 'none';
+      });
+    })(filterBtns[i]);
+  }
+})();
+</script>
+{{ end }}

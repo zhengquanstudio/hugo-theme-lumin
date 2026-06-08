@@ -1,0 +1,75 @@
+<div class="tool-input-group">
+  <label class="tool-label">CSS 选择器参考</label>
+</div>
+<div class="tool-result" id="cs-result"></div>
+
+<script>
+(function() {
+  var selectors = [
+    { type:'基础选择器', items: [
+      { syntax:'*', example:'* { margin: 0; }', priority:'0,0,0,0', desc:'通用选择器，匹配所有元素' },
+      { syntax:'element', example:'p { color: red; }', priority:'0,0,0,1', desc:'元素选择器，匹配指定标签' },
+      { syntax:'.class', example:'.active { font-weight: bold; }', priority:'0,0,1,0', desc:'类选择器，匹配class属性' },
+      { syntax:'#id', example:'#header { height: 60px; }', priority:'0,1,0,0', desc:'ID选择器，匹配id属性（唯一）' },
+      { syntax:'[attr]', example:'[disabled] { opacity: 0.5; }', priority:'0,0,1,0', desc:'属性选择器，匹配含有指定属性的元素' },
+      { syntax:'[attr=val]', example:'[type="text"] { border: 1px solid #ccc; }', priority:'0,0,1,0', desc:'属性值完全匹配' }
+    ]},
+    { type:'组合选择器', items: [
+      { syntax:'A B', example:'div p { line-height: 1.5; }', priority:'相加', desc:'后代选择器，A内所有B' },
+      { syntax:'A > B', example:'ul > li { list-style: none; }', priority:'相加', desc:'子代选择器，A的直接子元素B' },
+      { syntax:'A + B', example:'h2 + p { margin-top: 0; }', priority:'相加', desc:'相邻兄弟选择器，紧邻A后的B' },
+      { syntax:'A ~ B', example:'h2 ~ p { color: #666; }', priority:'相加', desc:'通用兄弟选择器，A后所有同级B' },
+      { syntax:'A, B', example:'h1, h2, h3 { font-family: sans-serif; }', priority:'各自独立', desc:'并集选择器，同时匹配A和B' }
+    ]},
+    { type:'伪类选择器', items: [
+      { syntax:':hover', example:'a:hover { color: blue; }', priority:'0,0,1,1', desc:'鼠标悬停时' },
+      { syntax:':active', example:'button:active { transform: scale(0.98); }', priority:'0,0,1,1', desc:'激活/点击时' },
+      { syntax:':focus', example:'input:focus { outline: 2px solid blue; }', priority:'0,0,1,1', desc:'获得焦点时' },
+      { syntax:':first-child', example:'li:first-child { border-top: none; }', priority:'0,0,1,1', desc:'父元素的首个子元素' },
+      { syntax:':last-child', example:'li:last-child { border-bottom: none; }', priority:'0,0,1,1', desc:'父元素的最后一个子元素' },
+      { syntax:':nth-child(n)', example:'tr:nth-child(odd) { background: #f9f9f9; }', priority:'0,0,1,1', desc:'第n个子元素，odd/even/公式' },
+      { syntax:':not(selector)', example:'div:not(.active) { display: none; }', priority:'0,0,1,1', desc:'排除匹配的元素' },
+      { syntax:':empty', example:'p:empty { display: none; }', priority:'0,0,1,1', desc:'没有子元素的元素' },
+      { syntax:':checked', example:'input:checked + label { color: blue; }', priority:'0,0,1,1', desc:'选中的复选框/单选框' },
+      { syntax:':disabled', example:'input:disabled { background: #eee; }', priority:'0,0,1,1', desc:'禁用的表单元素' },
+      { syntax:':nth-of-type(n)', example:'p:nth-of-type(2) { font-size: 18px; }', priority:'0,0,1,1', desc:'同类型中第n个' },
+      { syntax:':first-of-type', example:'p:first-of-type { font-weight: bold; }', priority:'0,0,1,1', desc:'同类型中首个' }
+    ]},
+    { type:'伪元素选择器', items: [
+      { syntax:'::before', example:'.icon::before { content: "★"; }', priority:'0,0,0,1', desc:'元素内容前插入' },
+      { syntax:'::after', example:'.clearfix::after { content: ""; display: table; clear: both; }', priority:'0,0,0,1', desc:'元素内容后插入' },
+      { syntax:'::first-letter', example:'p::first-letter { font-size: 2em; }', priority:'0,0,0,1', desc:'首字母/首字' },
+      { syntax:'::first-line', example:'p::first-line { font-weight: bold; }', priority:'0,0,0,1', desc:'首行' },
+      { syntax:'::selection', example:'::selection { background: #b3d4fc; }', priority:'0,0,0,1', desc:'选中文本的样式' },
+      { syntax:'::placeholder', example:'input::placeholder { color: #999; }', priority:'0,0,0,1', desc:'输入框占位文字' }
+    ]},
+    { type:'属性选择器(高级)', items: [
+      { syntax:'[attr^=val]', example:'a[href^="https"] { color: green; }', priority:'0,0,1,0', desc:'属性值以val开头' },
+      { syntax:'[attr$=val]', example:'a[href$=".pdf"]::after { content: "(PDF)"; }', priority:'0,0,1,0', desc:'属性值以val结尾' },
+      { syntax:'[attr*=val]', example:'[class*="btn"] { border-radius: 4px; }', priority:'0,0,1,0', desc:'属性值包含val' },
+      { syntax:'[attr~=val]', example:'[class~="active"] { color: red; }', priority:'0,0,1,0', desc:'属性值包含完整单词val' },
+      { syntax:'[attr|=val]', example:'[lang|="en"] { font-style: italic; }', priority:'0,0,1,0', desc:'属性值为val或val-开头' }
+    ]}
+  ];
+
+  var html = '';
+  for (var i = 0; i < selectors.length; i++) {
+    var section = selectors[i];
+    html += '<div class="tool-output" style="margin-bottom:16px;"><div class="tool-output-title">' + section.type + '</div>';
+    for (var j = 0; j < section.items.length; j++) {
+      var s = section.items[j];
+      html += '<div style="border:1px solid #e0e0e0;border-radius:6px;padding:10px 14px;margin-bottom:8px;">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
+      html += '<code style="background:#f0f0f0;padding:2px 8px;border-radius:3px;font-size:14px;">' + s.syntax + '</code>';
+      html += '<span style="font-size:11px;color:#888;font-family:monospace;">优先级: ' + s.priority + '</span>';
+      html += '</div>';
+      html += '<div style="font-size:12px;color:#555;margin-bottom:4px;">' + s.desc + '</div>';
+      html += '<div style="font-size:12px;"><code style="background:#fff8e1;padding:2px 6px;border-radius:3px;font-size:12px;">' + s.example.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</code></div>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
+  document.getElementById('cs-result').innerHTML = html;
+})();
+</script>

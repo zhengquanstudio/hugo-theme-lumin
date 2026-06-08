@@ -1,0 +1,171 @@
+<div class="tool-input-group">
+  <label class="tool-label">输入文本</label>
+  <textarea class="tool-textarea" id="tr-input" rows="4" placeholder="请输入需要重复的文本">Hello, WorkBuddy!</textarea>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">重复次数</label>
+  <input class="tool-input" id="tr-count" type="number" value="5" min="1" max="1000" style="width:120px;">
+  <input type="range" id="tr-count-range" min="1" max="100" value="5" class="tool-range" style="width:100%;max-width:300px;margin-top:8px;">
+  <span class="tool-range-value" id="tr-count-display">5</span>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">分隔符</label>
+  <select class="tool-select" id="tr-separator">
+    <option value="\n" selected>换行</option>
+    <option value=" ">空格</option>
+    <option value=", ">逗号</option>
+    <option value="custom">自定义</option>
+  </select>
+  <input class="tool-input" id="tr-custom-sep" placeholder="自定义分隔符" style="width:100px;margin-top:8px;display:none;">
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="tr-generate-btn">生成</button>
+  <button class="tool-btn" id="tr-clear-btn">清空</button>
+</div>
+
+<div id="tr-error" style="display:none;color:var(--color-error,#e53e3e);margin-top:8px;"></div>
+
+<div class="tool-stats" id="tr-stats" style="margin-top:12px;display:none;">
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="tr-stat-chars">0</span>
+    <span class="tool-stat-label">生成字符数</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="tr-stat-lines">0</span>
+    <span class="tool-stat-label">行数</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="tr-stat-size">0</span>
+    <span class="tool-stat-label">数据大小</span>
+  </div>
+</div>
+
+<div class="tool-output" id="tr-output-area" style="display:none;">
+  <div class="tool-output-title">生成结果</div>
+  <div class="tool-result" id="tr-result" style="max-height:300px;overflow-y:auto;"></div>
+  <button class="tool-copy-btn" id="tr-copy-btn">复制结果</button>
+</div>
+
+<script>
+(function(){
+  const input = document.getElementById('tr-input');
+  const countInput = document.getElementById('tr-count');
+  const countRange = document.getElementById('tr-count-range');
+  const countDisplay = document.getElementById('tr-count-display');
+  const sepSelect = document.getElementById('tr-separator');
+  const customSep = document.getElementById('tr-custom-sep');
+  const result = document.getElementById('tr-result');
+  const outputArea = document.getElementById('tr-output-area');
+  const errorDiv = document.getElementById('tr-error');
+  const statsDiv = document.getElementById('tr-stats');
+
+  // 同步数字输入和滑块
+  countInput.addEventListener('input', () => {
+    let val = parseInt(countInput.value, 10);
+    if (isNaN(val) || val < 1) val = 1;
+    if (val > 1000) val = 1000;
+    countInput.value = val;
+    countRange.value = Math.min(val, 100);
+    countDisplay.textContent = val;
+    updatePreview();
+  });
+
+  countRange.addEventListener('input', () => {
+    countInput.value = countRange.value;
+    countDisplay.textContent = countRange.value;
+    updatePreview();
+  });
+
+  sepSelect.addEventListener('change', () => {
+    customSep.style.display = sepSelect.value === 'custom' ? 'inline-block' : 'none';
+    updatePreview();
+  });
+
+  customSep.addEventListener('input', updatePreview);
+  input.addEventListener('input', updatePreview);
+
+  function getSeparator() {
+    if (sepSelect.value === 'custom') return customSep.value || ', ';
+    return sepSelect.value.replace('\\n', '\n');
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    return (bytes / 1024).toFixed(1) + ' KB';
+  }
+
+  function updatePreview() {
+    hideError();
+    const text = input.value;
+    const count = parseInt(countInput.value, 10) || 1;
+    if (!text) {
+      statsDiv.style.display = 'none';
+      result.textContent = '';
+      return;
+    }
+
+    const sep = getSeparator();
+    const parts = [];
+    for (let i = 0; i < count; i++) {
+      parts.push(text);
+    }
+    const output = parts.join(sep);
+
+    result.textContent = output;
+    outputArea.style.display = 'block';
+    statsDiv.style.display = 'flex';
+    document.getElementById('tr-stat-chars').textContent = output.length;
+    document.getElementById('tr-stat-lines').textContent = output.split('\n').length;
+    document.getElementById('tr-stat-size').textContent = formatSize(new Blob([output]).size);
+  }
+
+  function showError(msg) {
+    errorDiv.textContent = msg;
+    errorDiv.style.display = 'block';
+  }
+
+  function hideError() {
+    errorDiv.style.display = 'none';
+  }
+
+  document.getElementById('tr-generate-btn').addEventListener('click', () => {
+    hideError();
+    if (!input.value.trim()) { showError('请输入需要重复的文本'); return; }
+    updatePreview();
+  });
+
+  document.getElementById('tr-clear-btn').addEventListener('click', () => {
+    input.value = '';
+    result.textContent = '';
+    outputArea.style.display = 'none';
+    statsDiv.style.display = 'none';
+    hideError();
+  });
+
+  document.getElementById('tr-copy-btn').addEventListener('click', () => {
+    const text = result.textContent;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('tr-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const btn = document.getElementById('tr-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    });
+  });
+
+  // 初始预览
+  updatePreview();
+})();
+</script>

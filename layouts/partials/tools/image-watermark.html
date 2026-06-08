@@ -1,0 +1,123 @@
+<div class="tool-input-group">
+  <label class="tool-label">上传图片</label>
+  <input type="file" id="iwm-file" accept="image/*" style="display:block;margin-top:4px;">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">水印文字</label>
+  <input class="tool-input" type="text" id="iwm-text" value="Watermark" placeholder="水印文字">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">位置</label>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;max-width:200px;margin-top:4px;">
+    <button class="iwm-pos-btn" data-x="left" data-y="top" style="padding:8px;border:1px solid #ddd;background:#fff;cursor:pointer;">↖</button>
+    <button class="iwm-pos-btn" data-x="center" data-y="top" style="padding:8px;border:1px solid #ddd;background:#fff;cursor:pointer;">↑</button>
+    <button class="iwm-pos-btn active" data-x="right" data-y="top" style="padding:8px;border:2px solid #4a90d9;background:#e8f0fe;cursor:pointer;">↗</button>
+    <button class="iwm-pos-btn" data-x="left" data-y="middle" style="padding:8px;border:1px solid #ddd;background:#fff;cursor:pointer;">←</button>
+    <button class="iwm-pos-btn" data-x="center" data-y="middle" style="padding:8px;border:1px solid #ddd;background:#fff;cursor:pointer;">◎</button>
+    <button class="iwm-pos-btn" data-x="right" data-y="middle" style="padding:8px;border:1px solid #ddd;background:#fff;cursor:pointer;">→</button>
+    <button class="iwm-pos-btn" data-x="left" data-y="bottom" style="padding:8px;border:1px solid #ddd;background:#fff;cursor:pointer;">↙</button>
+    <button class="iwm-pos-btn" data-x="center" data-y="bottom" style="padding:8px;border:1px solid #ddd;background:#fff;cursor:pointer;">↓</button>
+    <button class="iwm-pos-btn" data-x="right" data-y="bottom" style="padding:8px;border:1px solid #ddd;background:#fff;cursor:pointer;">↘</button>
+  </div>
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">字体颜色</label>
+  <input type="color" id="iwm-color" value="#ffffff">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">字体大小（px）</label>
+  <input class="tool-input" type="number" id="iwm-size" value="30" min="8" max="200">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">透明度</label>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <input type="range" class="tool-range" id="iwm-opacity" min="0" max="1" step="0.1" value="0.5" style="flex:1;">
+    <span id="iwm-opacity-val">0.5</span>
+  </div>
+</div>
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="iwm-apply" disabled>应用水印</button>
+</div>
+<div id="iwm-preview" style="margin-top:12px;"></div>
+
+<script>
+(function() {
+  var sourceImg = null, posX = 'right', posY = 'top';
+
+  document.getElementById('iwm-opacity').addEventListener('input', function() {
+    document.getElementById('iwm-opacity-val').textContent = this.value;
+  });
+
+  var posBtns = document.querySelectorAll('.iwm-pos-btn');
+  for (var i = 0; i < posBtns.length; i++) {
+    posBtns[i].addEventListener('click', function() {
+      for (var j = 0; j < posBtns.length; j++) { posBtns[j].style.border = '1px solid #ddd'; posBtns[j].style.background = '#fff'; posBtns[j].classList.remove('active'); }
+      this.style.border = '2px solid #4a90d9';
+      this.style.background = '#e8f0fe';
+      this.classList.add('active');
+      posX = this.dataset.x;
+      posY = this.dataset.y;
+      if (sourceImg) applyWatermark();
+    });
+  }
+
+  document.getElementById('iwm-file').addEventListener('change', function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(evt) {
+      var img = new Image();
+      img.onload = function() {
+        sourceImg = img;
+        document.getElementById('iwm-apply').disabled = false;
+        applyWatermark();
+      };
+      img.src = evt.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  function applyWatermark() {
+    var text = document.getElementById('iwm-text').value;
+    var color = document.getElementById('iwm-color').value;
+    var fontSize = parseInt(document.getElementById('iwm-size').value);
+    var opacity = parseFloat(document.getElementById('iwm-opacity').value);
+
+    var canvas = document.createElement('canvas');
+    canvas.width = sourceImg.width;
+    canvas.height = sourceImg.height;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(sourceImg, 0, 0);
+
+    ctx.font = 'bold ' + fontSize + 'px sans-serif';
+    ctx.textBaseline = 'top';
+    var metrics = ctx.measureText(text);
+    var textWidth = metrics.width;
+    var padding = 20;
+
+    var x;
+    if (posX === 'left') x = padding;
+    else if (posX === 'center') x = (canvas.width - textWidth) / 2;
+    else x = canvas.width - textWidth - padding;
+
+    var y;
+    if (posY === 'top') y = padding;
+    else if (posY === 'middle') y = (canvas.height - fontSize) / 2;
+    else y = canvas.height - fontSize - padding;
+
+    ctx.globalAlpha = opacity;
+    ctx.fillStyle = color;
+    ctx.fillText(text, x, y);
+    ctx.globalAlpha = 1;
+
+    var url = canvas.toDataURL('image/png');
+    document.getElementById('iwm-preview').innerHTML = '<div><div class="tool-label">预览</div><img src="' + url + '" style="max-width:100%;max-height:400px;border:1px solid #ddd;border-radius:4px;"></div><p style="margin-top:8px;"><button class="tool-btn tool-btn-success" onclick="var a=document.createElement(\'a\');a.href=\'' + url + '\';a.download=\'watermarked.png\';a.click();">下载图片</button></p>';
+  }
+
+  document.getElementById('iwm-apply').addEventListener('click', function() { if (sourceImg) applyWatermark(); });
+  document.getElementById('iwm-text').addEventListener('input', function() { if (sourceImg) applyWatermark(); });
+  document.getElementById('iwm-color').addEventListener('input', function() { if (sourceImg) applyWatermark(); });
+  document.getElementById('iwm-size').addEventListener('input', function() { if (sourceImg) applyWatermark(); });
+  document.getElementById('iwm-opacity').addEventListener('input', function() { if (sourceImg) applyWatermark(); });
+})();
+</script>

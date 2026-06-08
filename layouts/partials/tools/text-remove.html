@@ -1,0 +1,96 @@
+<div class="tool-input-group">
+  <label class="tool-label">输入文本</label>
+  <textarea class="tool-textarea" id="tr-input" placeholder="在此输入文本..." style="min-height:180px;">  这行前面有多余空格  
+这是正常行
+   这行也有缩进   
+
+这行前后有空行
+
+最后一行</textarea>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">处理选项</label>
+  <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:4px;">
+    <label class="tool-switch"><input type="checkbox" id="tr-empty-lines" checked><span class="tool-switch-track"></span>去除空行</label>
+    <label class="tool-switch"><input type="checkbox" id="tr-trim" checked><span class="tool-switch-track"></span>去除首尾空格</label>
+    <label class="tool-switch"><input type="checkbox" id="tr-all-spaces"><span class="tool-switch-track"></span>去除所有空格</label>
+    <label class="tool-switch"><input type="checkbox" id="tr-tabs"><span class="tool-switch-track"></span>去除制表符</label>
+    <label class="tool-switch"><input type="checkbox" id="tr-dup-spaces"><span class="tool-switch-track"></span>合并连续空格</label>
+  </div>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="tr-process-btn"><i class="fas fa-broom"></i> 处理</button>
+  <button class="tool-btn" id="tr-clear-btn"><i class="fas fa-trash"></i> 清空</button>
+</div>
+
+<div class="tool-output" id="tr-output" style="display:none;">
+  <div class="tool-output-label">
+    <span class="tool-output-title">处理结果 <span id="tr-count" style="font-weight:400;color:var(--text-muted,#9ca3af);font-size:.8rem;"></span></span>
+    <button class="tool-copy-btn" id="tr-copy-btn"><i class="far fa-copy"></i> 复制</button>
+  </div>
+  <textarea class="tool-result" id="tr-result" readonly style="min-height:160px;"></textarea>
+</div>
+
+<script>
+(function(){
+  const input = document.getElementById('tr-input');
+  const resultArea = document.getElementById('tr-result');
+  const output = document.getElementById('tr-output');
+  const countEl = document.getElementById('tr-count');
+  const copyBtn = document.getElementById('tr-copy-btn');
+
+  function copyText(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+      const orig = btn.innerHTML; btn.innerHTML = '✅ 已复制'; btn.classList.add('copied');
+      setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('copied'); }, 1500);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+      document.body.removeChild(ta);
+      const orig = btn.innerHTML; btn.innerHTML = '✅ 已复制'; btn.classList.add('copied');
+      setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('copied'); }, 1500);
+    });
+  }
+
+  document.getElementById('tr-process-btn').addEventListener('click', () => {
+    let text = input.value;
+    if (!text.trim()) return;
+
+    const rmEmptyLines = document.getElementById('tr-empty-lines').checked;
+    const trim = document.getElementById('tr-trim').checked;
+    const allSpaces = document.getElementById('tr-all-spaces').checked;
+    const tabs = document.getElementById('tr-tabs').checked;
+    const dupSpaces = document.getElementById('tr-dup-spaces').checked;
+
+    let lines = text.split('\n');
+
+    lines = lines.map(line => {
+      if (tabs) line = line.replace(/\t/g, '');
+      if (allSpaces) line = line.replace(/ /g, '');
+      else {
+        if (trim) line = line.trim();
+        if (dupSpaces) line = line.replace(/ {2,}/g, ' ');
+      }
+      return line;
+    });
+
+    if (rmEmptyLines) lines = lines.filter(l => l.trim().length > 0);
+
+    const result = lines.join('\n');
+    resultArea.value = result;
+    const origLines = text.split('\n').length;
+    const newLines = lines.length;
+    countEl.textContent = `原 ${origLines} 行 → 现 ${newLines} 行`;
+    output.style.display = '';
+  });
+
+  copyBtn.addEventListener('click', () => copyText(resultArea.value, copyBtn));
+
+  document.getElementById('tr-clear-btn').addEventListener('click', () => {
+    input.value = ''; resultArea.value = ''; output.style.display = 'none';
+  });
+})();
+</script>

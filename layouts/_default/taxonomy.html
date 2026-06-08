@@ -1,0 +1,89 @@
+{{ define "main" }}
+{{ if eq .Kind "term" }}
+  {{ $isCat := eq .Data.Plural "categories" }}
+  {{ $extra := cond $isCat "tags" "categories" }}
+  <nav class="breadcrumb" aria-label="面包屑导航">
+    <ol class="breadcrumb-list">
+      <li class="breadcrumb-item"><a href="{{ site.BaseURL }}"><i class="fas fa-home" style="font-size:0.9em;margin-right:2px;"></i> 首页</a></li>
+      <li class="breadcrumb-item"><a href="/{{ .Data.Plural }}/"><i class="fas {{ if $isCat }}fa-folder-open{{ else }}fa-tags{{ end }}" style="font-size:0.85em;margin-right:4px;opacity:0.8;"></i>{{- if $isCat -}}分类{{- else -}}标签{{- end -}}</a></li>
+      <li class="breadcrumb-item active" aria-current="page">{{- if $isCat -}}{{- partial "category-display-name.html" (dict "Site" .Site "Slug" .Data.Term) -}}{{- else -}}{{- .Title -}}{{- end -}}</li>
+    </ol>
+  </nav>
+  <div class="list-page archives-page taxonomy-term-page">
+    <header class="list-header">
+      <h1 class="list-title">
+        {{- if $isCat -}}
+          {{- partial "category-display-name.html" (dict "Site" .Site "Slug" .Data.Term) -}}
+        {{- else -}}
+          {{- .Title -}}
+        {{- end -}}
+      </h1>
+      {{ with .Description }}<p class="list-description">{{ . }}</p>{{ end }}
+      <div class="list-count">共 {{ len .Pages }} 篇文章</div>
+    </header>
+    <div class="taxonomy-term-body">
+      {{ partial "archive-post-list.html" (dict "Pages" .Pages "extraMeta" $extra) }}
+    </div>
+
+    {{ partial "taxonomy-cloud.html" (dict) }}
+  </div>
+{{ else }}
+  {{/* 分类目录 / 标签目录（全部 term 列表） */}}
+  {{ $isCat := eq .Data.Plural "categories" }}
+  <nav class="breadcrumb" aria-label="面包屑导航">
+    <ol class="breadcrumb-list">
+      <li class="breadcrumb-item"><a href="{{ site.BaseURL }}"><i class="fas fa-home" style="font-size:0.9em;margin-right:2px;"></i> 首页</a></li>
+      <li class="breadcrumb-item active" aria-current="page"><i class="fas {{ if $isCat }}fa-folder-open{{ else }}fa-tags{{ end }}" style="font-size:0.85em;margin-right:4px;opacity:0.8;"></i>{{- if $isCat -}}分类{{- else -}}标签{{- end -}}</li>
+    </ol>
+  </nav>
+  <div class="list-page archives-page archive-hub-page taxonomy-hub-page">
+    <header class="tag-cloud-header">
+      <div class="tag-cloud-header-top">
+        <div class="tag-cloud-header-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+        </div>
+        <div class="tag-cloud-header-text">
+          <h1 class="tag-cloud-title">{{- if $isCat -}}分类{{- else -}}标签{{- end -}}</h1>
+          <p class="tag-cloud-subtitle">{{- if $isCat -}}浏览所有文章分类{{- else -}}探索所有文章标签，点击查看相关文章{{- end -}}</p>
+        </div>
+      </div>
+      <div class="tag-cloud-stats">
+        <span class="tag-cloud-stat">
+          <strong>{{ len .Pages }}</strong>
+          <span>{{- if $isCat -}}个分类{{- else -}}个标签{{- end -}}</span>
+        </span>
+      </div>
+    </header>
+
+    {{ if not $isCat }}
+    <div class="tag-cloud-wall" id="tag-cloud-wall" data-page-size="{{ site.Params.tagCloud.pageSize | default 15 }}">
+      {{ range .Pages }}
+      <a href="{{ .Permalink }}" class="tag-wall-item" data-tag="{{ .Title }}" data-count="{{ len .Pages }}" data-articles='{{ range $idx, $p := .Pages }}{{ if gt $idx 0 }};{{ end }}{{ $p.Title }}|{{ $p.RelPermalink }}|{{ $p.Date.Format "2006-01-02" }}|{{ $p.Params.featured_image | default $p.Params.image | default (site.Params.article.defaultFeaturedImage | default "/images/default-cover.webp") }}|{{ if $p.Params.categories }}{{ partial "category-display-name.html" (dict "Site" $p.Site "Slug" (index $p.Params.categories 0)) }}{{ end }}|{{ $p.ReadingTime }}|{{ $p.WordCount }}|{{ $p.Description | default ($p.Plain | truncate 80 "…") }}{{ end }}'>{{ .Title }}<span class="tag-wall-count">{{ len .Pages }}</span></a>
+      {{ end }}
+    </div>
+    <div class="tag-articles" id="tag-articles">
+      <div class="tag-articles-header" id="tag-articles-header">
+        <h3 id="tag-articles-title"></h3>
+        <button class="tag-articles-close" id="tag-articles-close" aria-label="关闭">&times;</button>
+      </div>
+      <div class="tag-articles-list" id="tag-articles-list"></div>
+      <div class="tag-articles-pagination" id="tag-articles-pagination"></div>
+    </div>
+    {{ else }}
+    <div class="tag-cloud-list-section">
+      <div class="tag-cloud-list tag-cloud-list--cat">
+        {{ range .Pages }}
+        <a href="{{ .RelPermalink }}" class="tag-cloud-list-item" data-count="{{ len .Pages }}">
+          <span class="tag-cloud-list-color"></span>
+          <span class="tag-cloud-list-name">
+            {{- partial "category-display-name.html" (dict "Site" $.Site "Slug" .Data.Term) -}}
+          </span>
+          <span class="tag-cloud-list-count">{{ len .Pages }}</span>
+        </a>
+        {{ end }}
+      </div>
+    </div>
+    {{ end }}
+  </div>
+{{ end }}
+{{ end }}

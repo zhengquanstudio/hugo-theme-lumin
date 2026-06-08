@@ -1,0 +1,129 @@
+<div id="bc-tool">
+  <div class="tool-input-group">
+    <label class="tool-label">输入数值</label>
+    <div style="display:flex;gap:8px;">
+      <input type="text" id="bc-input" class="tool-input" value="255" placeholder="请输入数值" style="flex:1;">
+      <select id="bc-base" class="tool-select">
+        <option value="2">二进制 (Base 2)</option>
+        <option value="8">八进制 (Base 8)</option>
+        <option value="10" selected>十进制 (Base 10)</option>
+        <option value="16">十六进制 (Base 16)</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="tool-btn-row">
+    <button class="tool-btn" onclick="bcClear()">清空</button>
+  </div>
+
+  <div id="bc-error" style="color:#e74c3c;font-size:0.9em;margin:8px 0;display:none;"></div>
+
+  <div class="tool-stats" id="bc-results">
+    <div class="tool-stat">
+      <div class="tool-stat-label">二进制 (Binary)</div>
+      <div class="tool-stat-value" id="bc-bin" style="font-family:monospace;word-break:break-all;">11111111</div>
+      <button class="tool-copy-btn" onclick="bcCopy('bin')">复制</button>
+    </div>
+    <div class="tool-stat">
+      <div class="tool-stat-label">八进制 (Octal)</div>
+      <div class="tool-stat-value" id="bc-oct" style="font-family:monospace;word-break:break-all;">377</div>
+      <button class="tool-copy-btn" onclick="bcCopy('oct')">复制</button>
+    </div>
+    <div class="tool-stat">
+      <div class="tool-stat-label">十进制 (Decimal)</div>
+      <div class="tool-stat-value" id="bc-dec" style="font-family:monospace;word-break:break-all;">255</div>
+      <button class="tool-copy-btn" onclick="bcCopy('dec')">复制</button>
+    </div>
+    <div class="tool-stat">
+      <div class="tool-stat-label">十六进制 (Hexadecimal)</div>
+      <div class="tool-stat-value" id="bc-hex" style="font-family:monospace;word-break:break-all;">FF</div>
+      <button class="tool-copy-btn" onclick="bcCopy('hex')">复制</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+
+  const validChars = {
+    2: /^[01]+$/,
+    8: /^[0-7]+$/,
+    10: /^[0-9]+$/,
+    16: /^[0-9a-fA-F]+$/
+  };
+
+  function convert() {
+    const input = $('bc-input').value.trim();
+    const base = parseInt($('bc-base').value);
+    const errEl = $('bc-error');
+
+    if (!input) {
+      $('bc-bin').textContent = '-';
+      $('bc-oct').textContent = '-';
+      $('bc-dec').textContent = '-';
+      $('bc-hex').textContent = '-';
+      errEl.style.display = 'none';
+      return;
+    }
+
+    if (!validChars[base].test(input)) {
+      errEl.textContent = `输入不是有效的${base}进制数`;
+      errEl.style.display = 'block';
+      $('bc-bin').textContent = '-';
+      $('bc-oct').textContent = '-';
+      $('bc-dec').textContent = '-';
+      $('bc-hex').textContent = '-';
+      return;
+    }
+
+    errEl.style.display = 'none';
+
+    try {
+      const dec = BigInt('0x0') + parseBigInt(input, base);
+      $('bc-dec').textContent = dec.toString(10);
+      $('bc-bin').textContent = dec.toString(2);
+      $('bc-oct').textContent = dec.toString(8);
+      $('bc-hex').textContent = dec.toString(16).toUpperCase();
+    } catch (e) {
+      errEl.textContent = '转换错误：' + e.message;
+      errEl.style.display = 'block';
+    }
+  }
+
+  function parseBigInt(str, base) {
+    base = BigInt(base);
+    let result = 0n;
+    for (let i = 0; i < str.length; i++) {
+      const ch = str[i].toLowerCase();
+      let digit;
+      if (ch >= '0' && ch <= '9') digit = BigInt(ch.charCodeAt(0) - 48);
+      else digit = BigInt(ch.charCodeAt(0) - 87);
+      result = result * base + digit;
+    }
+    return result;
+  }
+
+  $('bc-input').addEventListener('input', convert);
+  $('bc-base').addEventListener('change', convert);
+
+  window.bcClear = function() {
+    $('bc-input').value = '';
+    $('bc-error').style.display = 'none';
+    $('bc-bin').textContent = '-';
+    $('bc-oct').textContent = '-';
+    $('bc-dec').textContent = '-';
+    $('bc-hex').textContent = '-';
+  };
+
+  window.bcCopy = function(type) {
+    const map = { bin: 'bc-bin', oct: 'bc-oct', dec: 'bc-dec', hex: 'bc-hex' };
+    const text = $(map[type]).textContent;
+    if (text && text !== '-') {
+      navigator.clipboard.writeText(text).catch(() => {});
+    }
+  };
+
+  convert();
+})();
+</script>

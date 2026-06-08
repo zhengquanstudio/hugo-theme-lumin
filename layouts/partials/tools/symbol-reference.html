@@ -1,0 +1,58 @@
+<div class="tool-tabs" id="sr-tabs" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;"></div>
+<div class="tool-result" id="sr-result"></div>
+
+<script>
+(function() {
+  var symbols = {
+    '箭头': ['←','↑','→','↓','↔','↕','↖','↗','↘','↙','⇐','⇑','⇒','⇓','⇔','⇕','↵','↩','↪','➔'],
+    '数学符号': ['∞','±','×','÷','≠','≈','≤','≥','≡','√','²','³','‰','‱','%','π','∑','∏','∫','∂','Δ','∇','∝','∠','⊥','∴','∵','∅','∈','∉','⊂','⊃','∪','∩'],
+    '货币': ['$','€','£','¥','₽','₹','₩','¢','₿','₫','฿','₺','₴','₦','₱','₪','₼','₾','₸','﷼'],
+    '标点': ['«','»','"','"',''',''','‹','›','「','」','『','』','【','】','、','。','—','–','…','·','《','》'],
+    '图形': ['●','○','■','□','▲','△','◆','◇','★','☆','♥','♠','♣','♦','☀','☁','☂','☃','☺','☹','♫','♪','✈','✎','✑','✓','✗','☑','☒'],
+    '数字序号': ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','❶','❷','❸','❹','❺','❻','❼','❽','❾','❿','Ⅰ','Ⅱ','Ⅲ','Ⅳ','Ⅴ','Ⅵ','Ⅶ','Ⅷ','Ⅸ','Ⅹ'],
+    '单位符号': ['°','℃','℉','′','″','µ','Å','Ω','ℓ','㏄','㎡','㎥','㎠','㏉','㏊','㎜','㎝','㎞','㎎','㎏','㎐','㎑','㎒','㎓']
+  };
+
+  var categories = Object.keys(symbols);
+
+  function render(activeCat) {
+    activeCat = activeCat || '箭头';
+
+    var tabsHtml = categories.map(function(c) {
+      return '<button class="tool-tab' + (c === activeCat ? ' active' : '') + '" data-cat="' + c + '" style="padding:6px 14px;border:1px solid ' + (c===activeCat?'#4a90d9':'#ddd') + ';background:' + (c===activeCat?'#e8f0fe':'#fff') + ';border-radius:4px;cursor:pointer;">' + c + '</button>';
+    }).join('');
+    document.getElementById('sr-tabs').innerHTML = tabsHtml;
+
+    var list = symbols[activeCat];
+    var html = '<div class="tool-output"><div class="tool-output-title">' + activeCat + ' 符号（点击复制）</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(60px,1fr));gap:8px;">';
+
+    for (var i = 0; i < list.length; i++) {
+      html += '<button class="sr-copy-btn" data-char="' + list[i] + '" style="padding:12px 8px;border:1px solid #ddd;background:#fff;cursor:pointer;border-radius:6px;font-size:24px;text-align:center;transition:background 0.2s;" title="点击复制">' + list[i] + '</button>';
+    }
+    html += '</div></div>';
+    document.getElementById('sr-result').innerHTML = html;
+
+    var tabBtns = document.querySelectorAll('#sr-tabs .tool-tab');
+    for (var t = 0; t < tabBtns.length; t++) {
+      tabBtns[t].addEventListener('click', function() {
+        render(this.dataset.cat);
+      });
+    }
+
+    var copyBtns = document.querySelectorAll('.sr-copy-btn');
+    for (var c = 0; c < copyBtns.length; c++) {
+      copyBtns[c].addEventListener('click', function() {
+        navigator.clipboard.writeText(this.dataset.char).then(function() {
+          var orig = this.style.background;
+          this.style.background = '#d4edda';
+          var that = this;
+          setTimeout(function(){ that.style.background = orig; }, 600);
+        }.bind(this));
+      });
+    }
+  }
+
+  render('箭头');
+})();
+</script>

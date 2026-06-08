@@ -1,0 +1,127 @@
+<div class="tool-input-group">
+  <label class="tool-label">CIDR 表示法</label>
+  <input class="tool-input" type="text" id="cidr-input" placeholder="例如：192.168.1.0/24" value="192.168.1.0/24">
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="cidr-calc-btn">计算</button>
+</div>
+
+<div class="tool-stats" id="cidr-stats" style="display:none;">
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="cidr-netmask">-</span>
+    <span class="tool-stat-label">网络掩码</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="cidr-wildcard">-</span>
+    <span class="tool-stat-label">通配符掩码</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="cidr-network">-</span>
+    <span class="tool-stat-label">网络地址</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="cidr-broadcast">-</span>
+    <span class="tool-stat-label">广播地址</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="cidr-first-host">-</span>
+    <span class="tool-stat-label">首个主机</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="cidr-last-host">-</span>
+    <span class="tool-stat-label">最后主机</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="cidr-ip-range">-</span>
+    <span class="tool-stat-label">可用IP范围</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="cidr-host-count">-</span>
+    <span class="tool-stat-label">主机数量</span>
+  </div>
+</div>
+
+<div id="cidr-error" style="display:none;color:var(--color-error,#e53e3e);margin-top:8px;"></div>
+
+<script>
+(function(){
+  var input = document.getElementById('cidr-input');
+  var calcBtn = document.getElementById('cidr-calc-btn');
+  var statsDiv = document.getElementById('cidr-stats');
+  var errorDiv = document.getElementById('cidr-error');
+
+  function ipToInt(ip){
+    return ip.split('.').reduce(function(acc,o){ return (acc << 8) + parseInt(o,10); }, 0) >>> 0;
+  }
+
+  function intToIp(num){
+    return [(num >>> 24) & 255, (num >>> 16) & 255, (num >>> 8) & 255, num & 255].join('.');
+  }
+
+  function cidrToMask(cidr){
+    return -1 << (32 - cidr) >>> 0;
+  }
+
+  function calc(){
+    errorDiv.style.display = 'none';
+    statsDiv.style.display = 'none';
+    var val = input.value.trim();
+    
+    var match = val.match(/^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\/(\d{1,2})$/);
+    if(!match){
+      showError('请输入有效的 CIDR 格式 (如 192.168.1.0/24)');
+      return;
+    }
+
+    var ip = match[1];
+    var cidr = parseInt(match[2], 10);
+    if(cidr < 0 || cidr > 32){
+      showError('CIDR 前缀长度应在 0-32 之间');
+      return;
+    }
+
+    var octets = ip.split('.').map(Number);
+    if(octets.some(function(o){ return o < 0 || o > 255 || isNaN(o); })){
+      showError('IP地址每个字段应在 0-255 之间');
+      return;
+    }
+
+    var ipInt = ipToInt(ip);
+    var maskInt = cidrToMask(cidr);
+    var wildInt = ~maskInt >>> 0;
+    var netInt = (ipInt & maskInt) >>> 0;
+    var bcastInt = (netInt | wildInt) >>> 0;
+    var totalHosts = Math.pow(2, 32 - cidr);
+
+    document.getElementById('cidr-netmask').textContent = intToIp(maskInt);
+    document.getElementById('cidr-wildcard').textContent = intToIp(wildInt);
+    document.getElementById('cidr-network').textContent = intToIp(netInt);
+    document.getElementById('cidr-broadcast').textContent = intToIp(bcastInt);
+
+    if(cidr >= 31){
+      document.getElementById('cidr-first-host').textContent = intToIp(netInt);
+      document.getElementById('cidr-last-host').textContent = intToIp(bcastInt);
+      document.getElementById('cidr-ip-range').textContent = intToIp(netInt) + ' - ' + intToIp(bcastInt);
+      document.getElementById('cidr-host-count').textContent = totalHosts.toLocaleString();
+    } else {
+      document.getElementById('cidr-first-host').textContent = intToIp(netInt + 1);
+      document.getElementById('cidr-last-host').textContent = intToIp(bcastInt - 1);
+      document.getElementById('cidr-ip-range').textContent = intToIp(netInt + 1) + ' - ' + intToIp(bcastInt - 1);
+      document.getElementById('cidr-host-count').textContent = (totalHosts - 2).toLocaleString();
+    }
+
+    statsDiv.style.display = 'grid';
+  }
+
+  function showError(msg){
+    errorDiv.textContent = msg;
+    errorDiv.style.display = 'block';
+  }
+
+  calcBtn.addEventListener('click', calc);
+  input.addEventListener('keydown', function(e){ if(e.key === 'Enter') calc(); });
+
+  calc();
+})();
+</script>

@@ -1,0 +1,37 @@
+{{ if or .widgetEnabled site.Params.widgets.recentPosts }}
+<div class="widget widget-recent-posts">
+  <h4 class="widget-title">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+      <polyline points="14 2 14 8 20 8"></polyline>
+      <line x1="16" y1="13" x2="8" y2="13"></line>
+      <line x1="16" y1="17" x2="8" y2="17"></line>
+    </svg>
+    最新文章
+  </h4>
+  <div class="recent-posts-card">
+    {{ $recentCount := site.Params.widgets.recentPostsCount | default 6 }}
+    {{ $articleSections := partialCached "article-sections.html" . }}
+    {{ $posts := where site.RegularPages ".Params.hidden" "!=" true }}
+    {{ $posts = where $posts "Section" "in" $articleSections }}
+    {{ $idx := 0 }}
+    {{ range first $recentCount ($posts.ByDate.Reverse) }}
+    <a href="{{ .RelPermalink }}" class="rp-item">
+      <span class="rp-num">{{ add $idx 1 }}</span>
+      <div class="rp-info">
+        <span class="rp-title">{{ .Title }}</span>
+        <span class="rp-meta">
+          {{ with .Params.categories }}
+          {{- $catKey := index . 0 -}}
+          {{- $catInfo := partial "category-info.html" $catKey -}}
+          <span class="rp-cat">{{ $catInfo.title }}</span>
+          {{ end }}
+          <time class="rp-date">{{ .Date.Format "01-02" }}</time>
+        </span>
+      </div>
+    </a>
+    {{ $idx = add $idx 1 }}
+    {{ end }}
+  </div>
+</div>
+{{ end }}

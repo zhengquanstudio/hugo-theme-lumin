@@ -1,0 +1,376 @@
+{{ define "main" }}
+<div class="error-page lumin-404">
+  <div class="error-bg-shapes">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+  </div>
+
+  <div class="error-content">
+    <div class="error-code">404</div>
+    <h1 class="error-title">页面未找到</h1>
+    <p class="error-desc">抱歉，你访问的页面不存在或已被移除</p>
+
+    <div class="error-actions">
+      <a href="{{ site.BaseURL }}" class="error-btn primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        返回首页
+      </a>
+      <a href="{{ "archives" | relURL }}" class="error-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2z"/></svg>
+        查看归档
+      </a>
+    </div>
+
+    {{/* 搜索框 */}}
+    <div class="error-search">
+      <p class="search-hint">试试搜索你想找的内容？</p>
+      <div class="search-box">
+        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="error-search-input" placeholder="输入关键词搜索..." class="search-input" />
+        <button class="search-submit" id="error-search-btn">搜索</button>
+      </div>
+    </div>
+
+    {{/* 快捷导航 */}}
+    <div class="error-nav">
+      <p class="nav-hint">常用导航</p>
+      <div class="nav-links">
+        {{ range site.Menus.main }}
+          {{ if not .Children }}
+          <a href="{{ .URL }}" class="nav-link-item">{{ .Name }}</a>
+          {{ end }}
+        {{ end }}
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.lumin-404 {
+  position: relative;
+  min-height: calc(100vh - 200px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 40px 20px;
+}
+
+/* ── 背景装饰 ── */
+.error-bg-shapes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.shape {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.12;
+  animation: float-shape 20s ease-in-out infinite;
+}
+.shape-1 {
+  width: 400px; height: 400px;
+  background: var(--accent-color);
+  top: -10%; right: -5%;
+  animation-delay: 0s;
+}
+.shape-2 {
+  width: 300px; height: 300px;
+  background: var(--accent-color);
+  bottom: -5%; left: -5%;
+  animation-delay: -7s;
+}
+.shape-3 {
+  width: 200px; height: 200px;
+  background: var(--text-secondary);
+  top: 40%; left: 50%;
+  animation-delay: -14s;
+  opacity: 0.06;
+}
+@keyframes float-shape {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -20px) scale(1.05); }
+  66% { transform: translate(-20px, 15px) scale(0.95); }
+}
+
+/* ── 主内容 ── */
+.error-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  max-width: 520px;
+  width: 100%;
+}
+
+/* ── 404 大数字 ── */
+.error-code {
+  font-size: clamp(7rem, 18vw, 11rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-hover));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  user-select: none;
+  animation: code-fade-in 0.8s ease-out;
+  position: relative;
+}
+.error-code::after {
+  content: '404';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-hover));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: blur(30px);
+  opacity: 0.3;
+  z-index: -1;
+}
+@keyframes code-fade-in {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── 文字 ── */
+.error-title {
+  font-size: clamp(1.4rem, 3.5vw, 1.8rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 12px 0 8px;
+  animation: fade-up 0.6s ease-out 0.15s both;
+}
+.error-desc {
+  font-size: clamp(0.9rem, 2.2vw, 1.05rem);
+  color: var(--text-secondary);
+  margin: 0 0 28px;
+  animation: fade-up 0.6s ease-out 0.3s both;
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── 操作按钮 ── */
+.error-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 32px;
+  animation: fade-up 0.6s ease-out 0.45s both;
+}
+.error-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 22px;
+  border-radius: 10px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+}
+.error-btn svg {
+  flex-shrink: 0;
+}
+.error-btn:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.error-btn.primary {
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-hover));
+  border-color: transparent;
+  color: #fff;
+}
+.error-btn.primary:hover {
+  opacity: 0.9;
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
+}
+
+/* ── 搜索框 ── */
+.error-search {
+  margin-bottom: 32px;
+  animation: fade-up 0.6s ease-out 0.6s both;
+}
+.search-hint {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin: 0 0 12px;
+}
+.search-box {
+  display: flex;
+  align-items: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 4px 4px 4px 14px;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.search-box:focus-within {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+.search-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.92rem;
+  color: var(--text-primary);
+  padding: 8px 10px;
+  font-family: inherit;
+}
+.search-input::placeholder {
+  color: var(--text-muted);
+}
+.search-submit {
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent-color);
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+.search-submit:hover {
+  opacity: 0.85;
+}
+
+/* ── 快捷导航 ── */
+.error-nav {
+  animation: fade-up 0.6s ease-out 0.75s both;
+}
+.nav-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0 0 10px;
+}
+.nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.nav-link-item {
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  text-decoration: none;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+.nav-link-item:hover {
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+  background: var(--accent-light);
+}
+
+/* ── 暗色模式微调 ── */
+[data-theme="dark"] .shape {
+  opacity: 0.08;
+}
+[data-theme="dark"] .search-box {
+  background: var(--bg-secondary);
+}
+[data-theme="dark"] .search-box:focus-within {
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+}
+[data-theme="dark"] .error-btn {
+  background: var(--bg-secondary);
+}
+[data-theme="dark"] .error-btn.primary {
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-hover));
+}
+[data-theme="dark"] .nav-link-item {
+  background: var(--bg-secondary);
+}
+[data-theme="dark"] .nav-link-item:hover {
+  background: var(--accent-light);
+}
+[data-theme="dark"] .error-code::after {
+  opacity: 0.2;
+}
+
+/* ── 移动端适配 ── */
+@media (max-width: 480px) {
+  .lumin-404 {
+    padding: 24px 16px;
+  }
+  .error-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .error-btn {
+    justify-content: center;
+  }
+  .search-box {
+    flex-direction: column;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  .search-input {
+    padding: 8px 0;
+  }
+  .search-submit {
+    width: 100%;
+    padding: 10px;
+  }
+}
+</style>
+
+<script>
+(function() {
+  var input = document.getElementById('error-search-input');
+  var btn = document.getElementById('error-search-btn');
+
+  function doSearch() {
+    var q = (input.value || '').trim();
+    if (!q) return;
+    // 使用站点搜索功能
+    var searchToggle = document.getElementById('search-toggle');
+    if (searchToggle) {
+      searchToggle.click();
+      // 等搜索面板打开后填入关键词
+      setTimeout(function() {
+        var searchInput = document.getElementById('search-input');
+        if (searchInput) {
+          searchInput.value = q;
+          searchInput.dispatchEvent(new Event('input'));
+        }
+      }, 300);
+    } else {
+      // 降级：跳转到首页搜索
+      window.location.href = '{{ site.BaseURL }}?q=' + encodeURIComponent(q);
+    }
+  }
+
+  if (btn) btn.addEventListener('click', doSearch);
+  if (input) input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') doSearch();
+  });
+})();
+</script>
+{{ end }}

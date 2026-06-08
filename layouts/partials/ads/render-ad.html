@@ -1,0 +1,70 @@
+{{/*
+  核心广告渲染 partial
+  参数（通过 dict 传入）:
+    positionId  - 广告位 ID
+    idSuffix    - 可选，用于列表页多实例区分
+    Page        - 可选，Page 对象（用于 minWords 判断）
+*/}}
+{{ $positionId := .positionId }}
+{{ $idSuffix := .idSuffix | default "" }}
+{{ $adsData := hugo.Data.ads }}
+
+{{ if and $adsData $adsData.global.enable $adsData.positions }}
+  {{ range $pos := $adsData.positions }}
+    {{ if and (eq $pos.id $positionId) $pos.enable }}
+
+      {{/* minWords 检查 */}}
+      {{ $skip := false }}
+      {{ if and $pos.minWords $.Page }}
+        {{ if lt (len $.Page.Plain) (int $pos.minWords) }}
+          {{ $skip = true }}
+        {{ end }}
+      {{ end }}
+
+      {{ if not $skip }}
+        {{/* 过滤启用的广告 */}}
+        {{ $filtered := slice }}
+        {{ range $ad := $pos.ads }}
+          {{ if $ad.enable }}
+            {{ $filtered = $filtered | append $ad }}
+          {{ end }}
+        {{ end }}
+
+        {{ if $filtered }}
+          {{/* 按权重排序（权重高→低） */}}
+          {{ $sorted := sort $filtered "weight" "desc" }}
+
+          {{ if eq $pos.displayMode "fixed" }}
+            <div class="ad-container ad-{{ $positionId }}{{ if $idSuffix }}-{{ $idSuffix }}{{ end }}">
+              <div class="ad-inner">
+                {{ (index $sorted 0).code | safeHTML }}
+              </div>
+            </div>
+
+          {{ else if eq $pos.displayMode "random" }}
+            {{ $idx := mod now.Unix (len $sorted) }}
+            <div class="ad-container ad-{{ $positionId }}{{ if $idSuffix }}-{{ $idSuffix }}{{ end }}">
+              <div class="ad-inner">
+                {{ (index $sorted $idx).code | safeHTML }}
+              </div>
+            </div>
+
+          {{ else if eq $pos.displayMode "rotate" }}
+            {{ $rotateInterval := $pos.rotateInterval | default 5000 }}
+            {{ $maxToShow := $pos.maxAds | default 1 }}
+            <div class="ad-container ad-rotate ad-{{ $positionId }}{{ if $idSuffix }}-{{ $idSuffix }}{{ end }}"
+                 data-rotate-interval="{{ $rotateInterval }}">
+              {{ range $i, $ad := first $maxToShow $sorted }}
+              <div class="ad-item{{ if eq $i 0 }} active{{ end }}" data-ad-provider="{{ $ad.provider }}">
+                {{ $ad.code | safeHTML }}
+              </div>
+              {{ end }}
+            </div>
+          {{ end }}
+
+        {{ end }}
+      {{ end }}
+
+    {{ end }}
+  {{ end }}
+{{ end }}

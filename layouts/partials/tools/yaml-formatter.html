@@ -1,0 +1,242 @@
+<div class="tool-input-group">
+  <label class="tool-label">输入 YAML</label>
+  <textarea class="tool-textarea" id="yf-input" rows="12" placeholder="请输入 YAML 内容，例如：
+name: 张三
+age: 25
+skills:
+  - Python
+  - JavaScript"></textarea>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="yf-format-btn">格式化</button>
+  <button class="tool-btn tool-btn-primary" id="yf-minify-btn">压缩</button>
+  <button class="tool-btn tool-btn-success" id="yf-json-btn">转 JSON</button>
+  <button class="tool-btn" id="yf-clear-btn">清空</button>
+</div>
+
+<div class="tool-output" id="yf-output-area" style="display:none;">
+  <label class="tool-label">输出</label>
+  <div class="tool-result" id="yf-result"></div>
+  <button class="tool-copy-btn" id="yf-copy-btn">复制</button>
+</div>
+
+<div id="yf-error" style="display:none;color:var(--color-error,#e53e3e);margin-top:8px;"></div>
+
+<script>
+(function(){
+  var input = document.getElementById('yf-input');
+  var result = document.getElementById('yf-result');
+  var outputArea = document.getElementById('yf-output-area');
+  var errorDiv = document.getElementById('yf-error');
+  var copyBtn = document.getElementById('yf-copy-btn');
+
+  function parseYaml(text){
+    var lines = text.split('\n').filter(function(l){ return l.trim() || l === ''; });
+    // Remove empty leading/trailing lines that have no indentation
+    var result = {};
+    var stack = [{ obj: result, indent: -1, key: null }];
+
+    for(var i = 0; i < lines.length; i++){
+      var line = lines[i];
+      var trimmed = line.trim();
+      if(!trimmed || trimmed.startsWith('#')) continue;
+      
+      var indent = line.search(/\S|$/);
+      var colonIdx = trimmed.indexOf(':');
+      var colonBeforeSpace = colonIdx;
+      
+      // Check if colon is before a space (key: value) or end of line (key:)
+      var isKey = false;
+      var afterColon = '';
+      if(colonIdx > 0 && colonIdx < trimmed.length - 1){
+        afterColon = trimmed.slice(colonIdx + 1).trim();
+        isKey = !afterColon;
+      } else if(colonIdx === trimmed.length - 1){
+        isKey = true;
+      }
+
+      // Pop stack back to correct indent level
+      while(stack.length > 1 && stack[stack.length - 1].indent >= indent){
+        stack.pop();
+      }
+
+      var parent = stack[stack.length - 1].obj;
+
+      if(isKey){
+        // It's a key with nested object
+        var key = trimmed.slice(0, colonIdx).trim();
+        var newObj = {};
+        if(Array.isArray(parent)){
+          parent.push(newObj);
+        } else {
+          parent[key] = newObj;
+        }
+        stack.push({ obj: newObj, indent: indent, key: key });
+      } else if(trimmed.startsWith('- ')){
+        // Array item
+        var value = trimmed.slice(2).trim();
+        var arrItem;
+        if(value.indexOf(':') > 0){
+          arrItem = parseSimple(value);
+        } else {
+          arrItem = parseValue(value);
+        }
+
+        if(Array.isArray(parent)){
+          parent.push(arrItem);
+        } else {
+          // Need to create array context
+          var key = stack[stack.length - 1].key;
+          var grandparent = stack.length > 1 ? stack[stack.length - 2].obj : result;
+          if(key && !grandparent[key]){
+            grandparent[key] = [];
+          }
+          var arr = key ? grandparent[key] : result;
+          if(!Array.isArray(arr)){
+            arr = [];
+            if(key) grandparent[key] = arr;
+          }
+          arr.push(arrItem);
+          stack[stack.length - 1].obj = arr;
+        }
+      } else {
+        // Key: value pair
+        var parts = trimmed.split(':');
+        var k = parts[0].trim();
+        var v = parseValue(parts.slice(1).join(':').trim());
+        if(Array.isArray(parent)){
+          parent.push(parseSimple(trimmed));
+        } else {
+          parent[k] = v;
+        }
+      }
+    }
+
+    return result;
+  }
+
+  function parseSimple(str){
+    var idx = str.indexOf(':');
+    if(idx > 0){
+      var key = str.slice(0, idx).trim();
+      var val = parseValue(str.slice(idx + 1).trim());
+      var obj = {};
+      obj[key] = val;
+      return obj;
+    }
+    return parseValue(str);
+  }
+
+  function parseValue(val){
+    if(val === '' || val === 'null' || val === '~') return null;
+    if(val === 'true') return true;
+    if(val === 'false') return false;
+    if(/^\d+$/.test(val) && val.length < 16) return parseInt(val, 10);
+    if(/^\d+\.\d+$/.test(val)) return parseFloat(val);
+    if((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+      return val.slice(1, -1);
+    }
+    return val;
+  }
+
+  function formatYaml(obj, indent){
+    indent = indent || 0;
+    var spaces = '';
+    for(var i = 0; i < indent; i++) spaces += '  ';
+    var lines = [];
+
+    if(Array.isArray(obj)){
+      for(var a = 0; a < obj.length; a++){
+        var item = obj[a];
+        if(item && typeof item === 'object'){
+          var objLines = formatYaml(item, indent);
+          var firstLine = objLines[0];
+          objLines[0] = spaces + '- ' + firstLine.trim();
+          for(var j = 1; j < objLines.length; j++){
+            objLines[j] = spaces + '  ' + objLines[j];
+          }
+          lines = lines.concat(objLines);
+        } else {
+          lines.push(spaces + '- ' + formatValue(item));
+        }
+      }
+    } else {
+      var keys = Object.keys(obj);
+      for(var k = 0; k < keys.length; k++){
+        var key = keys[k];
+        var val = obj[key];
+        if(val && typeof val === 'object' && !Array.isArray(val)){
+          lines.push(spaces + key + ':');
+          lines = lines.concat(formatYaml(val, indent + 1));
+        } else if(Array.isArray(val)){
+          lines.push(spaces + key + ':');
+          lines = lines.concat(formatYaml(val, indent + 1));
+        } else {
+          lines.push(spaces + key + ': ' + formatValue(val));
+        }
+      }
+    }
+
+    return lines;
+  }
+
+  function formatValue(val){
+    if(val === null || val === undefined) return 'null';
+    if(typeof val === 'boolean') return val.toString();
+    if(typeof val === 'number') return val.toString();
+    if(typeof val === 'string' && (val.indexOf(':') > -1 || val.indexOf('#') > -1 || val.indexOf(' ') > -1)){
+      return '"' + val + '"';
+    }
+    return String(val);
+  }
+
+  function process(type){
+    errorDiv.style.display = 'none';
+    var raw = input.value.trim();
+    if(!raw) { showError('请输入 YAML 内容'); return; }
+
+    try{
+      var obj = parseYaml(raw);
+      if(type === 'json'){
+        result.textContent = JSON.stringify(obj, null, 2);
+      } else if(type === 'format'){
+        var lines = formatYaml(obj);
+        result.textContent = lines.join('\n');
+      } else if(type === 'minify'){
+        var text = formatYaml(obj).join('\n');
+        // Simple minify: remove blank lines and extra spaces
+        result.textContent = text;
+      }
+      outputArea.style.display = 'block';
+    } catch(e){
+      showError('YAML 解析失败：' + e.message);
+    }
+  }
+
+  function showError(msg){
+    errorDiv.textContent = msg;
+    errorDiv.style.display = 'block';
+    outputArea.style.display = 'none';
+  }
+
+  document.getElementById('yf-format-btn').addEventListener('click', function(){ process('format'); });
+  document.getElementById('yf-minify-btn').addEventListener('click', function(){ process('minify'); });
+  document.getElementById('yf-json-btn').addEventListener('click', function(){ process('json'); });
+  document.getElementById('yf-clear-btn').addEventListener('click', function(){
+    input.value = '';
+    result.textContent = '';
+    outputArea.style.display = 'none';
+    errorDiv.style.display = 'none';
+  });
+
+  copyBtn.addEventListener('click', function(){
+    var text = result.textContent;
+    if(!text) return;
+    navigator.clipboard.writeText(text).then(function(){
+      copyBtn.textContent = '已复制';
+      setTimeout(function(){ copyBtn.textContent = '复制'; }, 1500);
+    });
+  });
+})();
+</script>

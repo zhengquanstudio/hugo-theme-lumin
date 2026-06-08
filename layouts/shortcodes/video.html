@@ -1,0 +1,7 @@
+{{ $src := .Get "src" }}
+<div class="video-wrapper" style="max-width: 720px; margin: 1.5em auto;">
+  <video controls preload="metadata" style="width:100%; height:auto; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+    <source src="{{ $src }}" type="video/mp4">
+    您的浏览器不支持 video 标签。
+  </video>
+</div>

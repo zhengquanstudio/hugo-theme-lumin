@@ -1,0 +1,94 @@
+<div style="display:flex;gap:10px;flex-wrap:wrap;">
+  <div class="tool-input-group" style="flex:1;min-width:100px;">
+    <label class="tool-label">宽度</label>
+    <input class="tool-input" type="number" id="pi-width" value="800" min="1" max="4000" step="1" placeholder="宽度">
+  </div>
+  <div class="tool-input-group" style="flex:1;min-width:100px;">
+    <label class="tool-label">高度</label>
+    <input class="tool-input" type="number" id="pi-height" value="600" min="1" max="4000" step="1" placeholder="高度">
+  </div>
+</div>
+<div style="display:flex;gap:10px;flex-wrap:wrap;">
+  <div class="tool-input-group" style="flex:1;min-width:100px;">
+    <label class="tool-label">背景色</label>
+    <input type="color" id="pi-bg" value="#cccccc">
+  </div>
+  <div class="tool-input-group" style="flex:1;min-width:100px;">
+    <label class="tool-label">文字色</label>
+    <input type="color" id="pi-fg" value="#666666">
+  </div>
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">文字内容</label>
+  <input class="tool-input" type="text" id="pi-text" value="" placeholder="默认显示尺寸">
+</div>
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="pi-generate">生成占位图</button>
+</div>
+<div id="pi-preview" style="margin-top:12px;"></div>
+
+<script>
+(function() {
+  document.getElementById('pi-width').addEventListener('input', function() {
+    var w = this.value;
+    document.getElementById('pi-text').placeholder = w + '×' + (document.getElementById('pi-height').value || '0');
+  });
+  document.getElementById('pi-height').addEventListener('input', function() {
+    var h = this.value;
+    document.getElementById('pi-text').placeholder = (document.getElementById('pi-width').value || '0') + '×' + h;
+  });
+
+  document.getElementById('pi-generate').addEventListener('click', function() {
+    var w = parseInt(document.getElementById('pi-width').value);
+    var h = parseInt(document.getElementById('pi-height').value);
+    var bg = document.getElementById('pi-bg').value;
+    var fg = document.getElementById('pi-fg').value;
+    var text = document.getElementById('pi-text').value || (w + '×' + h);
+
+    if (isNaN(w) || isNaN(h) || w < 1 || h < 1 || w > 4000 || h > 4000) {
+      document.getElementById('pi-preview').innerHTML = '<div class="tool-output"><div class="tool-output-title">错误</div><p>请输入有效的尺寸（1-4000）。</p></div>';
+      return;
+    }
+
+    var canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    var ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, w, h);
+
+    var fontSize = Math.min(w, h) / 10;
+    ctx.font = fontSize + 'px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = fg;
+
+    var maxWidth = w * 0.8;
+    var size = fontSize;
+    ctx.font = size + 'px sans-serif';
+    while (ctx.measureText(text).width > maxWidth && size > 8) {
+      size -= 2;
+      ctx.font = size + 'px sans-serif';
+    }
+    ctx.fillText(text, w / 2, h / 2);
+
+    var dataUrl = canvas.toDataURL('image/png');
+    document.getElementById('pi-preview').innerHTML = '<div><div class="tool-label">预览</div><img src="' + dataUrl + '" style="max-width:100%;max-height:400px;border:1px solid #ddd;border-radius:4px;"></div>' +
+      '<p style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">' +
+      '<button class="tool-btn tool-btn-success" onclick="var a=document.createElement(\'a\');a.href=\'' + dataUrl + '\';a.download=\'placeholder-' + w + 'x' + h + '.png\';a.click();">下载 PNG</button>' +
+      '<button class="tool-btn" id="pi-copy-url" style="padding:8px 16px;border:1px solid #ddd;background:#fff;cursor:pointer;border-radius:4px;">复制 Data URL</button>' +
+      '</p>';
+
+    document.getElementById('pi-copy-url').addEventListener('click', function() {
+      navigator.clipboard.writeText(dataUrl).then(function() {
+        this.textContent = '已复制!';
+        var self = this;
+        setTimeout(function() { self.textContent = '复制 Data URL'; }, 2000);
+      }.bind(this));
+    });
+  });
+
+  document.getElementById('pi-generate').click();
+})();
+</script>

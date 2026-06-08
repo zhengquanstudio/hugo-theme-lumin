@@ -1,0 +1,98 @@
+{{ define "main" }}
+{{/* 判断是否为分类 section 页面 */}}
+{{ $catSlug := .Section }}
+{{ $catInfo := partial "category-info.html" $catSlug }}
+{{ $isCategorySection := ne $catInfo.title $catSlug }}
+
+{{/* 面包屑导航 */}}
+<nav class="breadcrumb" aria-label="面包屑导航">
+  <ol class="breadcrumb-list">
+    <li class="breadcrumb-item"><a href="{{ site.BaseURL }}"><i class="fas fa-home" style="font-size:0.9em;margin-right:2px;"></i> 首页</a></li>
+    {{ if $isCategorySection }}
+    <li class="breadcrumb-item"><a href="/categories/"><i class="fas fa-folder-open" style="font-size:0.85em;margin-right:4px;opacity:0.8;"></i>分类</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{- if $catInfo.icon }}<i class="{{ $catInfo.icon }}" style="font-size:0.85em;margin-right:4px;opacity:0.8;"></i>{{ end }}{{ $catInfo.title }}</li>
+    {{ else }}
+    <li class="breadcrumb-item active" aria-current="page">{{ .Title }}</li>
+    {{ end }}
+  </ol>
+</nav>
+
+{{/* 分页配置 */}}
+{{ $enablePagination := site.Params.listPage.enablePagination | default true }}
+{{ $listPageSize := site.Params.listPage.pageSize | default 15 }}
+
+<div class="list-page archives-page taxonomy-term-page">
+  <header class="list-header">
+    <h1 class="list-title">
+      {{- if $isCategorySection -}}
+        {{- if $catInfo.icon }}<i style="font-size:0.9rem;margin-right:6px;" class="{{ $catInfo.icon }}"></i> {{ end -}}
+        {{- $catInfo.title -}}
+      {{- else -}}
+        {{- .Title -}}
+      {{- end -}}
+    </h1>
+    {{ with .Description }}
+    <p class="list-description">{{ . }}</p>
+    {{ end }}
+    <div class="list-count">
+      共 {{ len .Pages }} 篇文章
+      {{ if and $enablePagination (gt (len .Pages) $listPageSize) }}
+      <span class="list-pagination-info">（分页显示，每页 {{ $listPageSize }} 篇）</span>
+      {{ end }}
+    </div>
+  </header>
+
+  <div class="taxonomy-term-body">
+    {{ if and $enablePagination (gt (len .Pages) $listPageSize) }}
+      {{/* 启用分页：使用 Paginator */}}
+      {{ $paginator := .Paginate .Pages $listPageSize }}
+      {{ partial "archive-post-list.html" (dict "Pages" $paginator.Pages "isPaginated" true) }}
+
+      {{/* ===== 分页导航 ===== */}}
+      <nav class="list-pagination" aria-label="分页导航">
+        <div class="pagination-wrapper">
+          {{ if $paginator.HasPrev }}
+          <a href="{{ $paginator.Prev.URL }}" class="pagination-btn prev">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            上一页
+          </a>
+          {{ end }}
+
+          <div class="pagination-numbers">
+            {{ range $paginator.Pagers }}
+              {{ if eq . $paginator }}
+              <span class="pagination-number current">{{ .PageNumber }}</span>
+              {{ else if or (ge .PageNumber (sub $paginator.PageNumber 2)) (le .PageNumber (add $paginator.PageNumber 2)) }}
+              <a href="{{ .URL }}" class="pagination-number">{{ .PageNumber }}</a>
+              {{ end }}
+            {{ end }}
+          </div>
+
+          {{ if $paginator.HasNext }}
+          <a href="{{ $paginator.Next.URL }}" class="pagination-btn next">
+            下一页
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </a>
+          {{ end }}
+        </div>
+        <div class="pagination-info">
+          第 {{ $paginator.PageNumber }} / {{ $paginator.TotalPages }} 页，
+          共 {{ $paginator.TotalNumberOfElements }} 篇文章
+        </div>
+      </nav>
+
+    {{ else }}
+      {{/* 未启用分页或文章数不足：显示全部 */}}
+      {{ partial "archive-post-list.html" (dict "Pages" .Pages "isPaginated" false) }}
+    {{ end }}
+  </div>
+
+  {{ if $isCategorySection }}
+  {{ partial "taxonomy-cloud.html" (dict "activeCategory" $catSlug) }}
+  {{ end }}
+</div>
+{{ end }}

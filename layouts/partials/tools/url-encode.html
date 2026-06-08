@@ -1,0 +1,160 @@
+<div class="tool-tabs" id="ue-tabs">
+  <button class="tool-tab active" data-tab="ue-encode">编码</button>
+  <button class="tool-tab" data-tab="ue-decode">解码</button>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">输入内容</label>
+  <textarea class="tool-textarea" id="ue-input" rows="8" placeholder="请输入需要编码或解码的 URL 文本">https://example.com/search?q=你好世界&lang=zh-CN&page=1#section-2</textarea>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">编码模式</label>
+  <select class="tool-select" id="ue-mode">
+    <option value="component" selected>编码组件（encodeURIComponent）</option>
+    <option value="uri">编码完整 URI（encodeURI）</option>
+  </select>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="ue-encode-btn">编码</button>
+  <button class="tool-btn tool-btn-primary" id="ue-decode-btn">解码</button>
+  <button class="tool-btn" id="ue-clear-btn">清空</button>
+</div>
+
+<div class="tool-output" id="ue-output-area" style="display:none;">
+  <div class="tool-result" id="ue-result"></div>
+  <button class="tool-copy-btn" id="ue-copy-btn">复制结果</button>
+</div>
+
+<div id="ue-error" style="display:none;color:var(--color-error,#e53e3e);margin-top:8px;"></div>
+
+<div class="tool-stats" id="ue-stats" style="display:none;">
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="ue-stat-input">0</span>
+    <span class="tool-stat-label">输入长度</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="ue-stat-output">0</span>
+    <span class="tool-stat-label">输出长度</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="ue-stat-encoded">0</span>
+    <span class="tool-stat-label">编码字符数</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  const input = document.getElementById('ue-input');
+  const result = document.getElementById('ue-result');
+  const outputArea = document.getElementById('ue-output-area');
+  const errorDiv = document.getElementById('ue-error');
+  const statsDiv = document.getElementById('ue-stats');
+  const modeSelect = document.getElementById('ue-mode');
+  const tabs = document.querySelectorAll('#ue-tabs .tool-tab');
+
+  let currentTab = 'ue-encode';
+
+  function switchTab(tabId) {
+    currentTab = tabId;
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
+  }
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+  });
+
+  function showError(msg) {
+    errorDiv.textContent = msg;
+    errorDiv.style.display = 'block';
+    outputArea.style.display = 'none';
+    statsDiv.style.display = 'none';
+  }
+
+  function hideError() {
+    errorDiv.style.display = 'none';
+  }
+
+  function showResult(text, inputLen, encodedCount) {
+    result.textContent = text;
+    outputArea.style.display = 'block';
+    statsDiv.style.display = 'flex';
+    document.getElementById('ue-stat-input').textContent = inputLen + ' 字符';
+    document.getElementById('ue-stat-output').textContent = text.length + ' 字符';
+    document.getElementById('ue-stat-encoded').textContent = encodedCount;
+  }
+
+  function countEncodedChars(original, encoded) {
+    let count = 0;
+    let j = 0;
+    for (let i = 0; i < original.length && j < encoded.length; i++) {
+      if (original[i] !== encoded[j]) {
+        count++;
+        while (j < encoded.length && encoded[j] !== '%' && (j === 0 || encoded[j - 1] !== '%')) j++;
+        if (j < encoded.length && encoded[j] === '%') j++;
+        while (j < encoded.length && /[0-9A-Fa-f]/.test(encoded[j])) j++;
+      } else {
+        j++;
+      }
+    }
+    return count;
+  }
+
+  document.getElementById('ue-encode-btn').addEventListener('click', () => {
+    hideError();
+    const raw = input.value;
+    if (!raw) { showError('请输入需要编码的文本'); return; }
+    try {
+      const mode = modeSelect.value;
+      const encoded = mode === 'component' ? encodeURIComponent(raw) : encodeURI(raw);
+      const encodedCount = (encoded.match(/%/g) || []).length / 3;
+      showResult(encoded, raw.length, Math.round(encodedCount));
+      switchTab('ue-encode');
+    } catch(e) {
+      showError('编码失败：' + e.message);
+    }
+  });
+
+  document.getElementById('ue-decode-btn').addEventListener('click', () => {
+    hideError();
+    const raw = input.value.trim();
+    if (!raw) { showError('请输入需要解码的 URL 编码文本'); return; }
+    try {
+      const decoded = decodeURIComponent(raw);
+      showResult(decoded, raw.length, 0);
+      switchTab('ue-decode');
+    } catch(e) {
+      showError('解码失败：无效的 URL 编码字符串');
+    }
+  });
+
+  document.getElementById('ue-clear-btn').addEventListener('click', () => {
+    input.value = '';
+    result.textContent = '';
+    outputArea.style.display = 'none';
+    statsDiv.style.display = 'none';
+    hideError();
+  });
+
+  document.getElementById('ue-copy-btn').addEventListener('click', () => {
+    const text = result.textContent;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('ue-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const btn = document.getElementById('ue-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    });
+  });
+})();
+</script>

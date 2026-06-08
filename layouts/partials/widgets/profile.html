@@ -1,0 +1,128 @@
+{{ if or .widgetEnabled site.Params.profile.enable }}
+<div class="profile-card">
+  {{ with site.Params.profile.backgroundImage }}
+  <div class="profile-card-bg" style="background-image: url('{{ . }}');"></div>
+  {{ else }}
+  <div class="profile-card-bg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+  {{ end }}
+  <div class="profile-card-body">
+    <div class="profile-card-avatar">
+      <img src="{{ site.Params.profile.avatar | default "/images/avatar/avatar.webp" }}" alt="{{ site.Params.profile.author }}">
+    </div>
+    <h3 class="profile-card-name">{{ site.Params.profile.author }}</h3>
+    
+    {{ with site.Params.profile.slogan }}
+    <p class="profile-card-slogan">{{ . }}</p>
+    {{ else }}
+    <p class="profile-card-slogan">{{ site.Params.profile.bio }}</p>
+    {{ end }}
+    
+    <div class="profile-card-social">
+      {{ with site.Params.social.github }}
+      <a href="{{ . }}" target="_blank" rel="noopener" title="GitHub">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.726.083-.726 1.205.082 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.943 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22v3.293c0 .319.214.694.825.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+      </a>
+      {{ end }}
+      {{ with site.Params.social.twitter }}
+      <a href="{{ . }}" target="_blank" rel="noopener" title="Twitter / X">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.552 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      </a>
+      {{ end }}
+      {{ with site.Params.social.youtube }}
+      <a href="{{ . }}" target="_blank" rel="noopener" title="YouTube">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+      </a>
+      {{ end }}
+      {{ with site.Params.social.weibo }}
+      <a href="{{ . }}" target="_blank" rel="noopener" title="微博">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M10.098 20.323c-3.977.391-7.414-1.406-7.672-4.02-.259-2.609 2.759-5.047 6.74-5.441 3.979-.394 7.413 1.404 7.671 4.018.259 2.6-2.759 5.049-6.739 5.443z"/></svg>
+      </a>
+      {{ end }}
+      {{ with site.Params.social.zhihu }}
+      <a href="{{ . }}" target="_blank" rel="noopener" title="知乎">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M5.721 0C2.251 0 0 2.25 0 5.719V18.28C0 21.751 2.252 24 5.721 24h12.56C21.751 24 24 21.75 24 18.281V5.72C24 2.249 21.75 0 18.281 0zm1.964 4.078h6.191c.14-.008.274.014.396.066.122.05.228.13.31.232.08.1.136.22.164.35.03.13.03.266.004.396a.924.924 0 0 1-.168.394.882.882 0 0 1-.31.232.856.856 0 0 1-.396.066H7.685a.856.856 0 0 1-.396-.066.882.882 0 0 1-.31-.232.924.924 0 0 1-.168-.394.856.856 0 0 1 .004-.396.882.882 0 0 1 .164-.35.882.882 0 0 1 .31-.232.856.856 0 0 1 .396-.066zm-2.014 8.078h2.578l1.51 3.672 1.504-3.672h2.578l-2.766 6.078 2.906 6.422h-2.672l-1.617-3.938-1.617 3.938H5.281l2.906-6.422z"/></svg>
+      </a>
+      {{ end }}
+      {{ with site.Params.social.bilibili }}
+      <a href="{{ . }}" target="_blank" rel="noopener" title="Bilibili">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.813 4.653h.854c1.51.054 2.769.578 3.773 1.574 1.004.995 1.524 2.249 1.56 3.76v7.36c-.036 1.51-.556 2.769-1.56 3.773s-2.262 1.524-3.773 1.56H5.333c-1.51-.036-2.769-.556-3.773-1.56S.036 18.858 0 17.347v-7.36c.036-1.511.556-2.765 1.56-3.76 1.004-.996 2.262-1.52 3.773-1.574h.774l-1.174-1.12a1.234 1.234 0 0 1-.373-.906c0-.356.124-.658.373-.907l.027-.027c.267-.249.573-.373.92-.373.347 0 .653.124.92.373L9.653 4.44c.071.071.134.142.187.213h4.267a.836.836 0 0 1 .16-.213l2.853-2.747c.267-.249.573-.373.92-.373.347 0 .662.151.929.4.267.249.391.551.391.907 0 .355-.124.657-.373.906zM5.333 7.24c-.746.018-1.373.276-1.88.773-.506.498-.769 1.13-.786 1.894v7.52c.017.764.28 1.395.786 1.893.507.498 1.134.756 1.88.773h13.334c.746-.017 1.373-.275 1.88-.773.506-.498.769-1.129.786-1.893v-7.52c-.017-.765-.28-1.396-.786-1.894-.507-.497-1.134-.755-1.88-.773zM8 11.107c.373 0 .684.124.933.373.25.249.383.569.4.96v1.173c-.017.391-.15.711-.4.96-.249.25-.56.374-.933.374s-.684-.125-.933-.374c-.25-.249-.383-.569-.4-.96V12.44c.017-.391.15-.711.4-.96.249-.249.56-.373.933-.373zm8 0c.373 0 .684.124.933.373.25.249.383.569.4.96v1.173c-.017.391-.15.711-.4.96-.249.25-.56.374-.933.374s-.684-.125-.933-.374c-.25-.249-.383-.569-.4-.96V12.44c.017-.391.15-.711.4-.96.249-.249.56-.373.933-.373z"/></svg>
+      </a>
+      {{ end }}
+      {{ with site.Params.social.email }}
+      <a href="javascript:void(0)" class="profile-email-link" data-email="{{ . }}" title="Email">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      </a>
+      {{ end }}
+      {{ with site.Params.social.qq }}
+      <a href="javascript:void(0)" class="social-qr-trigger" data-type="qq" data-qr="{{ . }}" title="QQ">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12.003 2c-2.265 0-6.29 1.364-6.29 7.325v1.195S3.55 14.96 3.55 17.474c0 3.853 3.634 4.527 5.122 4.527.394 0 .758-.04 1.084-.116.178.347.455.66.791.86l-.257.67c-.176.46.036.96.473 1.137l.08.032c.25.085.58.046.74-.116.115-.122.115-.287.115-.385V24c1.014-.274 2.172-.525 3.06-.424.416.051 1.153.424 1.153.424s.842-.622.567-.98c-.06-.077-.204-.18-.381-.297.827-.178 1.68-.595 2.156-1.53.152-.298.163-.66.032-1.008l-.257-.67c.336.116.69.16 1.084.16 1.488 0 5.122-.674 5.122-4.527 0-2.514-2.166-6.954-2.166-6.954V9.325C18.292 3.364 14.268 2 12.003 2z"/></svg>
+      </a>
+      {{ end }}
+      {{ with site.Params.social.weixin }}
+      <a href="javascript:void(0)" class="social-qr-trigger" data-type="weixin" data-qr="{{ . }}" title="微信">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178 1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 0 1 .598.082l1.584.926a.272.272 0 0 0 .14.045c.134 0 .24-.11.24-.245 0-.06-.024-.12-.04-.178l-.325-1.233a.492.492 0 0 1 .178-.554C23.028 18.48 24 16.82 24 14.98c0-3.21-2.931-5.952-7.062-6.122zm-2.18 2.769c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.97-.982zm4.844 0c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.97-.982z"/></svg>
+      </a>
+      {{ end }}
+      {{ if site.Params.social.rss }}
+      <a href="{{ "index.xml" | absURL }}" target="_blank" rel="noopener" title="RSS">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
+      </a>
+      {{ end }}
+    </div>
+  </div>
+</div>
+
+{{/* 二维码弹窗 — JS 动态注入到 body，确保居中不受父容器限制 */}}
+{{ if or site.Params.social.qq site.Params.social.weixin }}
+<style>
+.qr-modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center;animation:qr-fade-in .2s ease}
+.qr-modal{background:var(--bg-primary,#fff);border-radius:16px;padding:28px 24px 20px;max-width:320px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2);display:flex;flex-direction:column;align-items:center}
+.qr-modal-title{font-size:1rem;font-weight:700;color:var(--text-primary,#1f2937);margin-bottom:12px}
+.qr-modal-image{width:200px;height:200px;border-radius:8px;object-fit:contain;background:var(--bg-secondary,#f9fafb);display:block;margin:0 auto}
+.qr-modal-hint{font-size:.78rem;color:var(--text-muted,#9ca3af);margin-top:10px}
+@keyframes qr-fade-in{from{opacity:0}to{opacity:1}}
+</style>
+
+<script>
+(function(){
+  // 动态创建弹窗并注入 body
+  var overlay=document.createElement('div');
+  overlay.className='qr-modal-overlay';
+  overlay.id='qrModal';
+  overlay.style.display='none';
+  overlay.innerHTML='<div class="qr-modal"><div class="qr-modal-title" id="qrModalTitle"></div><img class="qr-modal-image" id="qrModalImage" src="" alt="QR Code"><p class="qr-modal-hint">打开对应 App 扫一扫</p></div>';
+  document.body.appendChild(overlay);
+
+  var triggers=document.querySelectorAll('.social-qr-trigger');
+  triggers.forEach(function(el){
+    el.addEventListener('click',function(e){
+      e.preventDefault();
+      var type=el.dataset.type;
+      var qr=el.dataset.qr;
+      document.getElementById('qrModalTitle').textContent=type==='qq'?'QQ 扫码联系':'微信 扫码联系';
+      document.getElementById('qrModalImage').src=qr;
+      overlay.style.display='flex';
+    });
+  });
+  window.closeQrModal=function(){
+    overlay.style.display='none';
+  };
+  overlay.addEventListener('click',function(e){if(e.target===overlay)closeQrModal();});
+})();
+</script>
+{{ end }}
+{{ end }}
+
+{{/* 邮箱链接：JS 动态注入 mailto，绕过 Cloudflare Email Obfuscation */}}
+<script>
+(function(){
+  var emailLinks=document.querySelectorAll('.profile-email-link');
+  emailLinks.forEach(function(el){
+    el.addEventListener('click',function(e){
+      e.preventDefault();
+      var email=el.dataset.email;
+      if(email)window.location.href='mailto:'+email;
+    });
+  });
+})();
+</script>

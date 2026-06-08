@@ -1,0 +1,32 @@
+{{- /* series-data.html — 共享的系列导航数据计算，返回 dict */ -}}
+{{- $page := . -}}
+{{- $topicName := index $page.Params.topics 0 -}}
+{{- $topicPage := site.GetPage (printf "/topics/%s" $topicName) -}}
+{{- $topicTitle := $topicName -}}
+{{- with $topicPage -}}
+  {{- $topicTitle = .Title | default $topicName -}}
+{{- end -}}
+
+{{- $allPages := slice -}}
+{{- if $topicPage -}}
+  {{- range $topicPage.Pages -}}
+    {{- $allPages = $allPages | append (dict "page" . "date" .Date) -}}
+  {{- end -}}
+{{- end -}}
+
+{{- $sorted := sort $allPages "date" -}}
+{{- $currentIndex := 0 -}}
+{{- $total := len $sorted -}}
+{{- range $idx, $item := $sorted -}}
+  {{- if eq $item.page.RelPermalink $page.RelPermalink -}}
+    {{- $currentIndex = add $idx 1 -}}
+  {{- end -}}
+{{- end -}}
+
+{{- return (dict 
+  "topicPage" $topicPage
+  "topicTitle" $topicTitle
+  "sorted" $sorted
+  "currentIndex" $currentIndex
+  "total" $total
+) -}}

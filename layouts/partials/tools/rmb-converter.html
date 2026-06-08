@@ -1,0 +1,45 @@
+<div class="tool-section">
+  <div class="tool-title"><i class="fa-solid fa-yen-sign"></i> 金额大写转换</div>
+  <div class="tool-row">
+    <div class="tool-input-group" style="flex:1">
+      <label class="tool-label">阿拉伯数字金额 <span style="color:var(--text-secondary);font-weight:400">(最大 9,999,999,999,999.99)</span></label>
+      <input type="text" class="tool-input" id="rmb-input" placeholder="例如: 123456.78">
+    </div>
+    <div class="tool-input-group" style="flex:2">
+      <label class="tool-label">人民币大写</label>
+      <input type="text" class="tool-input" id="rmb-output" readonly placeholder="壹拾贰万叁仟肆佰伍拾陆元柒角捌分">
+    </div>
+  </div>
+  <div class="tool-btn-group">
+    <button class="tool-btn tool-btn-primary" onclick="rmbToUpper()"><i class="fa-solid fa-right-left"></i> 转换</button>
+    <button class="tool-btn" onclick="rmbCopy()"><i class="fa-solid fa-copy"></i> 复制</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var digits=['零','壹','贰','叁','肆','伍','陆','柒','捌','玖'];
+  var radices=['','拾','佰','仟'];
+  var bigRadices=['','万','亿'];
+  function toChinese(num){
+    var str='',pos=0,zeroCount=0;
+    while(num>0){var p=num%10;if(p===0)zeroCount++;else{if(zeroCount>0)str=digits[0]+str;str=digits[p]+radices[pos]+str;zeroCount=0;}num=Math.floor(num/10);pos++;if(pos%4===0&&num>0&&pos>=4){str=bigRadices[Math.floor(pos/4)]+str;}}
+    return str;
+  }
+  window.rmbToUpper=function(){
+    var input=document.getElementById('rmb-input').value.trim();
+    if(!input||isNaN(parseFloat(input))){document.getElementById('rmb-output').value='请输入有效金额';return;}
+    var parts=input.split('.'),intPart=parseInt(parts[0]||'0'),decPart=parts[1]?parts[1].substring(0,2).padEnd(2,'0'):'00';
+    if(intPart>9999999999999){document.getElementById('rmb-output').value='金额超出范围';return;}
+    var result='';
+    if(intPart===0)result+=digits[0];
+    else result+=toChinese(intPart);
+    result+='元';
+    var j=parseInt(decPart[0]),f=parseInt(decPart[1]);
+    if(j===0&&f===0)result+='整';
+    else{if(j>0)result+=digits[j]+'角';if(f>0)result+=digits[f]+'分';}
+    document.getElementById('rmb-output').value=result;
+  };
+  window.rmbCopy=function(){var el=document.getElementById('rmb-output');el.select();document.execCommand('copy');};
+})();
+</script>

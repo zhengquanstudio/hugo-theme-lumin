@@ -1,0 +1,242 @@
+{{ if site.Params.weather.enable }}
+<div class="widget widget-weather">
+  <h4 class="widget-title">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+    天气预报
+  </h4>
+  <div class="weather-widget-body" id="weather-main">
+    <div class="weather-loading">加载中...</div>
+  </div>
+  <div class="weather-widget-detail" id="weather-detail"></div>
+</div>
+
+<script>
+(function() {
+  var mainEl = document.getElementById('weather-main');
+  var detailEl = document.getElementById('weather-detail');
+  if (!mainEl) return;
+
+  var cacheKey = 'lumin_weather_v7';
+  var cacheTimeout = {{ site.Params.weather.cacheMinutes | default 30 }} * 60 * 1000;
+
+  var weatherIcons = {
+    0: '\u2600\uFE0F',
+    1: '\uD83C\uDF24\uFE0F',
+    2: '\u26C5',
+    3: '\u2601\uFE0F',
+    45: '\uD83C\uDF2B\uFE0F',
+    48: '\uD83C\uDF2B\uFE0F',
+    51: '\uD83C\uDF26\uFE0F',
+    53: '\uD83C\uDF26\uFE0F',
+    55: '\uD83C\uDF27\uFE0F',
+    56: '\uD83C\uDF27\uFE0F',
+    57: '\uD83C\uDF27\uFE0F',
+    61: '\uD83C\uDF27\uFE0F',
+    63: '\uD83C\uDF27\uFE0F',
+    65: '\uD83C\uDF27\uFE0F',
+    66: '\uD83C\uDF27\uFE0F',
+    67: '\uD83C\uDF27\uFE0F',
+    71: '\u2744\uFE0F',
+    73: '\u2744\uFE0F',
+    75: '\u2744\uFE0F',
+    77: '\u2744\uFE0F',
+    80: '\uD83C\uDF28\uFE0F',
+    81: '\uD83C\uDF28\uFE0F',
+    82: '\uD83C\uDF28\uFE0F',
+    85: '\uD83C\uDF28\uFE0F',
+    86: '\uD83C\uDF28\uFE0F',
+    95: '\u26C8\uFE0F',
+    96: '\u26C8\uFE0F',
+    99: '\u26C8\uFE0F'
+  };
+
+  var weatherTexts = {
+    0: '\u6674', 1: '\u5927\u90E8\u6674\u6717', 2: '\u591A\u4E91',
+    3: '\u9634', 45: '\u96FE', 48: '\u96FE\u51C9',
+    51: '\u5C0F\u6BDB\u6BDB\u96E8', 53: '\u6BDB\u6BDB\u96E8', 55: '\u5927\u6BDB\u6BDB\u96E8',
+    56: '\u51BB\u6BDB\u6BDB\u96E8', 57: '\u51BB\u6BDB\u6BDB\u96E8',
+    61: '\u5C0F\u96E8', 63: '\u4E2D\u96E8', 65: '\u5927\u96E8',
+    66: '\u51BB\u96E8', 67: '\u51BB\u96E8',
+    71: '\u5C0F\u96EA', 73: '\u4E2D\u96EA', 75: '\u5927\u96EA', 77: '\u96EA\u7C92',
+    80: '\u9635\u96E8', 81: '\u9635\u96E8', 82: '\u5927\u9635\u96E8',
+    85: '\u9635\u96EA', 86: '\u9635\u96EA',
+    95: '\u96F7\u66B4', 96: '\u96F7\u66B4\u51FA\u96F9', 99: '\u5927\u96F7\u66B4\u51FA\u96F9'
+  };
+
+  function windDir(deg) {
+    if (deg == null) return '';
+    var dirs = ['\u5317', '\u4E1C\u5317', '\u4E1C', '\u4E1C\u5357', '\u5357', '\u897F\u5357', '\u897F', '\u897F\u5317'];
+    return dirs[Math.round(deg / 45) % 8] + '\u98CE';
+  }
+
+  function windScale(speedKmh) {
+    if (speedKmh == null) return '';
+    if (speedKmh < 1) return '0\u7EA7';
+    if (speedKmh < 6) return '1\u7EA7';
+    if (speedKmh < 12) return '2\u7EA7';
+    if (speedKmh < 20) return '3\u7EA7';
+    if (speedKmh < 29) return '4\u7EA7';
+    if (speedKmh < 39) return '5\u7EA7';
+    if (speedKmh < 50) return '6\u7EA7';
+    if (speedKmh < 62) return '7\u7EA7';
+    if (speedKmh < 75) return '8\u7EA7';
+    if (speedKmh < 89) return '9\u7EA7';
+    if (speedKmh < 103) return '10\u7EA7';
+    if (speedKmh < 118) return '11\u7EA7';
+    return '12\u7EA7';
+  }
+
+  function render(d) {
+    var icon = weatherIcons[d.code] || '\u2600\uFE0F';
+    var text = weatherTexts[d.code] || '';
+    var wd = windDir(d.windDirDeg);
+    var ws = windScale(d.windSpeed);
+
+    mainEl.innerHTML =
+      '<div class="weather-primary">' +
+        '<span class="weather-icon">' + icon + '</span>' +
+        '<span class="weather-temp">' + d.temp + '\u00B0</span>' +
+      '</div>' +
+      '<div class="weather-desc">' + text + '</div>' +
+      '<div class="weather-city">\uD83D\uDCCD ' + d.city + '</div>';
+
+    var visKm = d.visibility != null ? (d.visibility / 1000).toFixed(1) : '--';
+
+    detailEl.innerHTML =
+      '<div class="weather-detail-row"><span class="weather-detail-label">\uD83C\uDF2C\uFE0F ' + wd + '</span><span class="weather-detail-value">' + ws + ' ' + d.windSpeed + 'km/h</span></div>' +
+      '<div class="weather-detail-row"><span class="weather-detail-label">\uD83D\uDCA7 \u6E7F\u5EA6</span><span class="weather-detail-value">' + (d.humidity != null ? d.humidity : '--') + '%</span></div>' +
+      '<div class="weather-detail-row"><span class="weather-detail-label">\uD83C\uDFEB \u6C14\u538B</span><span class="weather-detail-value">' + (d.pressure != null ? d.pressure.toFixed(0) : '--') + 'hPa</span></div>' +
+      '<div class="weather-detail-row"><span class="weather-detail-label">\uD83D\uDC41 \u80FD\u89C1\u5EA6</span><span class="weather-detail-value">' + visKm + 'km</span></div>';
+  }
+
+  function fetchWeather(lat, lon, city) {
+    var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat.toFixed(4) +
+      '&longitude=' + lon.toFixed(4) +
+      '&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,pressure_msl,visibility' +
+      '&timezone=auto';
+
+    var xhr = new XMLHttpRequest();
+    xhr.timeout = 10000;
+    xhr.open('GET', url, true);
+    xhr.onload = function() {
+      if (xhr.status === 200) {
+        try {
+          var json = JSON.parse(xhr.responseText);
+          if (json.current) {
+            var c = json.current;
+            var data = {
+              city: city,
+              temp: c.temperature_2m,
+              code: c.weather_code,
+              humidity: c.relative_humidity_2m,
+              windSpeed: c.wind_speed_10m,
+              windDirDeg: c.wind_direction_10m,
+              pressure: c.pressure_msl,
+              visibility: c.visibility,
+              ts: Date.now()
+            };
+            localStorage.setItem(cacheKey, JSON.stringify(data));
+            render(data);
+          }
+        } catch(e) {
+          mainEl.innerHTML = '<div class=\'weather-loading\'>天气数据解析失败</div>';
+        }
+      }
+    };
+    xhr.onerror = function() {
+      mainEl.innerHTML = '<div class=\'weather-loading\'>网络请求失败</div>';
+    };
+    xhr.ontimeout = function() {
+      mainEl.innerHTML = '<div class=\'weather-loading\'>请求超时</div>';
+    };
+    xhr.send();
+  }
+
+  try {
+    var cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      var data = JSON.parse(cached);
+      if (Date.now() - data.ts < cacheTimeout) {
+        render(data);
+        return;
+      }
+    }
+  } catch(e) {}
+
+  // 免费 HTTPS + CORS 前端 IP 定位 API 列表（2026-06 更新）
+  var geoAPIs = [
+    { url: 'https://api.ipapi.is/', parse: function(j) { var loc = j.location || {}; return loc && loc.latitude && loc.longitude ? { lat: loc.latitude, lon: loc.longitude, city: loc.city || '' } : null; } },
+    { url: 'https://ipinfo.io/json', parse: function(j) { if (!j.loc) return null; var parts = j.loc.split(','); return { lat: parseFloat(parts[0]), lon: parseFloat(parts[1]), city: j.city || '' }; } }
+  ];
+
+  function doGeoLookup() {
+    var isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+    function handleGeoResult(lat, lon, city) {
+      if (lat && lon && lat !== 0 && lon !== 0) {
+        fetchWeather(lat, lon, city);
+        return true;
+      }
+      return false;
+    }
+
+    // 依次尝试多个 CDN API
+    function tryGeoAPIs(index) {
+      if (index >= geoAPIs.length) {
+        mainEl.innerHTML = '<div class=\'weather-loading\'>定位失败</div>';
+        return;
+      }
+      var api = geoAPIs[index];
+      var xhr = new XMLHttpRequest();
+      xhr.timeout = 8000;
+      xhr.open('GET', api.url, true);
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          try {
+            var json = JSON.parse(xhr.responseText);
+            var geo = api.parse(json);
+            if (geo && handleGeoResult(geo.lat, geo.lon, geo.city)) return;
+          } catch(e) {}
+        }
+        console.warn('[Weather] API ' + api.url + ' failed, trying next...');
+        tryGeoAPIs(index + 1);
+      };
+      xhr.onerror = function() { tryGeoAPIs(index + 1); };
+      xhr.ontimeout = function() { tryGeoAPIs(index + 1); };
+      xhr.send();
+    }
+
+    if (isLocal) {
+      // 本地直接用后端
+      var xhr = new XMLHttpRequest();
+      xhr.timeout = 8000;
+      xhr.open('GET', 'http://localhost:8888/api/public/geoip', true);
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          try { var json = JSON.parse(xhr.responseText); if (handleGeoResult(json.latitude, json.longitude, json.city)) return; } catch(e) {}
+        }
+        mainEl.innerHTML = '<div class=\'weather-loading\'>定位失败</div>';
+      };
+      xhr.onerror = function() { mainEl.innerHTML = '<div class=\'weather-loading\'>网络异常</div>'; };
+      xhr.ontimeout = function() { mainEl.innerHTML = '<div class=\'weather-loading\'>定位超时</div>'; };
+      xhr.send();
+    } else {
+      // 线上环境：依次尝试多个前端 CDN API
+      tryGeoAPIs(0);
+    }
+  }
+
+  doGeoLookup();
+})();
+</script>
+{{ end }}

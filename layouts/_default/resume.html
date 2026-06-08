@@ -1,0 +1,110 @@
+{{ define "main" }}
+<nav class="breadcrumb" aria-label="面包屑导航">
+  <ol class="breadcrumb-list">
+    <li class="breadcrumb-item"><a href="{{ site.BaseURL }}"><i class="fas fa-home" style="font-size:0.9em;margin-right:2px;"></i> 首页</a></li>
+    <li class="breadcrumb-item"><a href="{{ "about" | relURL }}"><i class="fas fa-user" style="font-size:0.85em;margin-right:3px;"></i>关于</a></li>
+    <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-file-alt" style="font-size:0.85em;margin-right:4px;opacity:0.8;"></i>{{ .Title }}</li>
+  </ol>
+</nav>
+
+<div class="list-page resume-page">
+  <header class="list-header">
+    <h1 class="list-title"><i class="fas fa-file-alt" style="color:var(--accent-color,#6366f1);"></i> {{ .Title }}</h1>
+    {{ with .Description }}
+    <p class="list-description">{{ . }}</p>
+    {{ end }}
+  </header>
+
+  <style>
+  /* 隐藏右侧文章目录，保留左侧侧边栏 */
+  .main-wrapper:has(.resume-page) .post-toc-sidebar{display:none!important}
+  /* 让主内容区域扩展到原来 TOC 的位置（两列布局：左侧边栏 + 宽屏主内容） */
+  .main-wrapper:has(.resume-page) .layout-grid{grid-template-columns:var(--sidebar-width) 1fr!important;gap:36px!important}
+  .resume-page{max-width:100%;margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+  .resume-page .list-header{padding:28px 0;margin-bottom:0;border-bottom:2px solid var(--border-color,#e5e7eb);background:transparent}
+  .resume-page .list-title{font-size:1.8rem;font-weight:700;color:var(--text-primary);margin:0 0 10px 0;letter-spacing:-0.02em;display:inline-flex;align-items:center;gap:10px}
+  .resume-page .list-description{font-size:0.95rem;color:var(--text-secondary);margin:0;line-height:1.6}
+
+  /* ===== 简历整体容器 ===== */
+  .resume-container{max-width:100%;display:grid;grid-template-columns:1fr 340px;gap:28px;margin:0}
+  @media(max-width:860px){.resume-container{grid-template-columns:1fr}}
+
+  /* ===== 卡片容器 ===== */
+  .resume-section{background:var(--bg-card,#fff);border-radius:16px;padding:26px 28px;margin-bottom:22px;border:1px solid var(--border-color,#e2e8f0);box-shadow:0 1px 3px rgba(0,0,0,.04);transition:box-shadow .2s}
+  .resume-section:hover{box-shadow:0 4px 16px rgba(0,0,0,.06)}
+  .resume-section:last-child{margin-bottom:0}
+  .resume-section-title{font-size:1.05rem;font-weight:700;color:var(--text-primary);margin:0 0 18px 0;display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:2px solid var(--accent-color)}
+  .resume-section-title .icon-box{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;background:linear-gradient(135deg,var(--accent-color),#4f46e5);color:#fff;border-radius:10px;font-size:15px}
+
+  /* ===== 头像+信息头部 ===== */
+  .resume-hero{display:flex;align-items:center;gap:20px;background:var(--bg-card);border-radius:16px;padding:28px 30px;margin-bottom:22px;border:1px solid var(--border-color)}
+  .resume-hero .resume-avatar{width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--accent-color);flex-shrink:0}
+  .resume-hero-info{flex:1;min-width:0}
+  .resume-hero-name{font-size:1.65rem;font-weight:800;color:var(--text-primary);margin:0 0 4px;letter-spacing:-.02em}
+  .resume-hero-title{font-size:.95rem;color:var(--accent-color);font-weight:600;margin:0 0 10px}
+  .resume-contacts{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--text-secondary)}
+  .resume-contacts a{color:inherit;text-decoration:none;transition:color .2s}
+  .resume-contacts a:hover{color:var(--accent-color)}
+
+  /* ===== 时间线 ===== */
+  .timeline-item{position:relative;padding:0 0 20px 28px}
+  .timeline-item:last-child{padding-bottom:0}
+  .timeline-item::before{content:'';position:absolute;left:8px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--accent-color);box-shadow:0 0 0 4px rgba(99,102,241,.15);z-index:1}
+  .timeline-item::after{content:'';position:absolute;left:12px;top:20px;bottom:0;width:2px;background:linear-gradient(to bottom,var(--accent-color),var(--border-color));border-radius:1px}
+  .timeline-item:last-child::after{display:none}
+  [data-theme="dark"] .timeline-item::before{box-shadow:0 0 0 4px rgba(129,140,248,.25)}
+  [data-theme="dark"] .timeline-item::after{background:linear-gradient(to bottom,var(--accent-color),var(--border-color))}
+  .timeline-role{font-size:.98rem;font-weight:700;color:var(--text-primary);display:inline}
+  .timeline-period{font-size:.78rem;color:var(--text-tertiary);margin-left:10px;font-weight:500;white-space:nowrap}
+  .timeline-org{font-size:.85rem;color:var(--accent-color);font-weight:600;margin:4px 0 8px 0}
+  .timeline-desc{font-size:.85rem;color:var(--text-secondary);line-height:1.65;margin:0}
+  .timeline-desc ul{margin:6px 0 0;padding-left:18px}
+  .timeline-desc li{margin-bottom:4px}
+
+  /* ===== 技能条 ===== */
+  .skill-row{margin-bottom:14px}
+  .skill-row:last-child{margin-bottom:0}
+  .skill-info{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .skill-name{font-size:.88rem;font-weight:600;color:var(--text-primary)}
+  .skill-pct{font-size:.75rem;color:var(--text-tertiary)}
+  .skill-bar{height:6px;background:var(--border-color);border-radius:3px;overflow:hidden}
+  .skill-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent-color),#818cf8)}
+
+  /* ===== 标签云 ===== */
+  .tag-list{display:flex;flex-wrap:wrap;gap:8px}
+  .tag-pill{padding:5px 14px;font-size:.8rem;font-weight:500;border-radius:20px;border:1px solid var(--border-color);color:var(--text-secondary);background:var(--bg-card)}
+  [data-theme="dark"] .tag-pill{border-color:#334155;background:rgba(30,41,59,.6)}
+
+  /* ===== 简介 ===== */
+  .resume-bio{font-size:.92rem;color:var(--text-secondary);line-height:1.75}
+
+  /* ===== 项目卡片 ===== */
+  .project-card{margin-bottom:16px;padding-bottom:16px;border-bottom:1px dashed var(--border-color)}
+  .project-card:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
+  .project-card h3{font-size:.93rem;font-weight:700;color:var(--text-primary);margin:0 0 4px}
+  .project-card h3 a{color:inherit;text-decoration:none}
+  .project-card h3 a:hover{color:var(--accent-color)}
+  .project-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}
+  .project-tags span{font-size:.7rem;padding:2px 8px;border-radius:10px;background:rgba(99,102,241,.08);color:var(--accent-color);font-weight:500}
+  .project-card p{font-size:.82rem;color:var(--text-secondary);line-height:1.55;margin:0}
+
+  @media(max-width:520px){
+    .resume-hero{flex-direction:column;text-align:center;padding:22px 20px}
+    .resume-contacts{justify-content:center}
+    .resume-section{padding:18px 16px}
+    .resume-section-title{font-size:.95rem}
+    .resume-hero-name{font-size:1.3rem}
+    .resume-page{padding:16px 12px}
+  }
+
+  @media print{
+    .resume-section{box-shadow:none!important;border:1px solid #e2e8f0!important;padding:16px 20px!important;page-break-inside:avoid}
+    .resume-page{padding:0!important;margin:0!important}.breadcrumb,.comments-section{display:none}
+  }
+  </style>
+
+  {{ .Content }}
+
+  {{ partial "comments.html" . }}
+</div>
+{{ end }}

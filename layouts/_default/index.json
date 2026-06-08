@@ -1,0 +1,15 @@
+[{{- $pages := site.RegularPages }}
+{{- $total := len $pages }}
+{{- range $index, $page := $pages }}
+{
+  "title": {{ $page.Title | jsonify }},
+  "permalink": {{ $page.Permalink | jsonify }},
+  "date": {{ $page.Date.Format "2006-01-02" | jsonify }},
+  "summary": {{ $page.Summary | plainify | truncate 200 | jsonify }},
+  "content": {{ $page.Plain | truncate 1200 | jsonify }},
+  "tags": {{ with $page.Params.tags }}{{ . | jsonify }}{{ else }}[]{{ end }},
+  "categories": {{ with $page.Params.categories }}{{ . | jsonify }}{{ else }}[]{{ end }},
+  "section": {{ $page.Section | jsonify }}
+}{{ if ne (add $index 1) $total }},{{ end }}
+{{- end }}
+]

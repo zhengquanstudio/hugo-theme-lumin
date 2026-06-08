@@ -1,0 +1,40 @@
+{{/* 卡片式链接 - 通用 */}}
+{{ $url := .Get "url" | default "#" }}
+{{ $title := .Get "title" | default "" }}
+{{ $desc := .Get "description" | default (.Get "desc" | default "") }}
+{{ $img := .Get "image" | default (.Get "img" | default "") }}
+{{ $icon := .Get "icon" | default "fa-arrow-up-right-from-square" }}
+
+<a href="{{ $url }}" target="_blank" rel="noopener nofollow"
+   class="card-link"
+   style="display:flex;align-items:center;gap:16px;padding:18px;margin:1.2em 0;
+          border-radius:12px;background:var(--bg-secondary,#f9fafb);
+          border:1px solid var(--border-light,#e5e7eb);text-decoration:none;
+          color:var(--text-primary,#111827);transition:all .25s ease;
+          box-shadow:0 1px 3px rgba(0,0,0,.04);">
+  {{ with $img }}
+  <img src="{{ . }}" alt="{{ $title }}封面图"
+       style="width:80px;height:56px;object-fit:cover;border-radius:8px;flex-shrink:0;" />
+  {{ else }}
+  <div class="card-icon" style="
+    width:56px;height:56px;border-radius:10px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,var(--accent-color,#2a9d8f),var(--accent-color,#20a085)dd);
+  ">
+    <i class="fas {{ $icon }}" style="color:#fff;font-size:1.15rem;"></i>
+  </div>
+  {{ end }}
+  <div style="flex:1;min-width:0;">
+    <div style="font-size:.95rem;font-weight:600;line-height:1.35;margin-bottom:5px;
+                overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+      {{ with $title }}{{ . }}{{ else }}点击查看 →{{ end }}
+    </div>
+    <div style="font-size:.82rem;color:var(--text-muted,#6b7280);line-height:1.4;
+                overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+      {{ with $desc }}{{ . }}{{ else }}{{ $url }}{{ end }}
+    </div>
+  </div>
+  <i class="fas fa-chevron-right" style="color:var(--text-muted,#9ca3af);flex-shrink:0;font-size:.75rem;"></i>
+</a>
+
+<style>.card-link:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.1);border-color:var(--accent-color33,#2a9d8f33);}</style>

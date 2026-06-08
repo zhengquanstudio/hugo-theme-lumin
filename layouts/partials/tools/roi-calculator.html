@@ -1,0 +1,48 @@
+<div class="tool-input-group">
+  <label class="tool-label">初始投资</label>
+  <input class="tool-input" type="number" id="roi-initial" value="100000" step="0.01" min="0" placeholder="初始投资金额">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">最终价值</label>
+  <input class="tool-input" type="number" id="roi-final" value="150000" step="0.01" min="0" placeholder="最终价值">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">投资年限</label>
+  <input class="tool-input" type="number" id="roi-years" value="5" step="0.01" min="0.01" placeholder="年数">
+</div>
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="roi-calc">计算回报</button>
+</div>
+<div class="tool-result" id="roi-result"></div>
+
+<script>
+(function() {
+  document.getElementById('roi-calc').addEventListener('click', function() {
+    var initial = parseFloat(document.getElementById('roi-initial').value);
+    var final = parseFloat(document.getElementById('roi-final').value);
+    var years = parseFloat(document.getElementById('roi-years').value);
+    var result = document.getElementById('roi-result');
+
+    if (isNaN(initial) || isNaN(final) || isNaN(years) || initial <= 0 || years <= 0) {
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">错误</div><p>请输入有效的数值。</p></div>';
+      return;
+    }
+
+    var totalReturn = final - initial;
+    var roi = (totalReturn / initial) * 100;
+    var annualized = (Math.pow(final / initial, 1 / years) - 1) * 100;
+
+    result.innerHTML = '<div class="tool-output"><div class="tool-output-title">投资回报分析</div>' +
+      '<div class="tool-stats"><div class="tool-stat"><div class="tool-stat-value">¥' + totalReturn.toFixed(2) + '</div><div class="tool-stat-label">总回报</div></div>' +
+      '<div class="tool-stat"><div class="tool-stat-value">' + roi.toFixed(2) + '%</div><div class="tool-stat-label">总ROI</div></div>' +
+      '<div class="tool-stat"><div class="tool-stat-value">' + annualized.toFixed(2) + '%</div><div class="tool-stat-label">年化收益率</div></div></div>' +
+      '<div style="margin-top:12px;font-size:13px;color:#666;">' +
+      '<p>总回报 = ¥' + final.toFixed(2) + ' - ¥' + initial.toFixed(2) + ' = ¥' + totalReturn.toFixed(2) + '</p>' +
+      '<p>ROI = (' + final.toFixed(2) + ' - ' + initial.toFixed(2) + ') / ' + initial.toFixed(2) + ' × 100% = ' + roi.toFixed(2) + '%</p>' +
+      '<p>年化收益率 = [(' + final.toFixed(2) + ' / ' + initial.toFixed(2) + ')^(1/' + years + '年) - 1] × 100% = ' + annualized.toFixed(2) + '%</p>' +
+      '</div>';
+  });
+
+  document.getElementById('roi-calc').click();
+})();
+</script>

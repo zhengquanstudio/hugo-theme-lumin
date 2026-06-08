@@ -1,0 +1,155 @@
+<style>
+.rc-swatch{width:80px;height:80px;border-radius:14px;cursor:pointer;border:2px solid transparent;transition:all .2s;position:relative;}
+.rc-swatch:hover{transform:scale(1.08);border-color:#fff;box-shadow:0 4px 16px rgba(0,0,0,.2);}
+.rc-swatch-hex{font-size:.68rem;text-align:center;margin-top:5px;color:var(--text-muted,#6b7280);font-family:monospace;}
+.rc-palette{display:flex;flex-wrap:wrap;gap:14px;}
+.rc-palette-item{display:flex;flex-direction:column;align-items:center;}
+</style>
+
+<div class="tool-btn-row" style="flex-wrap:wrap;gap:10px;">
+  <button class="tool-btn tool-btn-primary" id="rc-single-btn"><i class="fas fa-wand-magic-sparkles"></i> 随机颜色</button>
+  <button class="tool-btn" id="rc-palette-btn"><i class="fas fa-palette"></i> 随机色板（8色）</button>
+  <button class="tool-btn" id="rc-pastel-btn"><i class="fas fa-rainbow"></i> 柔和色调</button>
+  <button class="tool-btn" id="rc-dark-btn"><i class="fas fa-moon"></i> 深色系</button>
+  <button class="tool-btn tool-btn-danger" id="rc-clear-btn"><i class="fas fa-trash"></i> 清空</button>
+</div>
+
+<div id="rc-single-display" style="display:none;margin-top:18px;">
+  <div id="rc-single-preview" style="height:100px;border-radius:16px;border:1.5px solid var(--border-color,#e5e7eb);margin-bottom:14px;cursor:pointer;transition:all .3s;" title="点击复制 HEX"></div>
+  <div class="tool-stats">
+    <div class="tool-stat"><div class="tool-stat-value" id="rc-s-hex" style="font-size:1rem;"></div><div class="tool-stat-label">HEX<button class="tool-copy-btn" style="margin-left:6px;" id="rc-s-hex-copy"><i class="far fa-copy"></i></button></div></div>
+    <div class="tool-stat"><div class="tool-stat-value" id="rc-s-rgb" style="font-size:.85rem;"></div><div class="tool-stat-label">RGB</div></div>
+    <div class="tool-stat"><div class="tool-stat-value" id="rc-s-hsl" style="font-size:.85rem;"></div><div class="tool-stat-label">HSL</div></div>
+  </div>
+</div>
+
+<div id="rc-palette-display" style="display:none;margin-top:18px;">
+  <div class="tool-output-label" style="margin-bottom:12px;">
+    <span class="tool-output-title" id="rc-palette-title">随机色板</span>
+    <button class="tool-copy-btn" id="rc-palette-copy"><i class="far fa-copy"></i> 复制全部 HEX</button>
+  </div>
+  <div class="rc-palette" id="rc-palette-grid"></div>
+  <div style="margin-top:10px;font-size:.78rem;color:var(--text-muted,#9ca3af);">点击色块复制颜色代码</div>
+</div>
+
+<div id="rc-history" style="margin-top:24px;display:none;">
+  <div class="tool-output-label" style="margin-bottom:10px;">
+    <span class="tool-output-title">历史颜色</span>
+    <button class="tool-copy-btn" id="rc-history-clear">清空历史</button>
+  </div>
+  <div id="rc-history-grid" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+</div>
+
+<script>
+(function(){
+  let colorHistory=[];
+
+  function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+  function toHex(r,g,b){return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');}
+  function hexToRgb(hex){hex=hex.replace('#','');return [parseInt(hex.slice(0,2),16),parseInt(hex.slice(2,4),16),parseInt(hex.slice(4,6),16)];}
+  function rgbToHsl(r,g,b){
+    r/=255;g/=255;b/=255;
+    const max=Math.max(r,g,b),min=Math.min(r,g,b);
+    let h,s,l=(max+min)/2;
+    if(max===min){h=s=0;}else{const d=max-min;s=l>0.5?d/(2-max-min):d/(max+min);
+      switch(max){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break;}h/=6;}
+    return [Math.round(h*360),Math.round(s*100),Math.round(l*100)];
+  }
+  function hslToHex(h,s,l){
+    s/=100;l/=100;
+    const a=s*Math.min(l,1-l);
+    const f=n=>{const k=(n+h/30)%12;return l-a*Math.max(Math.min(k-3,9-k,1),-1);};
+    return '#'+[0,8,4].map(n=>Math.round(f(n)*255).toString(16).padStart(2,'0')).join('');
+  }
+
+  function randColor(){return toHex(randInt(0,255),randInt(0,255),randInt(0,255));}
+  function randPastel(){const h=randInt(0,359);return hslToHex(h,randInt(40,60),randInt(70,85));}
+  function randDark(){const h=randInt(0,359);return hslToHex(h,randInt(40,80),randInt(15,35));}
+
+  function copyText(text, btn){
+    navigator.clipboard.writeText(text).then(()=>{
+      const orig=btn.innerHTML; btn.innerHTML='✅'; btn.classList.add('copied');
+      setTimeout(()=>{btn.innerHTML=orig;btn.classList.remove('copied');},1500);
+    }).catch(()=>{});
+  }
+
+  function addToHistory(hex){
+    if(colorHistory.includes(hex)) return;
+    colorHistory.unshift(hex);
+    if(colorHistory.length>20) colorHistory.pop();
+    renderHistory();
+  }
+
+  function renderHistory(){
+    const grid=document.getElementById('rc-history-grid');
+    grid.innerHTML='';
+    document.getElementById('rc-history').style.display=colorHistory.length?'':'none';
+    colorHistory.forEach(hex=>{
+      const item=document.createElement('div');
+      item.style.cssText=`width:40px;height:40px;border-radius:10px;background:${hex};cursor:pointer;border:2px solid transparent;transition:all .2s;`;
+      item.title=hex+' (点击复制)';
+      item.addEventListener('click',()=>navigator.clipboard.writeText(hex).catch(()=>{}));
+      item.addEventListener('mouseenter',()=>item.style.borderColor='#667eea');
+      item.addEventListener('mouseleave',()=>item.style.borderColor='transparent');
+      grid.appendChild(item);
+    });
+  }
+
+  function showSingle(hex){
+    const [r,g,b]=hexToRgb(hex);
+    const [h,s,l]=rgbToHsl(r,g,b);
+    const preview=document.getElementById('rc-single-preview');
+    preview.style.background=hex;
+    document.getElementById('rc-s-hex').textContent=hex;
+    document.getElementById('rc-s-rgb').textContent=`rgb(${r},${g},${b})`;
+    document.getElementById('rc-s-hsl').textContent=`hsl(${h},${s}%,${l}%)`;
+    document.getElementById('rc-single-display').style.display='';
+    document.getElementById('rc-palette-display').style.display='none';
+    preview.onclick=()=>navigator.clipboard.writeText(hex).catch(()=>{});
+    addToHistory(hex);
+  }
+
+  function showPalette(colors, title){
+    const grid=document.getElementById('rc-palette-grid');
+    grid.innerHTML='';
+    colors.forEach(hex=>{
+      const item=document.createElement('div'); item.className='rc-palette-item';
+      const swatch=document.createElement('div'); swatch.className='rc-swatch'; swatch.style.background=hex; swatch.title=hex+' (点击复制)';
+      swatch.addEventListener('click',()=>navigator.clipboard.writeText(hex).catch(()=>{}));
+      const lbl=document.createElement('div'); lbl.className='rc-swatch-hex'; lbl.textContent=hex;
+      item.appendChild(swatch); item.appendChild(lbl); grid.appendChild(item);
+      addToHistory(hex);
+    });
+    document.getElementById('rc-palette-title').textContent=title||'随机色板';
+    document.getElementById('rc-single-display').style.display='none';
+    document.getElementById('rc-palette-display').style.display='';
+  }
+
+  document.getElementById('rc-single-btn').addEventListener('click',()=>showSingle(randColor()));
+  document.getElementById('rc-palette-btn').addEventListener('click',()=>showPalette(Array.from({length:8},randColor),'随机色板（8色）'));
+  document.getElementById('rc-pastel-btn').addEventListener('click',()=>showPalette(Array.from({length:8},randPastel),'柔和色调'));
+  document.getElementById('rc-dark-btn').addEventListener('click',()=>showPalette(Array.from({length:8},randDark),'深色系'));
+
+  document.getElementById('rc-s-hex-copy').addEventListener('click',()=>{
+    copyText(document.getElementById('rc-s-hex').textContent, document.getElementById('rc-s-hex-copy'));
+  });
+
+  document.getElementById('rc-palette-copy').addEventListener('click',()=>{
+    const hexes=[...document.getElementById('rc-palette-grid').querySelectorAll('.rc-swatch-hex')].map(el=>el.textContent).join('\n');
+    navigator.clipboard.writeText(hexes).then(()=>{
+      const btn=document.getElementById('rc-palette-copy');
+      const orig=btn.innerHTML; btn.innerHTML='✅ 已复制'; btn.classList.add('copied');
+      setTimeout(()=>{btn.innerHTML=orig;btn.classList.remove('copied');},1500);
+    }).catch(()=>{});
+  });
+
+  document.getElementById('rc-clear-btn').addEventListener('click',()=>{
+    document.getElementById('rc-single-display').style.display='none';
+    document.getElementById('rc-palette-display').style.display='none';
+  });
+
+  document.getElementById('rc-history-clear').addEventListener('click',()=>{
+    colorHistory=[];renderHistory();
+  });
+})();
+</script>

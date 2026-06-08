@@ -1,0 +1,6 @@
+{{/* TOC 侧边栏广告 */}}
+{{ if .widgetEnabled }}
+<div class="toc-ad-wrap">
+  {{ partial "ads/render-ad.html" (dict "positionId" "toc_sidebar") }}
+</div>
+{{ end }}

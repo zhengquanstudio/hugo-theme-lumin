@@ -1,0 +1,77 @@
+<div style="display:flex;gap:10px;flex-wrap:wrap;">
+  <div class="tool-input-group" style="flex:1;min-width:150px;">
+    <label class="tool-label">开始日期</label>
+    <input class="tool-input" type="date" id="wd-start" value="">
+  </div>
+  <div class="tool-input-group" style="flex:1;min-width:150px;">
+    <label class="tool-label">结束日期</label>
+    <input class="tool-input" type="date" id="wd-end" value="">
+  </div>
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">周末处理方式</label>
+  <select class="tool-select" id="wd-weekend">
+    <option value="both">排除周六和周日</option>
+    <option value="sunday">仅排除周日</option>
+    <option value="none">不排除（全部算工作日）</option>
+  </select>
+</div>
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="wd-calc">计算</button>
+</div>
+<div class="tool-result" id="wd-result"></div>
+
+<script>
+(function() {
+  document.getElementById('wd-start').value = new Date().toISOString().split('T')[0];
+  var endDate = new Date();
+  endDate.setDate(endDate.getDate() + 30);
+  document.getElementById('wd-end').value = endDate.toISOString().split('T')[0];
+
+  document.getElementById('wd-calc').addEventListener('click', function() {
+    var startStr = document.getElementById('wd-start').value;
+    var endStr = document.getElementById('wd-end').value;
+    var weekendMode = document.getElementById('wd-weekend').value;
+    var result = document.getElementById('wd-result');
+
+    if (!startStr || !endStr) {
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">错误</div><p>请选择开始和结束日期。</p></div>';
+      return;
+    }
+
+    var start = new Date(startStr + 'T00:00:00');
+    var end = new Date(endStr + 'T00:00:00');
+
+    if (end < start) {
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">错误</div><p>结束日期不能早于开始日期。</p></div>';
+      return;
+    }
+
+    var totalDays = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
+    var workDays = 0, weekendDays = 0;
+
+    var current = new Date(start);
+    for (var i = 0; i < totalDays; i++) {
+      var dow = current.getDay();
+      if (weekendMode === 'both') {
+        if (dow === 0 || dow === 6) weekendDays++;
+        else workDays++;
+      } else if (weekendMode === 'sunday') {
+        if (dow === 0) weekendDays++;
+        else workDays++;
+      } else {
+        workDays++;
+      }
+      current.setDate(current.getDate() + 1);
+    }
+
+    result.innerHTML = '<div class="tool-output"><div class="tool-output-title">计算结果</div>' +
+      '<div class="tool-stats"><div class="tool-stat"><div class="tool-stat-value">' + totalDays + '</div><div class="tool-stat-label">总天数</div></div>' +
+      '<div class="tool-stat"><div class="tool-stat-value">' + workDays + '</div><div class="tool-stat-label">工作日</div></div>' +
+      '<div class="tool-stat"><div class="tool-stat-value">' + weekendDays + '</div><div class="tool-stat-label">排除天数</div></div></div>' +
+      '<p style="margin-top:10px;font-size:13px;color:#666;">' + startStr + ' 至 ' + endStr + '，共 ' + totalDays + ' 天</p></div>';
+  });
+
+  document.getElementById('wd-calc').click();
+})();
+</script>

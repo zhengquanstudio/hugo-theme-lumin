@@ -1,0 +1,138 @@
+<div class="tool-input-group">
+  <label class="tool-label">输入候选项（每行一个）</label>
+  <textarea class="tool-textarea" id="rl-input" rows="10" placeholder="请输入候选项，每行一个。例如：
+选项A
+选项B
+选项C
+选项D
+选项E"></textarea>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">抽取数量</label>
+  <input class="tool-input" id="rl-count" type="number" value="1" min="1" style="width:120px;">
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">选项</label>
+  <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
+    <input type="checkbox" id="rl-unique" checked> 不重复抽取
+  </label>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="rl-pick-btn">随机抽取</button>
+  <button class="tool-btn" id="rl-clear-btn">清空</button>
+</div>
+
+<div id="rl-error" style="display:none;color:var(--color-error,#e53e3e);margin-top:8px;"></div>
+
+<div class="tool-output" id="rl-output-area" style="display:none;">
+  <div class="tool-result" id="rl-result"></div>
+  <button class="tool-copy-btn" id="rl-copy-btn">复制结果</button>
+</div>
+
+<div class="tool-stats" id="rl-stats" style="display:none;">
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="rl-stat-total">0</span>
+    <span class="tool-stat-label">候选项总数</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="rl-stat-picked">0</span>
+    <span class="tool-stat-label">已抽取</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  const input = document.getElementById('rl-input');
+  const countInput = document.getElementById('rl-count');
+  const uniqueCheck = document.getElementById('rl-unique');
+  const result = document.getElementById('rl-result');
+  const outputArea = document.getElementById('rl-output-area');
+  const errorDiv = document.getElementById('rl-error');
+  const statsDiv = document.getElementById('rl-stats');
+
+  function showError(msg) {
+    errorDiv.textContent = msg;
+    errorDiv.style.display = 'block';
+    outputArea.style.display = 'none';
+    statsDiv.style.display = 'none';
+  }
+
+  function hideError() {
+    errorDiv.style.display = 'none';
+  }
+
+  // Fisher-Yates 洗牌
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  document.getElementById('rl-pick-btn').addEventListener('click', () => {
+    hideError();
+    const raw = input.value.trim();
+    if (!raw) { showError('请输入候选项'); return; }
+
+    let items = raw.split('\n').map(l => l.trim()).filter(l => l !== '');
+    if (items.length === 0) { showError('无有效候选项'); return; }
+
+    const count = Math.min(parseInt(countInput.value, 10) || 1, items.length);
+    const unique = uniqueCheck.checked;
+
+    if (unique && count > items.length) {
+      showError('抽取数量不能超过候选项总数（不重复模式下）');
+      return;
+    }
+
+    let picked;
+    if (unique) {
+      picked = shuffle(items).slice(0, count);
+    } else {
+      picked = [];
+      for (let i = 0; i < count; i++) {
+        picked.push(items[Math.floor(Math.random() * items.length)]);
+      }
+    }
+
+    result.textContent = picked.join('\n');
+    outputArea.style.display = 'block';
+    statsDiv.style.display = 'flex';
+    document.getElementById('rl-stat-total').textContent = items.length;
+    document.getElementById('rl-stat-picked').textContent = count;
+  });
+
+  document.getElementById('rl-clear-btn').addEventListener('click', () => {
+    input.value = '';
+    result.textContent = '';
+    outputArea.style.display = 'none';
+    statsDiv.style.display = 'none';
+    hideError();
+  });
+
+  document.getElementById('rl-copy-btn').addEventListener('click', () => {
+    const text = result.textContent;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('rl-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const btn = document.getElementById('rl-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    });
+  });
+})();
+</script>

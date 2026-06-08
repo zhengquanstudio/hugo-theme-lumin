@@ -1,0 +1,231 @@
+<div id="cp-tool">
+  <div class="tool-input-group">
+    <label class="tool-label">颜色选择器</label>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+      <input type="color" id="cp-native" value="#4a90d9" style="width:80px;height:80px;border:none;cursor:pointer;border-radius:8px;padding:0;">
+      <div id="cp-preview" style="width:80px;height:80px;border-radius:8px;border:2px solid var(--border,#ddd);background:#4a90d9;"></div>
+    </div>
+  </div>
+
+  <div class="tool-input-group">
+    <label class="tool-label">HEX</label>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input type="text" id="cp-hex" class="tool-input" value="#4a90d9" maxlength="7" style="flex:1;">
+      <button class="tool-copy-btn" onclick="cpCopy('hex')">复制</button>
+    </div>
+  </div>
+
+  <div class="tool-input-group">
+    <label class="tool-label">RGB</label>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <div style="display:flex;gap:4px;flex:1;">
+        <input type="number" id="cp-r" class="tool-input" value="74" min="0" max="255" style="flex:1;">
+        <input type="number" id="cp-g" class="tool-input" value="144" min="0" max="255" style="flex:1;">
+        <input type="number" id="cp-b" class="tool-input" value="217" min="0" max="255" style="flex:1;">
+      </div>
+      <button class="tool-copy-btn" onclick="cpCopy('rgb')">复制</button>
+    </div>
+  </div>
+
+  <div class="tool-input-group">
+    <label class="tool-label">HSL</label>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <div style="display:flex;gap:4px;flex:1;">
+        <input type="number" id="cp-h" class="tool-input" value="213" min="0" max="360" style="flex:1;">
+        <input type="number" id="cp-s" class="tool-input" value="66" min="0" max="100" style="flex:1;">
+        <input type="number" id="cp-l" class="tool-input" value="57" min="0" max="100" style="flex:1;">
+      </div>
+      <button class="tool-copy-btn" onclick="cpCopy('hsl')">复制</button>
+    </div>
+  </div>
+
+  <div class="tool-input-group">
+    <label class="tool-label">CSS 代码</label>
+    <div id="cp-css" class="tool-output" style="font-family:monospace;">color: #4a90d9;</div>
+  </div>
+
+  <div class="tool-input-group">
+    <label class="tool-label">互补色</label>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div id="cp-complement" style="width:60px;height:60px;border-radius:8px;border:2px solid var(--border,#ddd);"></div>
+      <span id="cp-complement-hex" style="font-family:monospace;"></span>
+    </div>
+  </div>
+
+  <div class="tool-input-group">
+    <label class="tool-label">色阶</label>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;">
+      <div id="cp-shade-d5" style="width:40px;height:40px;border-radius:6px;border:1px solid var(--border,#ddd);"></div>
+      <div id="cp-shade-d4" style="width:40px;height:40px;border-radius:6px;border:1px solid var(--border,#ddd);"></div>
+      <div id="cp-shade-d3" style="width:40px;height:40px;border-radius:6px;border:1px solid var(--border,#ddd);"></div>
+      <div id="cp-shade-d2" style="width:40px;height:40px;border-radius:6px;border:1px solid var(--border,#ddd);"></div>
+      <div id="cp-shade-d1" style="width:40px;height:40px;border-radius:6px;border:1px solid var(--border,#ddd);"></div>
+      <div id="cp-shade-base" style="width:40px;height:40px;border-radius:6px;border:2px solid var(--text,#333);"></div>
+      <div id="cp-shade-l1" style="width:40px;height:40px;border-radius:6px;border:1px solid var(--border,#ddd);"></div>
+      <div id="cp-shade-l2" style="width:40px;height:40px;border-radius:6px;border:1px solid var(--border,#ddd);"></div>
+      <div id="cp-shade-l3" style="width:40px;height:40px;border-radius:6px;border:1px solid var(--border,#ddd);"></div>
+      <div id="cp-shade-l4" style="width:40px;height:40px;border-radius:6px;border:1px solid var(--border,#ddd);"></div>
+      <div id="cp-shade-l5" style="width:40px;height:40px;border-radius:6px;border:1px solid var(--border,#ddd);"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+
+  function hexToRgb(hex) {
+    hex = hex.replace('#','');
+    if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+    const n = parseInt(hex, 16);
+    return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+  }
+
+  function rgbToHex(r, g, b) {
+    return '#' + [r, g, b].map(v => {
+      const h = Math.max(0, Math.min(255, Math.round(v))).toString(16);
+      return h.length === 1 ? '0' + h : h;
+    }).join('');
+  }
+
+  function rgbToHsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+    if (max === min) {
+      h = s = 0;
+    } else {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+        case g: h = ((b - r) / d + 2) / 6; break;
+        case b: h = ((r - g) / d + 4) / 6; break;
+      }
+    }
+    return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
+  }
+
+  function hslToRgb(h, s, l) {
+    h /= 360; s /= 100; l /= 100;
+    let r, g, b;
+    if (s === 0) {
+      r = g = b = l;
+    } else {
+      const hue2rgb = (p, q, t) => {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1/6) return p + (q - p) * 6 * t;
+        if (t < 1/2) return q;
+        if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+        return p;
+      };
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+      r = hue2rgb(p, q, h + 1/3);
+      g = hue2rgb(p, q, h);
+      b = hue2rgb(p, q, h - 1/3);
+    }
+    return { r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255) };
+  }
+
+  function updateFromHex(hex, source) {
+    const rgb = hexToRgb(hex);
+    const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+    updateUI(hex, rgb, hsl, source);
+  }
+
+  function updateFromRgb(r, g, b, source) {
+    const hex = rgbToHex(r, g, b);
+    const hsl = rgbToHsl(r, g, b);
+    updateUI(hex, { r, g, b }, hsl, source);
+  }
+
+  function updateFromHsl(h, s, l, source) {
+    const rgb = hslToRgb(h, s, l);
+    const hex = rgbToHex(rgb.r, rgb.g, rgb.b);
+    updateUI(hex, rgb, { h, s, l }, source);
+  }
+
+  function updateUI(hex, rgb, hsl, source) {
+    if (source !== 'native') $('cp-native').value = hex;
+    if (source !== 'hex') $('cp-hex').value = hex;
+    if (source !== 'rgb') {
+      $('cp-r').value = rgb.r;
+      $('cp-g').value = rgb.g;
+      $('cp-b').value = rgb.b;
+    }
+    if (source !== 'hsl') {
+      $('cp-h').value = hsl.h;
+      $('cp-s').value = hsl.s;
+      $('cp-l').value = hsl.l;
+    }
+    $('cp-preview').style.background = hex;
+    $('cp-css').textContent = `color: ${hex};`;
+
+    // 互补色
+    const compH = (hsl.h + 180) % 360;
+    const compRgb = hslToRgb(compH, hsl.s, hsl.l);
+    const compHex = rgbToHex(compRgb.r, compRgb.g, compRgb.b);
+    $('cp-complement').style.background = compHex;
+    $('cp-complement-hex').textContent = compHex;
+
+    // 色阶
+    for (let i = 1; i <= 5; i++) {
+      const lighterL = Math.min(100, hsl.l + (100 - hsl.l) * (i / 5));
+      const lr = hslToRgb(hsl.h, hsl.s, lighterL);
+      $('cp-shade-l' + i).style.background = rgbToHex(lr.r, lr.g, lr.b);
+    }
+    $('cp-shade-base').style.background = hex;
+    for (let i = 1; i <= 5; i++) {
+      const darkerL = Math.max(0, hsl.l - hsl.l * (i / 5));
+      const dr = hslToRgb(hsl.h, hsl.s, darkerL);
+      $('cp-shade-d' + i).style.background = rgbToHex(dr.r, dr.g, dr.b);
+    }
+  }
+
+  $('cp-native').addEventListener('input', e => updateFromHex(e.target.value, 'native'));
+
+  $('cp-hex').addEventListener('input', e => {
+    let v = e.target.value.trim();
+    if (!v.startsWith('#')) v = '#' + v;
+    if (/^#[0-9a-fA-F]{3}$/.test(v) || /^#[0-9a-fA-F]{6}$/.test(v)) {
+      updateFromHex(v, 'hex');
+    }
+  });
+
+  ['cp-r','cp-g','cp-b'].forEach(id => {
+    $(id).addEventListener('input', () => {
+      const r = Math.max(0, Math.min(255, parseInt($('cp-r').value) || 0));
+      const g = Math.max(0, Math.min(255, parseInt($('cp-g').value) || 0));
+      const b = Math.max(0, Math.min(255, parseInt($('cp-b').value) || 0));
+      updateFromRgb(r, g, b, 'rgb');
+    });
+  });
+
+  ['cp-h','cp-s','cp-l'].forEach(id => {
+    $(id).addEventListener('input', () => {
+      const h = Math.max(0, Math.min(360, parseInt($('cp-h').value) || 0));
+      const s = Math.max(0, Math.min(100, parseInt($('cp-s').value) || 0));
+      const l = Math.max(0, Math.min(100, parseInt($('cp-l').value) || 0));
+      updateFromHsl(h, s, l, 'hsl');
+    });
+  });
+
+  window.cpCopy = function(type) {
+    let text = '';
+    const hex = $('cp-hex').value;
+    const r = $('cp-r').value, g = $('cp-g').value, b = $('cp-b').value;
+    const h = $('cp-h').value, s = $('cp-s').value, l = $('cp-l').value;
+    switch(type) {
+      case 'hex': text = hex; break;
+      case 'rgb': text = `rgb(${r}, ${g}, ${b})`; break;
+      case 'hsl': text = `hsl(${h}, ${s}%, ${l}%)`; break;
+    }
+    navigator.clipboard.writeText(text).catch(() => {});
+  };
+
+  // 初始化
+  updateFromHex('#4a90d9', '');
+})();
+</script>

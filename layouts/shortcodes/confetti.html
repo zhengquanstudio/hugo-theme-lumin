@@ -1,0 +1,18 @@
+{{- $duration := .Get "duration" | default "15000" -}}
+{{- $initial := .Get "initial" | default "20" -}}
+{{- $colors := .Get "colors" -}}
+{{- $auto := .Get "auto" | default "true" -}}
+
+<div class="confetti-trigger" 
+     data-confetti 
+     data-confetti-duration="{{ $duration }}" 
+     data-confetti-initial="{{ $initial }}"
+     data-confetti-auto="{{ $auto }}"
+     {{ with $colors }}data-confetti-colors="{{ . }}"{{ end }}>
+</div>
+
+<style>
+.confetti-trigger {
+  display: none;
+}
+</style>

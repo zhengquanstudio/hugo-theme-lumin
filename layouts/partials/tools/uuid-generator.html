@@ -1,0 +1,189 @@
+<div class="tool-input-group">
+  <label class="tool-label">生成数量</label>
+  <div class="tool-range-group">
+    <input type="range" class="tool-range" id="uuid-count" min="1" max="50" value="5">
+    <span class="tool-range-value" id="uuid-count-value">5</span>
+  </div>
+</div>
+
+<div class="tool-input-group" style="display:flex;flex-wrap:wrap;gap:20px;">
+  <label class="tool-switch">
+    <input type="checkbox" id="uuid-uppercase">
+    <span class="tool-switch-track"></span>
+    大写字母
+  </label>
+  <label class="tool-switch">
+    <input type="checkbox" id="uuid-no-hyphens">
+    <span class="tool-switch-track"></span>
+    去除连字符
+  </label>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="uuid-generate-btn">🔑 生成 UUID</button>
+  <button class="tool-btn tool-btn-success" id="uuid-copy-all-btn">📋 复制全部</button>
+  <button class="tool-btn tool-btn-danger" id="uuid-clear-btn">🗑️ 清空</button>
+</div>
+
+<div class="tool-output" id="uuid-output" style="display:none;">
+  <div class="tool-output-label">
+    <span class="tool-output-title">生成结果</span>
+    <span style="font-size:.75rem;color:var(--text-muted,#9ca3af);" id="uuid-result-count"></span>
+  </div>
+  <div id="uuid-result-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+</div>
+
+<script>
+(function(){
+  const countRange = document.getElementById('uuid-count');
+  const countValue = document.getElementById('uuid-count-value');
+  const uppercaseSwitch = document.getElementById('uuid-uppercase');
+  const noHyphensSwitch = document.getElementById('uuid-no-hyphens');
+  const generateBtn = document.getElementById('uuid-generate-btn');
+  const copyAllBtn = document.getElementById('uuid-copy-all-btn');
+  const clearBtn = document.getElementById('uuid-clear-btn');
+  const output = document.getElementById('uuid-output');
+  const resultList = document.getElementById('uuid-result-list');
+  const resultCount = document.getElementById('uuid-result-count');
+
+  let uuids = [];
+
+  countRange.addEventListener('input', () => {
+    countValue.textContent = countRange.value;
+  });
+
+  function generateUUIDv4() {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    // Fallback: manual v4 UUID
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+    return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
+  }
+
+  function formatUUID(uuid) {
+    let result = uuid;
+    if (noHyphensSwitch.checked) {
+      result = result.replace(/-/g, '');
+    }
+    if (uppercaseSwitch.checked) {
+      result = result.toUpperCase();
+    }
+    return result;
+  }
+
+  function copyText(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+      const original = btn.innerHTML;
+      btn.innerHTML = '✅ 已复制';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.innerHTML = original;
+        btn.classList.remove('copied');
+      }, 1500);
+    }).catch(() => {
+      // Fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const original = btn.innerHTML;
+      btn.innerHTML = '✅ 已复制';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.innerHTML = original;
+        btn.classList.remove('copied');
+      }, 1500);
+    });
+  }
+
+  function renderResults() {
+    resultList.innerHTML = '';
+    if (uuids.length === 0) {
+      output.style.display = 'none';
+      return;
+    }
+    output.style.display = 'block';
+    resultCount.textContent = `共 ${uuids.length} 个`;
+    uuids.forEach((uuid, i) => {
+      const item = document.createElement('div');
+      item.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg-secondary,#f9fafb);border:1px solid var(--border-color,#e5e7eb);border-radius:8px;';
+
+      const num = document.createElement('span');
+      num.style.cssText = 'font-size:.72rem;color:var(--text-muted,#9ca3af);min-width:28px;text-align:right;flex-shrink:0;';
+      num.textContent = `${i + 1}.`;
+
+      const text = document.createElement('span');
+      text.style.cssText = 'flex:1;font-family:\'Cascadia Code\',Consolas,monospace;font-size:.85rem;word-break:break-all;color:var(--text-primary,#1f2937);';
+      text.textContent = uuid;
+
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'tool-copy-btn';
+      copyBtn.innerHTML = '📋 复制';
+      copyBtn.addEventListener('click', () => copyText(uuid, copyBtn));
+
+      item.appendChild(num);
+      item.appendChild(text);
+      item.appendChild(copyBtn);
+      resultList.appendChild(item);
+    });
+  }
+
+  generateBtn.addEventListener('click', () => {
+    const count = parseInt(countRange.value, 10);
+    uuids = [];
+    for (let i = 0; i < count; i++) {
+      uuids.push(formatUUID(generateUUIDv4()));
+    }
+    renderResults();
+  });
+
+  copyAllBtn.addEventListener('click', () => {
+    if (uuids.length === 0) return;
+    copyText(uuids.join('\n'), copyAllBtn);
+  });
+
+  clearBtn.addEventListener('click', () => {
+    uuids = [];
+    renderResults();
+  });
+
+  // Re-format existing results when toggles change
+  uppercaseSwitch.addEventListener('change', () => {
+    if (uuids.length > 0) {
+      uuids = uuids.map(u => {
+        // Re-derive from base: strip hyphens first if needed, then re-apply
+        const raw = u.replace(/-/g, '').toLowerCase();
+        let base = raw;
+        if (raw.length === 32) {
+          base = `${raw.slice(0,8)}-${raw.slice(8,12)}-${raw.slice(12,16)}-${raw.slice(16,20)}-${raw.slice(20)}`;
+        }
+        return formatUUID(base);
+      });
+      renderResults();
+    }
+  });
+
+  noHyphensSwitch.addEventListener('change', () => {
+    if (uuids.length > 0) {
+      uuids = uuids.map(u => {
+        const raw = u.replace(/-/g, '').toLowerCase();
+        let base = raw;
+        if (raw.length === 32) {
+          base = `${raw.slice(0,8)}-${raw.slice(8,12)}-${raw.slice(12,16)}-${raw.slice(16,20)}-${raw.slice(20)}`;
+        }
+        return formatUUID(base);
+      });
+      renderResults();
+    }
+  });
+})();
+</script>

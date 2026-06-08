@@ -1,0 +1,27 @@
+{{ if or .widgetEnabled site.Params.widgets.tags }}
+<div class="widget widget-tags">
+  <h4 class="widget-title">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l9.41 9.41a2 2 0 0 1 0 2.83z"></path>
+      <line x1="7" y1="7" x2="7.01" y2="7"></line>
+    </svg>
+    标签云
+  </h4>
+  <div class="tags-cloud">
+    {{ $tagCount := site.Params.widgets.tagsCount | default 20 }}
+    {{ $tags := slice }}
+    {{ $colorPalette := slice "#667eea" "#764ba2" "#f093fb" "#f5576c" "#4facfe" "#43e97b" "#fa709a" "#a18cd1" "#fcb69f" "#a1c4fd" "#84fab0" "#ffecd2" "#ff9a9e" "#96e6a1" "#d4fc79" "#cfd9df" "#b8cbb8" "#e0c3fc" "#8ec5fc" "#fccb90" }}
+    {{ $paletteLen := len $colorPalette }}
+    {{ range $name, $items := site.Taxonomies.tags }}
+      {{ $tags = $tags | append (dict "Name" $name "Count" (len $items)) }}
+    {{ end }}
+    {{ range $idx, $tag := (first $tagCount (sort $tags "Count" "desc")) }}
+    {{ $colorIdx := mod $idx $paletteLen }}
+    {{ $color := index $colorPalette $colorIdx }}
+    <a href="{{ printf "/tags/%s/" ($tag.Name | urlize) }}" class="tag-item" style="font-size: {{ add 0.75 (mul 0.25 (div (math.Log $tag.Count) (math.Log 10))) }}rem; background: {{ $color }}; color: #fff;">
+      {{ $tag.Name }}
+    </a>
+    {{ end }}
+  </div>
+</div>
+{{ end }}

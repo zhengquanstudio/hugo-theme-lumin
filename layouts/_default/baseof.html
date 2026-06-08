@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang }}" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="description" content="{{ if .Description }}{{ .Description }}{{ else }}{{ site.Params.description }}{{ end }}">
+  <meta name="keywords" content="{{ if .Keywords }}{{ delimit .Keywords "," }}{{ else }}{{ site.Params.keywords }}{{ end }}">
+  <meta name="author" content="{{ site.Params.author }}">
+  
+  <title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }} - {{ site.Title }}{{ end }}</title>
+
+  {{/* Canonical URL */}}
+  <link rel="canonical" href="{{ .Permalink }}">
+
+  {{/* Open Graph */}}
+  <meta property="og:type" content="{{ if .IsPage }}article{{ else }}website{{ end }}">
+  <meta property="og:title" content="{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }}{{ end }}">
+  <meta property="og:description" content="{{ if .Description }}{{ .Description }}{{ else }}{{ site.Params.description }}{{ end }}">
+  <meta property="og:url" content="{{ .Permalink }}">
+  <meta property="og:site_name" content="{{ site.Title }}">
+  <meta property="og:locale" content="{{ site.Language.Lang }}">
+  {{ with .Params.featured_image }}<meta property="og:image" content="{{ . | absURL }}">{{ else }}{{ with site.Params.defaultImage }}<meta property="og:image" content="{{ . | absURL }}">{{ end }}{{ end }}
+  {{ if .IsPage }}{{ with .Params.date }}<meta property="article:published_time" content="{{ .Format "2006-01-02T15:04:05Z" }}">{{ end }}{{ with .Lastmod }}<meta property="article:modified_time" content="{{ .Format "2006-01-02T15:04:05Z" }}">{{ end }}{{ range .Params.tags }}<meta property="article:tag" content="{{ . }}">{{ end }}{{ end }}
+
+  {{/* Twitter Card */}}
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }}{{ end }}">
+<meta name="twitter:description" content="{{ if .Description }}{{ .Description }}{{ else }}{{ site.Params.description }}{{ end }}">
+  {{ with .Params.featured_image }}<meta name="twitter:image" content="{{ . | absURL }}">{{ else }}{{ with site.Params.defaultImage }}<meta name="twitter:image" content="{{ . | absURL }}">{{ end }}{{ end }}
+
+  <script>!function(){try{var t=localStorage.getItem('lumin-theme');if(t){document.documentElement.setAttribute('data-theme',t)}else{var d='{{ site.Params.defaultTheme | default "light" }}';if(d==='auto'){if(window.matchMedia('(prefers-color-scheme:dark)').matches){document.documentElement.setAttribute('data-theme','dark')}}else if(d==='dark'){document.documentElement.setAttribute('data-theme','dark')}}}catch(e){var d='{{ site.Params.defaultTheme | default "light" }}';if(d==='dark'||(d==='auto'&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.setAttribute('data-theme','dark')}}}()</script>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="{{ site.Params.favicon | default "/favicon.ico" }}">
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ site.Params.appleTouchIcon | default "/apple-touch-icon.png" }}">
+  
+  {{/* PWA Manifest */}}
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="{{ with site.Params.accentColor }}{{ . }}{{ else }}#3b82f6{{ end }}">
+  
+  <!-- RSS -->
+  {{ with .OutputFormats.Get "rss" }}
+  <link rel="alternate" type="application/rss+xml" href="{{ .Permalink }}" title="{{ site.Title }}">
+  {{ end }}
+  
+  <!-- ====== CSS 加载策略 ======
+       1. main.css → 预加载 + 渲染阻塞（首屏必须）
+       2. mobile.css / custom.css / font-awesome → 非阻塞延迟加载
+  ====== -->
+  {{ $mainCSS := resources.Get "css/main.css" | resources.Minify | resources.Fingerprint }}
+  <link rel="preload" href="{{ $mainCSS.RelPermalink }}" as="style">
+  <link rel="stylesheet" href="{{ $mainCSS.RelPermalink }}">
+
+  <!-- Mobile Styles - 非阻塞延迟加载（打印后立即切回屏幕） -->
+  {{ $mobileCSS := resources.Get "css/mobile.css" | resources.Minify | resources.Fingerprint }}
+  <link rel="preload" href="{{ $mobileCSS.RelPermalink }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="stylesheet" href="{{ $mobileCSS.RelPermalink }}" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="{{ $mobileCSS.RelPermalink }}"></noscript>
+
+  <!-- Custom CSS - 非阻塞延迟加载 -->
+  {{ if resources.Get "css/custom.css" }}
+    {{ $customCSS := resources.Get "css/custom.css" | resources.Minify | resources.Fingerprint }}
+    <link rel="preload" href="{{ $customCSS.RelPermalink }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="stylesheet" href="{{ $customCSS.RelPermalink }}" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="{{ $customCSS.RelPermalink }}"></noscript>
+  {{ end }}
+
+  <!-- Font Awesome - 非阻塞延迟加载（图标不阻塞首屏文字展示） -->
+  <link rel="preload" href="/css/fontawesome-all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="stylesheet" href="/css/fontawesome-all.min.css" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="/css/fontawesome-all.min.css"></noscript>
+
+  {{ block "head" . }}{{ end }}
+
+  {{/* 首页提前预加载首张 Banner 背景图 */}}
+  {{ if .IsHome }}
+    {{ $firstBanner := index site.Params.banner.images 0 | default "" }}
+    {{ with $firstBanner }}
+  <link rel="preload" href="/images/banners/{{ . }}" as="image" fetchpriority="high">
+    {{ end }}
+  {{ end }}
+
+  {{/* ====== 3. 分析统计（Head部分） ====== */}}
+  {{ partial "analytics.html" . }}
+
+  {{/* ====== 4. CDN降级提示系统（Toast通知组件） ====== */}}
+  {{ partial "cdn-fallback.html" . }}
+</head>
+
+{{/* ================================================================================
+     BODY 区域: 页面布局骨架
+   ================================================================================ */}}
+<body class="lumin-body sidebar-{{ site.Params.sidebarPosition | default "left" }}{{ if .IsHome }} home-page{{ end }}"{{ if and site.Params.cursor.enable (ne (site.Params.cursor.theme | default "default") "default") }} data-cursor-theme="{{ site.Params.cursor.theme }}"{{ end }}>
+
+  {{/* 全局音频播放器 - 放在 Swup 容器外以确保页面切换时不被销毁 */}}
+  <audio id="global-audio-player" preload="auto" style="display:none"></audio>
+
+  <a href="#swup-main" class="skip-link">跳转到主要内容</a>
+
+  {{/* 阅读进度条（仅文章页显示） */}}
+  {{ if and .IsPage (ne .Kind "home") (ne .Layout "archives") (ne .Type "error") }}
+  <div id="reading-progress" class="reading-progress-bar">
+    <div class="reading-progress-fill"></div>
+  </div>
+  {{ end }}
+
+  {{/* ====== 顶部导航栏 ====== */}}
+  {{ partial "header.html" . }}
+
+  {{/* 广告位：Header 下方全局横幅（窄幅，不打扰） */}}
+  {{ partial "ads/header-below.html" . }}
+
+  {{/* ====== 首页Banner（顶部背景图） ====== */}}
+  {{ partial "banner.html" . }}
+  <style>#site-banner{display:none}.home-page #site-banner{display:block}.home-page .main-wrapper{padding-top:0}.home-page .layout-grid{padding-top:24px}@media(max-width:768px){.home-page .main-wrapper{padding-top:calc(env(safe-area-inset-top, 0px) + 12px)!important}.home-page .layout-grid{padding-top:12px!important}}</style>
+
+  {{/* ====== 主内容区域 - Swup 容器 ====== */}}
+  <div id="swup-main" role="main">
+  {{/* 通过 Front Matter aside 参数控制侧边栏：aside: false 隐藏侧边栏，默认显示 */}}
+  {{/* moments 分区自动隐藏侧边栏 */}}
+  {{ $noSidebar := false }}
+  {{ if isset .Params "aside" }}
+    {{ $noSidebar = not .Params.aside }}
+  {{ else if eq .Section "moments" }}
+    {{ $noSidebar = true }}
+  {{ end }}
+  
+  {{ if $noSidebar }}
+  {{/* 全宽页面，不显示侧边栏 */}}
+  <main class="main-wrapper fullwidth-page" id="main-content">
+    <div class="container">
+      {{ block "main" . }}{{ end }}
+    </div>
+  </main>
+  {{ else }}
+  {{/* 其他页面使用带侧边栏的布局 */}}
+  {{/*
+    TOC 目录显示逻辑：
+    - 默认对普通文章页显示（.IsPage 且 .Kind == "page"）
+    - 排除已知不需要 TOC 的特殊页面
+  */}}
+  {{ $noTocLayouts := (slice "moments" "gallery" "music" "equipment" "datastatistics" "archives" "about" "friends" "sponsor" "website" "guestbook") }}
+  {{ $isNoToc := in $noTocLayouts .Layout }}
+  {{ $showToc := and (site.Params.article.showToc) (.IsPage) (eq .Kind "page") (not $isNoToc) }}
+  <div class="main-wrapper{{ if $showToc }} has-toc{{ end }}">
+    <div class="container">
+      <div class="layout-grid">
+        {{/* 左侧侧边栏 */}}
+        {{ if eq (site.Params.sidebarPosition | default "left") "left" }}
+        <aside class="sidebar">
+          {{ partial "sidebar.html" . }}
+        </aside>
+        {{ end }}
+
+        {{/* 主内容区域 */}}
+        <main id="main-content" class="main-content">
+          {{ block "main" . }}{{ end }}
+        </main>
+
+        {{/* 文章目录 TOC 侧边栏（仅文章页） */}}
+        {{ if $showToc }}
+          {{ partial "toc-sidebar.html" . }}
+        {{ end }}
+
+        {{/* 移动端浮动 TOC 按钮 */}}
+        {{ if $showToc }}
+        <button class="mobile-toc-fab" id="mobile-toc-fab" aria-label="打开目录" title="目录">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6"></line>
+            <line x1="8" y1="12" x2="21" y2="12"></line>
+            <line x1="8" y1="18" x2="21" y2="18"></line>
+            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+          </svg>
+        </button>
+        <div class="mobile-toc-overlay" id="mobile-toc-overlay">
+          <div class="mobile-toc-sheet">
+            <div class="mobile-toc-header">
+              <h3 class="mobile-toc-heading">目录</h3>
+              <button class="mobile-toc-close" id="mobile-toc-close" aria-label="关闭目录">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+            <nav class="mobile-toc-nav">
+              {{ .TableOfContents }}
+            </nav>
+          </div>
+        </div>
+        {{ end }}
+
+        {{/* 右侧侧边栏 */}}
+        {{ if eq (site.Params.sidebarPosition | default "left") "right" }}
+        <aside class="sidebar">
+          {{ partial "sidebar.html" . }}
+        </aside>
+        {{ end }}
+      </div>
+    </div>
+  </div>
+  {{ end }}
+  </div>
+
+  {{/* 广告位：页脚上方 */}}
+  {{ partial "ads/footer-above.html" (dict "Site" .Site "widgetEnabled" true) }}
+
+  {{/* ====== 页脚 ====== */}}
+  {{ partialCached "footer.html" . "footer" }}
+
+  {{/* ====== 工具栏（返回顶部、切换主题等） ====== */}}
+  {{ partial "toolbar.html" . }}
+
+  {{/* ====== 搜索遮罩层 ====== */}}
+  {{ partial "search-overlay.html" . }}
+
+  {{/* ====== 依赖库（jQuery等） ====== */}}
+  {{ partial "scripts/libs.html" . }}
+
+  {{/* Swup.js - SPA 导航实现跨页面音乐不中断播放 */}}
+  <script src="/libs/swup/swup.umd.js" defer></script>
+
+  {{/* ====== 站点配置传递给JS ====== */}}
+  <script>
+    window.siteConfig = {
+      tocExpandAll: {{ site.Params.article.tocExpandAll | default false }},
+      searchMaxResults: {{ site.Params.search.maxResults | default 30 }},
+      lazyLoad: {
+        enable: {{ site.Params.lazyLoad.enable | default true }},
+        placeholder: "{{ site.Params.lazyLoad.placeholder | default "" }}",
+        concurrentLoads: {{ site.Params.lazyLoad.concurrentLoads | default 3 }},
+        rootMargin: "{{ site.Params.lazyLoad.rootMargin | default "300px" }}"
+      }
+    };
+
+    {{/* 点击特效配置 */}}
+    {{ if site.Params.clickEffect.enable }}
+    window.__CLICK_EFFECT_CONFIG__ = {
+      enable: true,
+      type: "{{ site.Params.clickEffect.type | default "fireworks" }}"
+    };
+    {{ end }}
+  </script>
+
+  {{/* ====== 自定义脚本（ES 模块打包 - defer 延迟执行）====== */}}
+  {{ $mainJS := resources.Get "js/main.js" | js.Build | minify | fingerprint }}
+  <script data-cfasync="false" defer src="{{ $mainJS.RelPermalink }}"></script>
+
+  {{/* ====== 广告轮播脚本 ====== */}}
+  {{ $adsRotateJS := resources.Get "js/modules/ads-rotate.js" | minify | fingerprint }}
+  <script defer src="{{ $adsRotateJS.RelPermalink }}"></script>
+
+  {{/* ====== 鼠标点击特效（需在 main.js 之前加载，但 non-blocking） ====== */}}
+  {{ if site.Params.clickEffect.enable }}
+  {{ $clickJS := resources.Get "js/click-effects.js" | minify }}
+  <script defer src="{{ $clickJS.RelPermalink }}"></script>
+  {{ end }}
+
+  {{/* ====== Swup.js 初始化 - SPA 导航 ====== */}}
+  {{ $swupInit := resources.Get "js/modules/swup-init.js" | minify | fingerprint }}
+  <script src="{{ $swupInit.RelPermalink }}" defer></script>
+
+  {{/* ====== 页面级脚本 ====== */}}
+  {{ block "scripts" . }}{{ end }}
+
+  {{/* KaTeX 数学公式 - 仅文章页异步按需加载 */}}
+  {{ if and .IsPage (not .IsHome) }}{{ partial "scripts/katex.html" . }}{{ end }}
+
+  {{/* ====== 统计脚本（Body末尾） ====== */}}
+  {{ partial "scripts/analytics.html" . }}
+
+  {{/* ====== PWA Service Worker 注册 ====== */}}
+  {{ partial "scripts/pwa.html" . }}
+
+  {{/* ====== Live2D 看板娘 ====== */}}
+  {{ partial "live2d.html" . }}
+
+  {{/* ====== 动态彩色飘带 ====== */}}
+  {{ partial "ribbon.html" . }}
+
+  {{/* 
+    ========================================
+    评论系统说明
+    ========================================
+    
+    所有页面的评论都在各自模板内部管理（不在 baseof 加载）
+    - 文章页: single.html 内调用 comments.html
+    - 独立页面: 各自模板内调用 comments.html
+    - 特殊页面: moments/gallery/music 内嵌 Twikoo
+    
+    控制方式:
+    - 默认显示: 不设置 comments 或 comments: true
+    - 关闭评论: comments: false
+  */}}
+
+</body>
+</html>

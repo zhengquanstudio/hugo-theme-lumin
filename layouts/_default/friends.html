@@ -1,0 +1,254 @@
+{{ define "main" }}
+{{ $friends := hugo.Data.friends.friends | default slice }}
+{{ $friendCount := len $friends }}
+
+<style>
+/* ===== 友链页面（与 guestbook/sponsor 等独立页面统一风格） ===== */
+.main-wrapper:has(.friends-page) .layout-grid{gap:36px!important}
+
+/* 页面头部 - 统一样式 */
+.friends-page .list-header{padding:28px 0;margin-bottom:32px;border-bottom:2px solid var(--border-color,#e5e7eb);background:transparent}
+.friends-page .list-title{font-size:1.8rem;font-weight:700;color:var(--text-primary,#1f2937);margin:0 0 10px 0;letter-spacing:-0.02em;display:flex;align-items:center;gap:12px}
+.friends-page .list-title .title-icon{width:40px;height:40px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:18px;color:#fff;background:linear-gradient(135deg,#ec4899,#f43f5e);box-shadow:0 4px 14px rgba(236,72,153,.25);flex-shrink:0}
+.friends-page .list-description{font-size:0.95rem;color:var(--text-secondary,#6b7280);margin:0;line-height:1.6}
+.friends-page .list-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 13px;border-radius:16px;font-size:.8rem;font-weight:600;color:#ec4899;background:#fce7f3;margin-left:auto;flex-shrink:0}
+
+/* 友链统计条 */
+.friends-stats{display:flex;align-items:center;gap:24px;padding:16px 20px;background:var(--bg-secondary,#f9fafb);border-radius:12px;border:1px solid var(--border-color,#e5e7eb);margin-bottom:26px}
+.friends-stat{text-align:center}
+.friends-stat-num{font-size:1.5rem;font-weight:800;color:var(--text-primary,#1f2937);line-height:1.2}
+.friends-stat-label{font-size:.75rem;color:var(--text-muted,#9ca3af);margin-top:2px;font-weight:500}
+.friends-stat-divider{width:1px;height:32px;background:var(--border-color,#e5e7eb)}
+
+/* 友链卡片网格 */
+.friends-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-bottom:20px}
+
+/* 单个友链卡片 */
+.friend-card{background:var(--bg-primary,#fff);border-radius:14px;border:1px solid var(--border-color,#e5e7eb);padding:18px;display:flex;flex-direction:column;gap:12px;transition:all .3s cubic-bezier(.4,0,.2,1);position:relative;overflow:hidden;text-decoration:none;color:inherit;box-shadow:0 1px 6px rgba(0,0,0,.03)}
+.friend-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#ec4899,#f43f5e,#f97316);opacity:0;transition:opacity .3s}
+.friend-card:hover{transform:translateY(-4px);border-color:#fbcfe8;box-shadow:0 8px 24px rgba(236,72,153,.1)}
+.friend-card:hover::before{opacity:1}
+
+/* 卡片头部 */
+.friend-top{display:flex;align-items:center;gap:12px}
+.friend-avatar{width:48px;height:48px;border-radius:12px;object-fit:cover;border:2px solid var(--border-color,#e5e7eb);transition:border-color .3s,transform .3s;flex-shrink:0;background:var(--bg-secondary,#f9fafc)}
+.friend-card:hover .friend-avatar{border-color:#fbcfe8;transform:scale(1.06)}
+.friend-info{flex:1;min-width:0}
+.friend-name{font-size:.95rem;font-weight:700;color:var(--text-primary,#1f2937);margin:0 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .2s}
+.friend-card:hover .friend-name{color:#be185d}
+.friend-url{font-size:.73rem;color:var(--text-muted,#9ca3af);font-family:'SF Mono',Consolas,'Courier New',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* 卡片描述 */
+.friend-desc{font-size:.82rem;color:var(--text-secondary,#4b5563);line-height:1.6;margin:0;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;display:-webkit-box;flex:1}
+
+/* 卡片底部操作栏 */
+.friend-action{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:11px;border-top:1px dashed var(--border-color,#e5e7eb)}
+.friend-visit{display:inline-flex;align-items:center;gap:5px;padding:6px 15px;border-radius:8px;font-size:.78rem;font-weight:600;color:#fff;background:linear-gradient(135deg,#ec4899,#f43f5e);transition:all .22s;box-shadow:0 2px 8px rgba(236,72,153,.2)}
+.friend-visit:hover{transform:translateX(2px);box-shadow:0 4px 12px rgba(236,72,153,.3)}
+.friend-tag{font-size:.7rem;color:var(--text-muted,#9ca3af);font-weight:500;padding:3px 9px;border-radius:5px;background:var(--bg-secondary,#f9fafb);border:1px solid var(--border-color,#e5e7eb)}
+
+/* 空状态 */
+.friends-empty{text-align:center;padding:56px 20px;color:var(--text-muted,#9ca3af)}
+.friends-empty-icon{width:64px;height:64px;border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;color:var(--border-color,#d1d5db);background:var(--bg-secondary,#f9fafb);margin-bottom:12px}
+.friends-empty-text{font-size:.95rem;margin:0 0 6px}
+.friends-empty-hint{font-size:.8rem;color:var(--border-color,#d1d5db);margin:0}
+
+/* 暗色模式适配 */
+[data-theme="dark"] .friend-card{background:var(--bg-primary,#1e293b);border-color:var(--border-color,#334155)}
+[data-theme="dark"] .friend-card:hover{border-color:#831843;box-shadow:0 8px 24px rgba(236,72,153,.12)}
+[data-theme="dark"] .friend-name{color:var(--text-primary,#e2e8f0)}
+[data-theme="dark"] .friend-card:hover .friend-name{color:#f9a8d4}
+[data-theme="dark"] .friend-desc{color:var(--text-secondary,#94a3b8)}
+[data-theme="dark"] .friend-url{color:var(--text-muted,#64748b)}
+[data-theme="dark"] .friend-avatar{border-color:var(--border-color,#334155);background:var(--bg-secondary,#0f172a)}
+[data-theme="dark"] .friend-card:hover .friend-avatar{border-color:#831843}
+[data-theme="dark"] .friend-action{border-top-color:var(--border-color,#334155)}
+[data-theme="dark"] .friend-tag{background:var(--bg-secondary,#0f172a);border-color:var(--border-color,#334155);color:var(--text-muted,#64748b)}
+[data-theme="dark"] .friends-stats{background:var(--bg-secondary,#1e293b);border-color:var(--border-color,#334155)}
+[data-theme="dark"] .friends-empty-icon{background:var(--bg-secondary,#1e293b);color:var(--border-color,#475569)}
+
+/* 响应式 */
+@media(max-width:900px){
+  .friends-grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+  .friends-stats{gap:16px;flex-wrap:wrap}
+  .friends-stat-divider{display:none}
+}
+@media(max-width:600px){.friends-grid{grid-template-columns:1fr}}
+</style>
+
+{{/* 面包屑导航 */}}
+<nav class="breadcrumb" aria-label="面包屑导航">
+  <ol class="breadcrumb-list">
+    <li class="breadcrumb-item"><a href="{{ site.BaseURL }}"><i class="fas fa-home" style="font-size:0.9em;margin-right:2px;"></i> 首页</a></li>
+    <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-link" style="font-size:0.85em;margin-right:4px;opacity:0.8;"></i>{{ .Title }}</li>
+  </ol>
+</nav>
+
+<div class="list-page friends-page">
+
+  {{/* 页面头部（统一风格） */}}
+  <header class="list-header">
+    <h1 class="list-title">
+      <span class="title-icon"><i class="fas fa-link"></i></span>
+      {{ .Title }}
+      {{ if gt $friendCount 0 }}<span class="list-badge"><i class="fas fa-users"></i> {{ $friendCount }}</span>{{ end }}
+    </h1>
+    {{ with .Description }}
+    <p class="list-description">{{ . }}</p>
+    {{ end }}
+  </header>
+
+  {{/* 统计概览 */}}
+  {{ if gt $friendCount 0 }}
+  <div class="friends-stats">
+    <div class="friends-stat">
+      <div class="friends-stat-num">{{ $friendCount }}</div>
+      <div class="friends-stat-label">友链总数</div>
+    </div>
+    <div class="friends-stat-divider"></div>
+    <div class="friends-stat">
+      <div class="friends-stat-num">{{ len (where $friends "weight" "ge" 80) }}</div>
+      <div class="friends-stat-label">推荐友链</div>
+    </div>
+    <div class="friends-stat-divider"></div>
+    <div class="friends-stat">
+      <div class="friends-stat-num">{{ time.Now.Format "2006" }}</div>
+      <div class="friends-stat-label">当前年份</div>
+    </div>
+  </div>
+  {{ end }}
+
+  {{/* 友链卡片列表 */}}
+  {{ if gt $friendCount 0 }}
+  <div class="friends-grid">
+    {{ range sort $friends ".weight" "desc" }}
+    <a href="{{ .url }}" target="_blank" rel="noopener noreferrer external" class="friend-card" title="{{ .name }} - {{ .desc }}">
+      <div class="friend-top">
+        <img class="friend-avatar" src="{{ .avatar }}" alt="{{ .name }}"
+             onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.68em%22 x=%22.5em%22 font-size=42 fill=%22%23cbd5e1%22>🔗</text></svg>'" />
+        <div class="friend-info">
+          <div class="friend-name">{{ .name }}</div>
+          <div class="friend-url">{{ .url | replaceRE `^https?://(www\\.)?` `` }}</div>
+        </div>
+      </div>
+      <p class="friend-desc">{{ .desc }}</p>
+      <div class="friend-action">
+        <span class="friend-visit"><i class="fas fa-arrow-up-right-from-square"></i> 访问</span>
+        <span class="friend-tag"><i class="fas fa-star"></i> {{ .weight }}</span>
+      </div>
+    </a>
+    {{ end }}
+  </div>
+  {{ else }}
+  <div class="friends-empty">
+    <div class="friends-empty-icon"><i class="fas fa-link-slash"></i></div>
+    <p class="friends-empty-text">暂无友链数据</p>
+    <p class="friends-empty-hint">请在后台「站点配置 → 友链管理」中添加友链接</p>
+  </div>
+  {{ end }}
+
+  {{ if .Content }}
+  <div class="post-content friends-content" style="margin-top:28px;">
+    {{ .Content }}
+  </div>
+  {{ end }}
+
+  {{/* 一键复制本站信息 */}}
+  <script>
+  (function() {
+    document.addEventListener('DOMContentLoaded', function() {
+      var content = document.querySelector('.friends-content');
+      if (!content) return;
+
+      var headings = content.querySelectorAll('h2, h3');
+      for (var i = 0; i < headings.length; i++) {
+        if (/本站信息|站点信息|Site Info/i.test(headings[i].textContent)) {
+          var table = headings[i].nextElementSibling;
+          while (table && table.tagName !== 'TABLE') { table = table.nextElementSibling; }
+          if (!table) continue;
+
+          var wrapper = document.createElement('div');
+          wrapper.className = 'site-info-copy-wrapper';
+          wrapper.innerHTML = '<button class="site-info-copy-btn" title="一键复制友链信息"><i class="fas fa-copy"></i> 一键复制友链信息</button><span class="copy-success"><i class="fas fa-check-circle"></i> 已复制到剪贴板！</span>';
+
+          var parent = headings[i].parentNode;
+          parent.insertBefore(wrapper, headings[i]);
+
+          var btn = wrapper.querySelector('.site-info-copy-btn');
+          btn.addEventListener('click', function() {
+            var rows = table.querySelectorAll('tbody tr, tr');
+            var info = {};
+            rows.forEach(function(row) {
+              var cells = row.querySelectorAll('td, th');
+              if (cells.length >= 2) {
+                var key = cells[0].textContent.trim();
+                var val = cells[1].textContent.trim();
+                if (key === '站点名称') info.name = val;
+                else if (key === '站点地址') info.url = val;
+                else if (key === '站点描述') info.desc = val;
+                else if (key === '头像链接') info.avatar = val;
+              }
+            });
+
+            var text = '[[friends]]\n';
+            text += '  name = "' + (info.name || '') + '"\n';
+            text += '  url = "' + (info.url || '') + '"\n';
+            text += '  avatar = "' + (info.avatar || '') + '"\n';
+            text += '  desc = "' + (info.desc || '') + '"\n';
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(text).then(function() { showSuccess(wrapper); });
+            } else {
+              var ta = document.createElement('textarea'); ta.value = text;
+              ta.style.cssText = 'position:fixed;left:-9999px'; document.body.appendChild(ta);
+              ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+              showSuccess(wrapper);
+            }
+          });
+          break;
+        }
+      }
+
+      function showSuccess(wrapper) {
+        var btn = wrapper.querySelector('.site-info-copy-btn');
+        var ok = wrapper.querySelector('.copy-success');
+        btn.style.display = 'none'; ok.classList.add('show');
+        setTimeout(function() { btn.style.display = ''; ok.classList.remove('show'); }, 2200);
+      }
+    });
+  })();
+  </script>
+
+  <style>
+  .site-info-copy-wrapper{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .site-info-copy-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:10px;font-size:.85rem;font-weight:600;color:#fff;background:linear-gradient(135deg,#3699ff,#2277e8);border:none;cursor:pointer;transition:all .25s;box-shadow:0 3px 10px rgba(54,153,255,.2)}
+  .site-info-copy-btn:hover{transform:translateY(-1px);box-shadow:0 5px 16px rgba(54,153,255,.35);background:linear-gradient(135deg,#2b84f5,#1a63c7)}
+  .site-info-copy-btn:active{transform:scale(.97)}
+  .site-info-copy-btn i{font-size:.95rem}
+  .copy-success{display:none;align-items:center;gap:5px;padding:8px 16px;border-radius:10px;font-size:.82rem;font-weight:600;color:#059669;background:#d1fae5;opacity:0;transition:all .3s}
+  .copy-success.show{display:inline-flex;opacity:1}
+  .copy-success i{color:#059669}
+
+  /* 本站信息表格增强 */
+  .friends-content table{width:100%;max-width:100%;border-collapse:separate;border-spacing:0;border-radius:10px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+  .friends-content th,.friends-content td{padding:11px 16px;border-bottom:1px solid #f3f4f6;font-size:.88rem;word-break:break-word}
+  .friends-content th{background:#f9fafb;font-weight:600;color:#374151;text-align:left;width:140px;min-width:140px;white-space:nowrap}
+  .friends-content td{color:#4b5563}
+  .friends-content tr:last-child td{border-bottom:none}
+  .friends-content tr:hover td{background:#fefce8}
+  .friends-content td:nth-child(2){font-family:'SF Mono',Consolas,'Courier New',monospace;font-size:.82rem;color:#2563eb;word-break:break-all}
+  [data-theme="dark"] .friends-content table{border-color:#334155;background:#1e293b}
+  [data-theme="dark"] .friends-content th{background:#0f172a;color:#e2e8f0}
+  [data-theme="dark"] .friends-content td{color:#94a3b8;border-color:#1e293b}
+  [data-theme="dark"] .friends-content tr:hover td{background:#1e293b}
+  [data-theme="dark"] .friends-content td:nth-child(2){color:#60a5fa}
+  
+  /* 修复：隐藏标题锚点 # 号 + 内容区域宽度优化 */
+  .friends-content .heading-anchor{display:none!important}
+  .friends-content{max-width:100%;overflow-x:auto}
+  </style>
+
+  {{ partial "comments.html" . }}
+</div>
+
+{{ end }}

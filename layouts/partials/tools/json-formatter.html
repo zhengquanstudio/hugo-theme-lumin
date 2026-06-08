@@ -1,0 +1,167 @@
+<div class="tool-tabs" id="jf-tabs">
+  <button class="tool-tab active" data-tab="jf-format">格式化</button>
+  <button class="tool-tab" data-tab="jf-minify">压缩</button>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">输入 JSON</label>
+  <textarea class="tool-textarea" id="jf-input" rows="10" placeholder='请输入 JSON 数据，例如：{"name":"张三","age":25}'>{"name":"张三","age":28,"city":"北京","skills":["Go","Vue","Hugo"],"contact":{"email":"test@example.com","phone":"13812345678"},"active":true}</textarea>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">缩进大小</label>
+  <select class="tool-select" id="jf-indent">
+    <option value="2" selected>2 空格</option>
+    <option value="4">4 空格</option>
+    <option value="8">8 空格</option>
+  </select>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="jf-format-btn">格式化</button>
+  <button class="tool-btn tool-btn-primary" id="jf-minify-btn">压缩</button>
+  <button class="tool-btn" id="jf-clear-btn">清空</button>
+</div>
+
+<div class="tool-output" id="jf-output-area" style="display:none;">
+  <div class="tool-result" id="jf-result"></div>
+  <button class="tool-copy-btn" id="jf-copy-btn">复制结果</button>
+</div>
+
+<div id="jf-error" style="display:none;color:var(--color-error,#e53e3e);margin-top:8px;"></div>
+
+<div class="tool-stats" id="jf-stats" style="display:none;">
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="jf-stat-size">0</span>
+    <span class="tool-stat-label">原始大小</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="jf-stat-result-size">0</span>
+    <span class="tool-stat-label">结果大小</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="jf-stat-depth">0</span>
+    <span class="tool-stat-label">嵌套深度</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  const input = document.getElementById('jf-input');
+  const result = document.getElementById('jf-result');
+  const outputArea = document.getElementById('jf-output-area');
+  const errorDiv = document.getElementById('jf-error');
+  const statsDiv = document.getElementById('jf-stats');
+  const indentSelect = document.getElementById('jf-indent');
+  const tabs = document.querySelectorAll('#jf-tabs .tool-tab');
+
+  let currentTab = 'jf-format';
+
+  function switchTab(tabId) {
+    currentTab = tabId;
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
+  }
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+  });
+
+  function getDepth(obj) {
+    if (typeof obj !== 'object' || obj === null) return 0;
+    let maxDepth = 0;
+    const values = Array.isArray(obj) ? obj : Object.values(obj);
+    for (const v of values) {
+      const d = getDepth(v);
+      if (d > maxDepth) maxDepth = d;
+    }
+    return maxDepth + 1;
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    return (bytes / 1024).toFixed(1) + ' KB';
+  }
+
+  function showError(msg) {
+    errorDiv.textContent = msg;
+    errorDiv.style.display = 'block';
+    outputArea.style.display = 'none';
+    statsDiv.style.display = 'none';
+  }
+
+  function hideError() {
+    errorDiv.style.display = 'none';
+  }
+
+  function showResult(text, originalSize) {
+    result.textContent = text;
+    outputArea.style.display = 'block';
+    statsDiv.style.display = 'flex';
+    document.getElementById('jf-stat-size').textContent = formatSize(originalSize);
+    document.getElementById('jf-stat-result-size').textContent = formatSize(new Blob([text]).size);
+    try {
+      const depth = getDepth(JSON.parse(input.value));
+      document.getElementById('jf-stat-depth').textContent = depth;
+    } catch(e) {
+      document.getElementById('jf-stat-depth').textContent = '-';
+    }
+  }
+
+  document.getElementById('jf-format-btn').addEventListener('click', () => {
+    hideError();
+    const raw = input.value.trim();
+    if (!raw) { showError('请输入 JSON 数据'); return; }
+    try {
+      const obj = JSON.parse(raw);
+      const indent = parseInt(indentSelect.value, 10);
+      const formatted = JSON.stringify(obj, null, indent);
+      showResult(formatted, new Blob([raw]).size);
+      switchTab('jf-format');
+    } catch(e) {
+      showError('JSON 解析失败：' + e.message);
+    }
+  });
+
+  document.getElementById('jf-minify-btn').addEventListener('click', () => {
+    hideError();
+    const raw = input.value.trim();
+    if (!raw) { showError('请输入 JSON 数据'); return; }
+    try {
+      const obj = JSON.parse(raw);
+      const minified = JSON.stringify(obj);
+      showResult(minified, new Blob([raw]).size);
+      switchTab('jf-minify');
+    } catch(e) {
+      showError('JSON 解析失败：' + e.message);
+    }
+  });
+
+  document.getElementById('jf-clear-btn').addEventListener('click', () => {
+    input.value = '';
+    result.textContent = '';
+    outputArea.style.display = 'none';
+    statsDiv.style.display = 'none';
+    hideError();
+  });
+
+  document.getElementById('jf-copy-btn').addEventListener('click', () => {
+    const text = result.textContent;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('jf-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const btn = document.getElementById('jf-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    });
+  });
+})();
+</script>

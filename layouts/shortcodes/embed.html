@@ -1,0 +1,29 @@
+{{/* GitHub Gist / CodePen / JSFiddle 嵌入 */}}
+{{ $src := .Get "src" | default (.Get 0) }}
+{{ $platform := .Get "platform" | default (.Get "p") | default "gist" }}
+
+<div class="code-embed-wrapper" style="
+  max-width:100%;
+  margin:1.5em auto;
+  border:1px solid var(--border-light,#e5e7eb);
+  border-radius:8px;
+  overflow:hidden;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);
+">
+  {{ if eq $platform "gist" }}
+  <script src="{{ $src }}.js"></script>
+  {{ else if or (eq $platform "codepen") (eq $platform "pen") }}
+  <iframe height="400" style="width:100%;" title=""
+          scrolling="no" frameborder="no" allowfullscreen="true"
+          src="{{ $src }}"></iframe>
+  {{ else if or (eq $platform "jsfiddle") (eq $platform "fiddle") }}
+  <iframe width="100%" height="300"
+          src="{{ $src }}"
+          allowfullscreen="true"
+          style="border:none;border-radius:8px;"></iframe>
+  {{ else }}
+  <!-- 通用代码嵌入 iframe -->
+  <iframe src="{{ $src }}"
+          style="width:100%;min-height:200px;border:none;"></iframe>
+  {{ end }}
+</div>

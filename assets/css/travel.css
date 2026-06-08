@@ -1,0 +1,37 @@
+.main-wrapper:has(#travel-page) .container{max-width:100%!important;padding-left:40px!important;padding-right:40px!important}
+.main-wrapper:has(#travel-page) .site-footer{position:fixed!important;bottom:0!important;left:0!important;right:0!important;z-index:100!important;margin-top:0!important}
+#travel-map{margin-bottom:80px!important}
+
+.travel-page{max-width:1480px;margin:0 auto 24px;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+
+.travel-page-header{text-align:center;min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 24px;background:linear-gradient(135deg,#f0f4ff 0%,#e8eeff 50%,#f5f0ff 100%);border-radius:20px;margin-bottom:22px;box-shadow:0 4px 20px rgba(0,0,0,.08);position:relative;overflow:hidden;border:1px solid rgba(109,40,217,.12)}
+.travel-page-header::before{content:'';position:absolute;top:-60%;left:-30%;width:200%;height:200%;background:radial-gradient(circle at 30% 40%,rgba(109,40,217,.07) 0%,transparent 55%);pointer-events:none}
+.page-title{font-size:2rem;font-weight:800;color:#1e293b;margin:0 0 10px;display:inline-flex;align-items:center;gap:12px;position:relative;z-index:1}
+.title-icon{font-size:1.4em;color:#6d28d9;animation:travel-bounce 2.5s ease-in-out infinite;display:inline-block}
+@keyframes travel-bounce{0%,100%{transform:scale(1) rotate(-5deg)}50%{transform:scale(1.08) rotate(5deg)}}
+.page-subtitle{font-size:.95rem;color:#475569;margin:0;line-height:1.6;position:relative;z-index:1}
+
+[data-theme="dark"] .travel-page-header{background:linear-gradient(135deg,#0f172a 0%,#1a1f3a 50%,#1e1530 100%);border-color:rgba(109,40,217,.15)}
+[data-theme="dark"] .page-title{color:#f1f5f9}
+[data-theme="dark"] .page-subtitle{color:#94a3b8}
+
+#travel-map{width:100%;height:calc(100vh - 380px);min-height:500px;border-radius:20px;overflow:hidden;background:#f0f4ff;position:relative;box-shadow:0 4px 20px rgba(0,0,0,.08);border:1px solid rgba(109,40,217,.08)}
+[data-theme="dark"] #travel-map{background:#0f172a;border-color:rgba(109,40,217,.15)}
+#travel-map-loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;text-align:center}
+#travel-map-loading .spin{width:40px;height:40px;border:3px solid #e2e8f0;border-top-color:#6d28d9;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.travel-footer{display:none!important}
+
+@media(max-width:900px){
+  .main-wrapper:has(#travel-page) .container{padding-left:16px!important;padding-right:16px!important}
+  .travel-page-header{padding:26px 16px 20px;min-height:160px}
+  .page-title{font-size:1.65rem}
+  #travel-map{height:calc(100vh - 320px);min-height:380px;border-radius:14px}
+}
+@media(max-width:600px){
+  .main-wrapper:has(#travel-page) .container{padding-left:12px!important;padding-right:12px!important}
+  .travel-page-header{padding:22px 12px 16px;min-height:140px}
+  .page-title{font-size:1.4rem}
+  #travel-map{min-height:350px;border-radius:12px}
+}

@@ -1,0 +1,285 @@
+{{ define "main" }}
+{{ $data := hugo.Data.travel }}
+{{ $cities := $data.cities }}
+{{ $homeCity := "临沂" }}
+{{ $homeLng := 118.36 }}{{ $homeLat := 35.10 }}
+
+{{ $travelCSS := resources.Get "css/travel.css" | minify | fingerprint }}
+<link rel="stylesheet" href="{{ $travelCSS.RelPermalink }}">
+
+<div class="travel-page" id="travel-page">
+  <div class="travel-page-header">
+    <h1 class="page-title"><span class="title-icon"><i class="fas fa-globe-asia"></i></span> 我的旅行足迹</h1>
+    <p class="page-subtitle">每一段旅途都是一个故事</p>
+  </div>
+
+  <div id="travel-map">
+    <div id="travel-map-loading">
+      <div class="spin"></div>
+      <div style="color:#64748b;font-size:.85rem">加载地图中...</div>
+    </div>
+  </div>
+
+  {{ partial "comments.html" . }}
+</div>
+
+<script data-swup-reload-script>
+(function(){
+  var mapContainer = document.getElementById('travel-map');
+  if (!mapContainer) return;
+
+  if (window.__travelChart) {
+    try { window.__travelChart.dispose(); } catch(e) {}
+    window.__travelChart = null;
+  }
+
+  var loadingEl = document.getElementById('travel-map-loading');
+
+  var rawData = JSON.parse({{ $cities | jsonify }});
+  var homeLng = {{ $homeLng }};
+  var homeLat = {{ $homeLat }};
+
+  function hexToRgba(hex, alpha) {
+    var r = parseInt(hex.slice(1,3),16);
+    var g = parseInt(hex.slice(3,5),16);
+    var b = parseInt(hex.slice(5,7),16);
+    return 'rgba('+r+','+g+','+b+','+alpha+')';
+  }
+
+  function buildChartData(provinceColors, defaultColor, provinceGeoName) {
+    var scatterData = [];
+    var lineData = [];
+
+    rawData.forEach(function(c) {
+      var color = provinceColors[c.province] || defaultColor;
+      scatterData.push({
+        name: c.name,
+        value: [c.lng, c.lat],
+        itemStyle: { color: color },
+        province: c.province,
+        desc: c.desc || '',
+        visited: c.visited || ''
+      });
+
+      if (c.name !== '临沂') {
+        lineData.push({
+          coords: [[c.lng, c.lat], [homeLng, homeLat]],
+          lineStyle: { color: color, curveness: 0.3 }
+        });
+      }
+    });
+
+    return { scatterData: scatterData, lineData: lineData };
+  }
+
+  function drawChart(chinaJson, provinceColors, defaultColor, provinceGeoName) {
+    var chartData = buildChartData(provinceColors, defaultColor, provinceGeoName);
+    var scatterData = chartData.scatterData;
+    var lineData = chartData.lineData;
+
+    echarts.registerMap('china', chinaJson);
+
+    var chart = echarts.init(mapContainer, null, { renderer: 'canvas' });
+    window.__travelChart = chart;
+
+    function getProvinceColor(province) {
+      return provinceColors[province] || defaultColor;
+    }
+
+    var option = {
+      backgroundColor: 'transparent',
+      geo: {
+        map: 'china',
+        roam: true,
+        zoom: 1.2,
+        center: [107, 35],
+        label: { show: true, fontSize: 10, color: '#475569' },
+        itemStyle: {
+          areaColor: '#e8f0fe',
+          borderColor: '#93c5fd',
+          borderWidth: 1
+        },
+        emphasis: {
+          itemStyle: { areaColor: '#bfdbfe' },
+          label: { color: '#1e293b' }
+        },
+        regions: rawData.map(function(c) {
+          return {
+            name: provinceGeoName[c.province] || c.province,
+            itemStyle: { areaColor: hexToRgba(getProvinceColor(c.province), 0.12) }
+          };
+        })
+      },
+      tooltip: {
+        trigger: 'item',
+        backgroundColor: 'rgba(255,255,255,.95)',
+        borderColor: '#e2e8f0',
+        borderWidth: 1,
+        textStyle: { color: '#1e293b', fontSize: 13 },
+        formatter: function(params) {
+          if (params.seriesType === 'scatter' && params.data) {
+            var d = params.data;
+            var h = '<div style="font-weight:600;font-size:15px;margin-bottom:4px">📍 ' + d.name + '</div>';
+            h += '<div style="color:#64748b;font-size:13px">🏛 ' + (d.province || '') + '</div>';
+            if (d.desc) h += '<div style="color:#475569;font-size:13px;margin-top:4px">' + d.desc + '</div>';
+            if (d.visited) h += '<div style="color:#94a3b8;font-size:12px;margin-top:4px">📅 ' + d.visited + '年</div>';
+            return h;
+          }
+          return '';
+        }
+      },
+      series: [
+        {
+          name: '航线',
+          type: 'lines',
+          coordinateSystem: 'geo',
+          zlevel: 1,
+          data: lineData,
+          polyline: false,
+          lineStyle: {
+            width: 2,
+            opacity: 0.5,
+            curveness: 0.3
+          },
+          effect: {
+            show: true,
+            period: 4,
+            trailLength: 0.3,
+            symbol: 'circle',
+            symbolSize: 6,
+            color: 'inherit'
+          },
+          progressive: 200,
+          progressiveThreshold: 500
+        },
+        {
+          name: '城市',
+          type: 'scatter',
+          coordinateSystem: 'geo',
+          zlevel: 2,
+          data: scatterData,
+          symbol: 'circle',
+          symbolSize: function(val, params) {
+            return params.name === '临沂' ? 16 : 10;
+          },
+          itemStyle: {
+            borderColor: '#fff',
+            borderWidth: 2,
+            shadowBlur: 6,
+            shadowColor: 'rgba(0,0,0,.15)'
+          },
+          label: {
+            show: true,
+            formatter: function(p) { return p.name; },
+            fontSize: 11,
+            color: '#334155',
+            offset: [0, -12]
+          },
+          emphasis: {
+            scale: 1.4,
+            label: { fontWeight: 'bold', fontSize: 12 }
+          }
+        }
+      ]
+    };
+
+    chart.setOption(option);
+    if (loadingEl) loadingEl.style.display = 'none';
+
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
+                 document.documentElement.getAttribute('data-mode') === 'dark' ||
+                 document.documentElement.classList.contains('dark');
+    if (isDark) {
+      chart.setOption({
+        geo: {
+          itemStyle: {
+            areaColor: '#1e293b',
+            borderColor: '#475569'
+          },
+          emphasis: {
+            itemStyle: { areaColor: '#334155' }
+          },
+          label: { color: '#94a3b8' }
+        }
+      });
+    }
+
+    window.addEventListener('resize', function() { chart.resize(); });
+
+    var themeObserver = new MutationObserver(function() {
+      var nowDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
+                    document.documentElement.getAttribute('data-mode') === 'dark' ||
+                    document.documentElement.classList.contains('dark');
+      chart.setOption({
+        geo: {
+          itemStyle: {
+            areaColor: nowDark ? '#1e293b' : '#e8f0fe',
+            borderColor: nowDark ? '#475569' : '#93c5fd'
+          },
+          emphasis: {
+            itemStyle: { areaColor: nowDark ? '#334155' : '#bfdbfe' }
+          },
+          label: { color: nowDark ? '#94a3b8' : '#475569' }
+        }
+      });
+      setTimeout(function() { chart.resize(); }, 100);
+    });
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme', 'class']
+    });
+  }
+
+  function ensureECharts(cb) {
+    if (typeof echarts !== 'undefined') { cb(); return; }
+    var s = document.createElement('script');
+    s.src = '/libs/echarts/echarts.min.js';
+    s.onload = cb;
+    s.onerror = function() {
+      var s2 = document.createElement('script');
+      s2.src = 'https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js';
+      s2.onload = cb;
+      s2.onerror = function() {
+        loadingEl && (loadingEl.innerHTML = '<div style="color:#ef4444">ECharts 加载失败</div>');
+      };
+      document.head.appendChild(s2);
+    };
+    document.head.appendChild(s);
+  }
+
+  fetch('/data/province-config.json')
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function(config) {
+      var pColors = config.provinceColors || {};
+      var dColor = config.defaultColor || '#6b7280';
+      var pGeoName = config.provinceGeoName || {};
+
+      ensureECharts(function() {
+        fetch('/data/china.json')
+          .then(function(r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+          })
+          .then(function(chinaJson) { drawChart(chinaJson, pColors, dColor, pGeoName); })
+          .catch(function() {
+            fetch('https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json')
+              .then(function(r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+              })
+              .then(function(chinaJson) { drawChart(chinaJson, pColors, dColor, pGeoName); })
+              .catch(function() {
+                loadingEl && (loadingEl.innerHTML = '<div style="color:#ef4444">地图数据加载失败，请刷新重试</div>');
+              });
+          });
+      });
+    })
+    .catch(function() {
+      loadingEl && (loadingEl.innerHTML = '<div style="color:#ef4444">省份配置加载失败，请刷新重试</div>');
+    });
+})();
+</script>
+{{ end }}

@@ -1,0 +1,81 @@
+<div class="tool-input-group">
+  <label class="tool-label">输入文本</label>
+  <textarea class="tool-textarea" id="sl-input" rows="8" placeholder="请输入文本，将实时统计各项指标...">这是一段用于测试字符串长度统计的示例文本。This is a sample text for testing string length counter.
+它包含中英文字符、数字123、标点符号，以及多行内容。
+
+第二段落开始，用于测试段落计数功能是否正常。The second paragraph starts here.</textarea>
+</div>
+
+<div class="tool-stats" id="sl-stats">
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="sl-stat-chars">0</span>
+    <span class="tool-stat-label">字符数</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="sl-stat-bytes">0</span>
+    <span class="tool-stat-label">UTF-8 字节数</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="sl-stat-words">0</span>
+    <span class="tool-stat-label">单词数</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="sl-stat-lines">0</span>
+    <span class="tool-stat-label">行数</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="sl-stat-no-space">0</span>
+    <span class="tool-stat-label">不含空格字符数</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="sl-stat-paragraphs">0</span>
+    <span class="tool-stat-label">段落数</span>
+  </div>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn" id="sl-clear-btn">清空</button>
+</div>
+
+<script>
+(function(){
+  const input = document.getElementById('sl-input');
+
+  function updateStats() {
+    const text = input.value;
+
+    // 字符数
+    document.getElementById('sl-stat-chars').textContent = text.length;
+
+    // UTF-8 字节数
+    const bytes = new Blob([text]).size;
+    document.getElementById('sl-stat-bytes').textContent = bytes;
+
+    // 单词数 (中英文混合)
+    const words = text.trim() ? (text.trim().match(/[\u4e00-\u9fff]|[a-zA-Z0-9\u00C0-\u024F]+/g) || []).length : 0;
+    document.getElementById('sl-stat-words').textContent = words;
+
+    // 行数
+    const lines = text ? text.split('\n').length : 0;
+    document.getElementById('sl-stat-lines').textContent = lines;
+
+    // 不含空格字符数
+    const noSpace = text.replace(/\s/g, '').length;
+    document.getElementById('sl-stat-no-space').textContent = noSpace;
+
+    // 段落数
+    const paragraphs = text.trim() ? text.split(/\n\s*\n/).filter(p => p.trim() !== '').length : 0;
+    document.getElementById('sl-stat-paragraphs').textContent = paragraphs;
+  }
+
+  input.addEventListener('input', updateStats);
+
+  document.getElementById('sl-clear-btn').addEventListener('click', () => {
+    input.value = '';
+    updateStats();
+  });
+
+  // 初始统计
+  updateStats();
+})();
+</script>

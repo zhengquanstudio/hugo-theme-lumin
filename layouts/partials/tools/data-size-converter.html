@@ -1,0 +1,59 @@
+<div class="tool-input-group">
+  <label class="tool-label">数据量换算</label>
+  <div style="display:flex;gap:10px;">
+    <input class="tool-input" type="number" id="ds-val" value="1" step="any" min="0" placeholder="数值" style="flex:2;">
+    <select class="tool-select" id="ds-unit" style="flex:1;">
+      <option value="bit">bit</option>
+      <option value="B">Byte (B)</option>
+      <option value="KB">KB</option>
+      <option value="MB">MB</option>
+      <option value="GB">GB</option>
+      <option value="TB">TB</option>
+      <option value="PB">PB</option>
+    </select>
+  </div>
+</div>
+<div class="tool-result" id="ds-result"></div>
+
+<script>
+(function() {
+  var units = [
+    { name: 'bit', label: 'bit（比特）', scale: 1 },
+    { name: 'Byte', label: 'B（字节）', scale: 8 },
+    { name: 'KB', label: 'KB（千字节）', scale: 8 * 1024 },
+    { name: 'MB', label: 'MB（兆字节）', scale: 8 * 1024 * 1024 },
+    { name: 'GB', label: 'GB（吉字节）', scale: 8 * 1024 * 1024 * 1024 },
+    { name: 'TB', label: 'TB（太字节）', scale: 8 * 1024 * 1024 * 1024 * 1024 },
+    { name: 'PB', label: 'PB（拍字节）', scale: 8 * 1024 * 1024 * 1024 * 1024 * 1024 }
+  ];
+
+  function update() {
+    var val = parseFloat(document.getElementById('ds-val').value);
+    var fromUnit = document.getElementById('ds-unit').value;
+
+    if (isNaN(val) || val < 0) {
+      document.getElementById('ds-result').innerHTML = '<div class="tool-output"><div class="tool-output-title">错误</div><p>请输入有效数值。</p></div>';
+      return;
+    }
+
+    var fromBit = val * units.find(function(u){return u.name === fromUnit;}).scale;
+    var html = '<div class="tool-output"><div class="tool-output-title">换算结果</div><table style="width:100%;border-collapse:collapse;">';
+    html += '<thead><tr style="background:#f5f5f5;"><th style="padding:8px;text-align:left;border-bottom:2px solid #ddd;">单位</th><th style="padding:8px;text-align:right;border-bottom:2px solid #ddd;">数值</th></tr></thead><tbody>';
+
+    for (var i = 0; i < units.length; i++) {
+      var converted = fromBit / units[i].scale;
+      var display;
+      if (Math.abs(converted) >= 1e9) display = converted.toExponential(6);
+      else if (Math.abs(converted) >= 1) display = converted.toFixed(6).replace(/\.?0+$/, '');
+      else display = converted.toFixed(10).replace(/0+$/, '');
+      html += '<tr style="border-bottom:1px solid #eee;"><td style="padding:8px;">' + units[i].label + '</td><td style="padding:8px;text-align:right;font-family:monospace;">' + display + '</td></tr>';
+    }
+    html += '</tbody></table></div>';
+    document.getElementById('ds-result').innerHTML = html;
+  }
+
+  document.getElementById('ds-val').addEventListener('input', update);
+  document.getElementById('ds-unit').addEventListener('change', update);
+  update();
+})();
+</script>

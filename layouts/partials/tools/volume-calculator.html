@@ -1,0 +1,97 @@
+<div class="tool-input-group">
+  <label class="tool-label">选择立体形状</label>
+  <select class="tool-select" id="vol-shape">
+    <option value="cube">正方体</option>
+    <option value="cuboid">长方体</option>
+    <option value="sphere">球体</option>
+    <option value="cylinder">圆柱体</option>
+    <option value="cone">圆锥体</option>
+    <option value="prism">棱柱</option>
+    <option value="pyramid">棱锥</option>
+  </select>
+</div>
+<div id="vol-inputs"></div>
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="vol-calc">计算体积</button>
+</div>
+<div class="tool-result" id="vol-result"></div>
+
+<script>
+(function() {
+  var shapeConfig = {
+    cube: { inputs: [{id:'a', label:'边长 a', val:'5'}], formula: 'a³' },
+    cuboid: { inputs: [{id:'l', label:'长 l', val:'10'},{id:'w', label:'宽 w', val:'6'},{id:'h', label:'高 h', val:'4'}], formula: 'l × w × h' },
+    sphere: { inputs: [{id:'r', label:'半径 r', val:'5'}], formula: '4/3 × π × r³' },
+    cylinder: { inputs: [{id:'r', label:'底面半径 r', val:'5'},{id:'h', label:'高 h', val:'10'}], formula: 'π × r² × h' },
+    cone: { inputs: [{id:'r', label:'底面半径 r', val:'5'},{id:'h', label:'高 h', val:'10'}], formula: '1/3 × π × r² × h' },
+    prism: { inputs: [{id:'a', label:'底面积 A', val:'25'},{id:'h', label:'高 h', val:'10'}], formula: 'A × h' },
+    pyramid: { inputs: [{id:'a', label:'底面积 A', val:'25'},{id:'h', label:'高 h', val:'10'}], formula: '1/3 × A × h' }
+  };
+
+  function renderInputs() {
+    var shape = document.getElementById('vol-shape').value;
+    var cfg = shapeConfig[shape];
+    var html = '';
+    for (var i = 0; i < cfg.inputs.length; i++) {
+      html += '<div class="tool-input-group"><label class="tool-label">' + cfg.inputs[i].label + '</label><input class="tool-input vol-param" type="number" id="vol-' + cfg.inputs[i].id + '" value="' + cfg.inputs[i].val + '" step="any" min="0"></div>';
+    }
+    document.getElementById('vol-inputs').innerHTML = html;
+  }
+
+  document.getElementById('vol-shape').addEventListener('change', renderInputs);
+  renderInputs();
+
+  document.getElementById('vol-calc').addEventListener('click', function() {
+    var shape = document.getElementById('vol-shape').value;
+    var cfg = shapeConfig[shape];
+    var result = document.getElementById('vol-result');
+    var volume;
+
+    try {
+      if (shape === 'cube') {
+        var a = parseFloat(document.getElementById('vol-a').value);
+        if (isNaN(a) || a <= 0) throw '请输入有效的边长。';
+        volume = a * a * a;
+      } else if (shape === 'cuboid') {
+        var l = parseFloat(document.getElementById('vol-l').value);
+        var w = parseFloat(document.getElementById('vol-w').value);
+        var h = parseFloat(document.getElementById('vol-h').value);
+        if (isNaN(l) || isNaN(w) || isNaN(h) || l <= 0 || w <= 0 || h <= 0) throw '请输入有效的长宽高。';
+        volume = l * w * h;
+      } else if (shape === 'sphere') {
+        var sr = parseFloat(document.getElementById('vol-r').value);
+        if (isNaN(sr) || sr <= 0) throw '请输入有效的半径。';
+        volume = 4/3 * Math.PI * sr * sr * sr;
+      } else if (shape === 'cylinder') {
+        var cr = parseFloat(document.getElementById('vol-r').value);
+        var ch = parseFloat(document.getElementById('vol-h').value);
+        if (isNaN(cr) || isNaN(ch) || cr <= 0 || ch <= 0) throw '请输入有效的半径和高。';
+        volume = Math.PI * cr * cr * ch;
+      } else if (shape === 'cone') {
+        var cor = parseFloat(document.getElementById('vol-r').value);
+        var coh = parseFloat(document.getElementById('vol-h').value);
+        if (isNaN(cor) || isNaN(coh) || cor <= 0 || coh <= 0) throw '请输入有效的半径和高。';
+        volume = Math.PI * cor * cor * coh / 3;
+      } else if (shape === 'prism') {
+        var pa = parseFloat(document.getElementById('vol-a').value);
+        var ph = parseFloat(document.getElementById('vol-h').value);
+        if (isNaN(pa) || isNaN(ph) || pa <= 0 || ph <= 0) throw '请输入有效的底面积和高。';
+        volume = pa * ph;
+      } else if (shape === 'pyramid') {
+        var pya = parseFloat(document.getElementById('vol-a').value);
+        var pyh = parseFloat(document.getElementById('vol-h').value);
+        if (isNaN(pya) || isNaN(pyh) || pya <= 0 || pyh <= 0) throw '请输入有效的底面积和高。';
+        volume = pya * pyh / 3;
+      }
+
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">体积</div>' +
+        '<div class="tool-stats"><div class="tool-stat"><div class="tool-stat-value" style="font-size:28px;">' + volume.toFixed(4) + '</div><div class="tool-stat-label">体积（立方单位）</div></div></div>' +
+        '<p style="margin-top:12px;">公式：<code>V = ' + cfg.formula + '</code></p></div>';
+    } catch(e) {
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">错误</div><p>' + e + '</p></div>';
+    }
+  });
+
+  document.getElementById('vol-calc').click();
+})();
+</script>

@@ -1,0 +1,59 @@
+<div class="tool-section">
+  <div class="tool-title"><i class="fa-solid fa-chart-simple"></i> 统计计算器</div>
+  <div class="tool-input-group">
+    <label class="tool-label">输入数字列表 <span style="color:var(--text-secondary);font-weight:400">(每行一个，或用逗号/空格分隔)</span></label>
+    <textarea id="stats-input" class="tool-textarea" rows="5" placeholder="1,2,3,4,5,6,7,8,9,10">1,2,3,4,5,6,7,8,9,10</textarea>
+  </div>
+  <button class="tool-btn tool-btn-primary" onclick="calcStats()"><i class="fa-solid fa-calculator"></i> 计算</button>
+  <div class="stats-result" id="stats-result">
+    <div class="stats-grid">
+      <div class="stat-card"><span>数量</span><span id="stat-count">—</span></div>
+      <div class="stat-card"><span>总和</span><span id="stat-sum">—</span></div>
+      <div class="stat-card"><span>平均数</span><span id="stat-mean">—</span></div>
+      <div class="stat-card"><span>中位数</span><span id="stat-median">—</span></div>
+      <div class="stat-card"><span>众数</span><span id="stat-mode">—</span></div>
+      <div class="stat-card"><span>最小值</span><span id="stat-min">—</span></div>
+      <div class="stat-card"><span>最大值</span><span id="stat-max">—</span></div>
+      <div class="stat-card"><span>极差</span><span id="stat-range">—</span></div>
+      <div class="stat-card"><span>方差</span><span id="stat-variance">—</span></div>
+      <div class="stat-card"><span>标准差</span><span id="stat-stddev">—</span></div>
+    </div>
+  </div>
+</div>
+
+<style>
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-top:16px;}
+.stat-card{padding:12px;background:var(--bg-card);border-radius:10px;text-align:center;border:1px solid var(--border-color);}
+.stat-card span{display:block}.stat-card span:first-child{font-size:.75rem;color:var(--text-secondary);margin-bottom:4px}
+.stat-card span:last-child{font-size:1.2rem;font-weight:700;}
+</style>
+
+<script>
+(function(){
+  window.calcStats=function(){
+    var raw=document.getElementById('stats-input').value;
+    var nums=raw.split(/[\n,，\s]+/).map(function(x){return parseFloat(x);}).filter(function(x){return !isNaN(x);});
+    if(!nums.length){alert('请输入有效数字');return;}
+    nums.sort(function(a,b){return a-b;});
+    var n=nums.length,sum=0,min=nums[0],max=nums[nums.length-1];
+    for(var i=0;i<n;i++)sum+=nums[i];
+    var mean=sum/n,median=n%2===0?(nums[n/2-1]+nums[n/2])/2:nums[Math.floor(n/2)];
+    var freq={},maxF=0,mode=[];
+    for(var j=0;j<n;j++){var v=nums[j];freq[v]=(freq[v]||0)+1;if(freq[v]>maxF){maxF=freq[v];mode=[v];}else if(freq[v]===maxF&&mode.indexOf(v)===-1)mode.push(v);}
+    if(maxF===1)mode=['无'];
+    var sqSum=0;for(var k=0;k<n;k++)sqSum+=Math.pow(nums[k]-mean,2);
+    var variance=sqSum/n,stddev=Math.sqrt(variance);
+    document.getElementById('stat-count').textContent=n;
+    document.getElementById('stat-sum').textContent=sum.toFixed(4);
+    document.getElementById('stat-mean').textContent=mean.toFixed(4);
+    document.getElementById('stat-median').textContent=median.toFixed(4);
+    document.getElementById('stat-mode').textContent=mode.join(',');
+    document.getElementById('stat-min').textContent=min;
+    document.getElementById('stat-max').textContent=max;
+    document.getElementById('stat-range').textContent=(max-min).toFixed(4);
+    document.getElementById('stat-variance').textContent=variance.toFixed(4);
+    document.getElementById('stat-stddev').textContent=stddev.toFixed(4);
+  };
+  calcStats();
+})();
+</script>

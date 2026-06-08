@@ -1,0 +1,9 @@
+{{- /* article-sections.html — 获取所有 pageType=article 的 section 名，全站共享缓存 */ -}}
+{{- $sections := slice -}}
+{{- range site.Sections -}}
+  {{- $pt := .Params.pageType | default "article" -}}
+  {{- if eq $pt "article" -}}
+    {{- $sections = $sections | append .Section -}}
+  {{- end -}}
+{{- end -}}
+{{- return $sections -}}

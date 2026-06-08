@@ -1,0 +1,23 @@
+{{ if site.Params.ribbon.enable }}
+{{ $config := site.Params.ribbon }}
+<canvas id="ribbon-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:-1"
+  data-ribbon-count="{{ $config.count | default 3 }}"
+  data-alpha="{{ $config.alpha | default 0.5 }}"
+  data-saturation="{{ $config.saturation | default "70%" }}"
+  data-brightness="{{ $config.brightness | default "55%" }}"
+  data-color-cycle-speed="{{ $config.colorCycleSpeed | default 5 }}"
+  data-horizontal-speed="{{ $config.horizontalSpeed | default 180 }}"
+  data-parallax-amount="{{ $config.parallaxAmount | default -0.2 }}"
+  data-stroke-size="{{ $config.strokeSize | default 0 }}"
+></canvas>
+
+<style>
+.main-wrapper { background: transparent !important; }
+#swup-main { background: transparent !important; }
+body { background-color: transparent !important; }
+html { background-color: var(--bg-primary) !important; }
+</style>
+
+{{ $ribbonJS := resources.Get "js/modules/ribbon.js" | minify | fingerprint }}
+<script src="{{ $ribbonJS.RelPermalink }}" defer></script>
+{{ end }}

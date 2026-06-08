@@ -1,0 +1,282 @@
+<style>
+.lp-search-wrap{margin-bottom:18px}
+.lp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.lp-card{background:var(--bg-primary,#fff);border-radius:14px;border:1px solid var(--border-color,#e5e7eb);padding:18px 20px;transition:all .2s;cursor:default}
+.lp-card:hover{border-color:#667eea;box-shadow:0 4px 16px rgba(102,126,234,.1);transform:translateY(-2px)}
+[data-theme="dark"] .lp-card:hover{border-color:var(--primary-color,#818cf8)}
+.lp-card-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.lp-abbr{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;font-size:1rem;font-weight:800;flex-shrink:0;border:2px solid var(--border-color,#e5e7eb)}
+.lp-name{font-size:1.05rem;font-weight:700;color:var(--text-primary,#1f2937)}
+.lp-codes{font-size:.82rem;color:var(--text-secondary,#4b5563);line-height:1.8}
+.lp-code-tag{display:inline-flex;align-items:center;gap:4px;background:var(--bg-secondary,#f3f4f6);border-radius:6px;padding:2px 8px;margin:2px 3px;font-family:monospace;font-size:.8rem;color:var(--text-primary,#1f2937);font-weight:600;border:1px solid var(--border-color,#e5e7eb)}
+.lp-city{font-size:.72rem;font-weight:400;color:var(--text-muted,#9ca3af);font-family:inherit}
+.lp-special{margin-top:18px}
+.lp-section-title{font-size:.9rem;font-weight:700;color:var(--text-muted,#6b7280);margin-bottom:10px;padding-left:4px}
+.lp-note{font-size:.76rem;color:var(--text-muted,#9ca3af);margin-top:3px}
+.lp-count{font-size:.82rem;color:var(--text-muted,#9ca3af);margin-top:10px}
+.lp-empty{padding:40px;text-align:center;color:var(--text-muted,#9ca3af);font-size:.88rem}
+</style>
+
+<div class="lp-search-wrap">
+  <div class="tool-input-group">
+    <label class="tool-label" for="lp-search">搜索省份/城市/车牌代码</label>
+    <input class="tool-input" type="text" id="lp-search" placeholder="输入省份名、城市名或车牌代码快速查找...">
+  </div>
+</div>
+
+<div class="lp-grid" id="lp-grid"></div>
+<div class="lp-empty" id="lp-empty" style="display:none">没有匹配的省份或城市</div>
+<div class="lp-count" id="lp-count"></div>
+
+<div class="lp-special" id="lp-special" style="display:none">
+  <div class="lp-section-title">特殊车辆</div>
+  <div class="lp-card">
+    <div class="lp-card-header">
+      <span class="lp-abbr" style="background:linear-gradient(135deg,#ef4444,#f97316)">使</span>
+      <span class="lp-name">使/领馆车辆</span>
+    </div>
+    <div class="lp-codes">
+      <span class="lp-code-tag">使<span class="lp-city">大使馆</span></span>
+      <span class="lp-code-tag">领<span class="lp-city">领事馆</span></span>
+    </div>
+  </div>
+  <div class="lp-card" style="margin-top:10px">
+    <div class="lp-card-header">
+      <span class="lp-abbr" style="background:linear-gradient(135deg,#22c55e,#10b981)">军</span>
+      <span class="lp-name">军警车辆</span>
+    </div>
+    <div class="lp-codes">
+      <span class="lp-code-tag">军<span class="lp-city">军队</span></span>
+      <span class="lp-code-tag">空<span class="lp-city">空军</span></span>
+      <span class="lp-code-tag">海<span class="lp-city">海军</span></span>
+      <span class="lp-code-tag">WJ<span class="lp-city">武警</span></span>
+    </div>
+  </div>
+  <div class="lp-card" style="margin-top:10px">
+    <div class="lp-card-header">
+      <span class="lp-abbr" style="background:linear-gradient(135deg,#f59e0b,#f97316)">临</span>
+      <span class="lp-name">临时/教练车辆</span>
+    </div>
+    <div class="lp-codes">
+      <span class="lp-code-tag">学<span class="lp-city">驾校</span></span>
+      <span class="lp-code-tag">警<span class="lp-city">警车</span></span>
+      <span class="lp-code-tag">试<span class="lp-city">试车</span></span>
+      <span class="lp-code-tag">临<span class="lp-city">临时</span></span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var provinces=[
+    {name:"北京",abbr:"京",codes:[
+      {c:"A",city:"北京"},{c:"B",city:"北京"},{c:"C",city:"北京"},{c:"D",city:"北京"},{c:"E",city:"北京"},
+      {c:"F",city:"北京"},{c:"G",city:"北京"},{c:"H",city:"北京"},{c:"J",city:"北京"},{c:"K",city:"北京"},
+      {c:"L",city:"北京"},{c:"M",city:"北京"},{c:"N",city:"北京"},{c:"P",city:"北京"},{c:"Q",city:"北京"},
+      {c:"Y",city:"北京"}
+    ]},
+    {name:"天津",abbr:"津",codes:[
+      {c:"A",city:"天津"},{c:"B",city:"天津"},{c:"C",city:"天津"},{c:"D",city:"天津"},{c:"E",city:"天津"},
+      {c:"F",city:"天津"},{c:"G",city:"天津"},{c:"H",city:"天津"},{c:"J",city:"天津"},{c:"K",city:"天津"},
+      {c:"L",city:"天津"},{c:"M",city:"天津"},{c:"N",city:"天津"},{c:"P",city:"天津"},{c:"Q",city:"天津"},
+      {c:"R",city:"天津"}
+    ]},
+    {name:"上海",abbr:"沪",codes:[
+      {c:"A",city:"上海"},{c:"B",city:"上海"},{c:"C",city:"上海"},{c:"D",city:"上海"},{c:"E",city:"上海"},
+      {c:"F",city:"上海"},{c:"G",city:"上海"},{c:"H",city:"上海"},{c:"J",city:"上海"},{c:"K",city:"上海"},
+      {c:"L",city:"上海"},{c:"M",city:"上海"},{c:"N",city:"上海"}
+    ]},
+    {name:"重庆",abbr:"渝",codes:[
+      {c:"A",city:"重庆"},{c:"B",city:"重庆"},{c:"C",city:"重庆"},{c:"D",city:"重庆"},
+      {c:"F",city:"重庆"},{c:"G",city:"重庆"},{c:"H",city:"重庆"}
+    ]},
+    {name:"河北",abbr:"冀",codes:[
+      {c:"A",city:"石家庄"},{c:"B",city:"唐山"},{c:"C",city:"秦皇岛"},{c:"D",city:"邯郸"},{c:"E",city:"邢台"},
+      {c:"F",city:"保定"},{c:"G",city:"张家口"},{c:"H",city:"承德"},{c:"J",city:"沧州"},{c:"R",city:"廊坊"},
+      {c:"T",city:"衡水"},{c:"X",city:"雄安新区"}
+    ]},
+    {name:"山西",abbr:"晋",codes:[
+      {c:"A",city:"太原"},{c:"B",city:"大同"},{c:"C",city:"阳泉"},{c:"D",city:"长治"},{c:"E",city:"晋城"},
+      {c:"F",city:"朔州"},{c:"H",city:"忻州"},{c:"J",city:"吕梁"},{c:"K",city:"晋中"},{c:"L",city:"临汾"},
+      {c:"M",city:"运城"}
+    ]},
+    {name:"辽宁",abbr:"辽",codes:[
+      {c:"A",city:"沈阳"},{c:"B",city:"大连"},{c:"C",city:"鞍山"},{c:"D",city:"抚顺"},{c:"E",city:"本溪"},
+      {c:"F",city:"丹东"},{c:"G",city:"锦州"},{c:"H",city:"营口"},{c:"J",city:"阜新"},{c:"K",city:"辽阳"},
+      {c:"L",city:"盘锦"},{c:"M",city:"铁岭"},{c:"N",city:"朝阳"},{c:"P",city:"葫芦岛"}
+    ]},
+    {name:"吉林",abbr:"吉",codes:[
+      {c:"A",city:"长春"},{c:"B",city:"吉林"},{c:"C",city:"四平"},{c:"D",city:"辽源"},{c:"E",city:"通化"},
+      {c:"F",city:"白山"},{c:"G",city:"白城"},{c:"H",city:"延边"},{c:"J",city:"松原"}
+    ]},
+    {name:"黑龙江",abbr:"黑",codes:[
+      {c:"A",city:"哈尔滨"},{c:"B",city:"齐齐哈尔"},{c:"C",city:"牡丹江"},{c:"D",city:"佳木斯"},{c:"E",city:"大庆"},
+      {c:"F",city:"伊春"},{c:"G",city:"鸡西"},{c:"H",city:"鹤岗"},{c:"J",city:"双鸭山"},{c:"K",city:"七台河"},
+      {c:"L",city:"哈尔滨"},{c:"M",city:"绥化"},{c:"N",city:"黑河"},{c:"P",city:"大兴安岭"},{c:"R",city:"农垦"}
+    ]},
+    {name:"江苏",abbr:"苏",codes:[
+      {c:"A",city:"南京"},{c:"B",city:"无锡"},{c:"C",city:"徐州"},{c:"D",city:"常州"},{c:"E",city:"苏州"},
+      {c:"F",city:"南通"},{c:"G",city:"连云港"},{c:"H",city:"淮安"},{c:"J",city:"盐城"},{c:"K",city:"扬州"},
+      {c:"L",city:"镇江"},{c:"M",city:"泰州"},{c:"N",city:"宿迁"},{c:"U",city:"苏州"}
+    ]},
+    {name:"浙江",abbr:"浙",codes:[
+      {c:"A",city:"杭州"},{c:"B",city:"宁波"},{c:"C",city:"温州"},{c:"D",city:"绍兴"},{c:"E",city:"湖州"},
+      {c:"F",city:"嘉兴"},{c:"G",city:"金华"},{c:"H",city:"衢州"},{c:"J",city:"台州"},{c:"K",city:"丽水"},
+      {c:"L",city:"舟山"}
+    ]},
+    {name:"安徽",abbr:"皖",codes:[
+      {c:"A",city:"合肥"},{c:"B",city:"芜湖"},{c:"C",city:"蚌埠"},{c:"D",city:"淮南"},{c:"E",city:"马鞍山"},
+      {c:"F",city:"淮北"},{c:"G",city:"铜陵"},{c:"H",city:"安庆"},{c:"J",city:"黄山"},{c:"K",city:"阜阳"},
+      {c:"L",city:"宿州"},{c:"M",city:"滁州"},{c:"N",city:"六安"},{c:"P",city:"宣城"},{c:"R",city:"池州"},
+      {c:"S",city:"亳州"}
+    ]},
+    {name:"福建",abbr:"闽",codes:[
+      {c:"A",city:"福州"},{c:"B",city:"莆田"},{c:"C",city:"泉州"},{c:"D",city:"厦门"},{c:"E",city:"漳州"},
+      {c:"F",city:"龙岩"},{c:"G",city:"三明"},{c:"H",city:"南平"},{c:"J",city:"宁德"},{c:"K",city:"省直"}
+    ]},
+    {name:"江西",abbr:"赣",codes:[
+      {c:"A",city:"南昌"},{c:"B",city:"赣州"},{c:"C",city:"宜春"},{c:"D",city:"吉安"},{c:"E",city:"上饶"},
+      {c:"F",city:"抚州"},{c:"G",city:"九江"},{c:"H",city:"景德镇"},{c:"J",city:"萍乡"},{c:"K",city:"新余"},
+      {c:"L",city:"鹰潭"},{c:"M",city:"南昌"}
+    ]},
+    {name:"山东",abbr:"鲁",codes:[
+      {c:"A",city:"济南"},{c:"B",city:"青岛"},{c:"C",city:"淄博"},{c:"D",city:"枣庄"},{c:"E",city:"东营"},
+      {c:"F",city:"烟台"},{c:"G",city:"潍坊"},{c:"H",city:"济宁"},{c:"J",city:"泰安"},{c:"K",city:"威海"},
+      {c:"L",city:"日照"},{c:"M",city:"滨州"},{c:"N",city:"德州"},{c:"P",city:"聊城"},{c:"Q",city:"临沂"},
+      {c:"R",city:"菏泽"},{c:"S",city:"济南"},{c:"U",city:"青岛"},{c:"V",city:"潍坊"},{c:"W",city:"临沂"},{c:"Y",city:"烟台"}
+    ]},
+    {name:"河南",abbr:"豫",codes:[
+      {c:"A",city:"郑州"},{c:"B",city:"开封"},{c:"C",city:"洛阳"},{c:"D",city:"平顶山"},{c:"E",city:"安阳"},
+      {c:"F",city:"鹤壁"},{c:"G",city:"新乡"},{c:"H",city:"焦作"},{c:"J",city:"濮阳"},{c:"K",city:"许昌"},
+      {c:"L",city:"漯河"},{c:"M",city:"三门峡"},{c:"N",city:"商丘"},{c:"P",city:"周口"},{c:"Q",city:"驻马店"},
+      {c:"R",city:"南阳"},{c:"S",city:"信阳"},{c:"U",city:"济源"},{c:"V",city:"郑州"}
+    ]},
+    {name:"湖北",abbr:"鄂",codes:[
+      {c:"A",city:"武汉"},{c:"B",city:"黄石"},{c:"C",city:"十堰"},{c:"D",city:"荆州"},{c:"E",city:"宜昌"},
+      {c:"F",city:"襄阳"},{c:"G",city:"鄂州"},{c:"H",city:"荆门"},{c:"J",city:"黄冈"},{c:"K",city:"孝感"},
+      {c:"L",city:"咸宁"},{c:"M",city:"仙桃"},{c:"N",city:"潜江"},{c:"P",city:"神农架"},{c:"Q",city:"恩施"},
+      {c:"R",city:"天门"},{c:"S",city:"随州"}
+    ]},
+    {name:"湖南",abbr:"湘",codes:[
+      {c:"A",city:"长沙"},{c:"B",city:"株洲"},{c:"C",city:"湘潭"},{c:"D",city:"衡阳"},{c:"E",city:"邵阳"},
+      {c:"F",city:"岳阳"},{c:"G",city:"张家界"},{c:"H",city:"益阳"},{c:"J",city:"常德"},{c:"K",city:"娄底"},
+      {c:"L",city:"郴州"},{c:"M",city:"永州"},{c:"N",city:"怀化"},{c:"U",city:"湘西"}
+    ]},
+    {name:"广东",abbr:"粤",codes:[
+      {c:"A",city:"广州"},{c:"B",city:"深圳"},{c:"C",city:"珠海"},{c:"D",city:"汕头"},{c:"E",city:"佛山"},
+      {c:"F",city:"韶关"},{c:"G",city:"湛江"},{c:"H",city:"肇庆"},{c:"J",city:"江门"},{c:"K",city:"茂名"},
+      {c:"L",city:"惠州"},{c:"M",city:"梅州"},{c:"N",city:"汕尾"},{c:"P",city:"河源"},{c:"Q",city:"阳江"},
+      {c:"R",city:"清远"},{c:"S",city:"东莞"},{c:"T",city:"中山"},{c:"U",city:"潮州"},{c:"V",city:"揭阳"},
+      {c:"W",city:"云浮"},{c:"X",city:"佛山"},{c:"Y",city:"佛山"},{c:"Z",city:"港澳"}
+    ]},
+    {name:"广西",abbr:"桂",codes:[
+      {c:"A",city:"南宁"},{c:"B",city:"柳州"},{c:"C",city:"桂林"},{c:"D",city:"梧州"},{c:"E",city:"北海"},
+      {c:"F",city:"崇左"},{c:"G",city:"来宾"},{c:"H",city:"桂林"},{c:"J",city:"贺州"},{c:"K",city:"玉林"},
+      {c:"L",city:"百色"},{c:"M",city:"河池"},{c:"N",city:"钦州"},{c:"P",city:"防城港"},{c:"R",city:"贵港"}
+    ]},
+    {name:"海南",abbr:"琼",codes:[
+      {c:"A",city:"海口"},{c:"B",city:"三亚"},{c:"C",city:"琼北"},{c:"D",city:"琼南"},{c:"E",city:"洋浦"},{c:"F",city:"儋州"}
+    ]},
+    {name:"四川",abbr:"川",codes:[
+      {c:"A",city:"成都"},{c:"B",city:"绵阳"},{c:"C",city:"自贡"},{c:"D",city:"攀枝花"},{c:"E",city:"泸州"},
+      {c:"F",city:"德阳"},{c:"G",city:"成都"},{c:"H",city:"广元"},{c:"J",city:"遂宁"},{c:"K",city:"内江"},
+      {c:"L",city:"乐山"},{c:"M",city:"资阳"},{c:"Q",city:"宜宾"},{c:"R",city:"南充"},{c:"S",city:"达州"},
+      {c:"T",city:"雅安"},{c:"U",city:"阿坝"},{c:"V",city:"甘孜"},{c:"W",city:"凉山"},{c:"X",city:"广安"},
+      {c:"Y",city:"巴中"},{c:"Z",city:"眉山"}
+    ]},
+    {name:"贵州",abbr:"贵",codes:[
+      {c:"A",city:"贵阳"},{c:"B",city:"六盘水"},{c:"C",city:"遵义"},{c:"D",city:"铜仁"},{c:"E",city:"黔西南"},
+      {c:"F",city:"毕节"},{c:"G",city:"安顺"},{c:"H",city:"黔东南"},{c:"J",city:"黔南"}
+    ]},
+    {name:"云南",abbr:"云",codes:[
+      {c:"A",city:"昆明"},{c:"C",city:"昭通"},{c:"D",city:"曲靖"},{c:"E",city:"楚雄"},{c:"F",city:"玉溪"},
+      {c:"G",city:"红河"},{c:"H",city:"文山"},{c:"J",city:"普洱"},{c:"K",city:"西双版纳"},{c:"L",city:"大理"},
+      {c:"M",city:"保山"},{c:"N",city:"德宏"},{c:"P",city:"丽江"},{c:"Q",city:"怒江"},{c:"R",city:"迪庆"},
+      {c:"S",city:"临沧"}
+    ]},
+    {name:"西藏",abbr:"藏",codes:[
+      {c:"A",city:"拉萨"},{c:"B",city:"昌都"},{c:"C",city:"山南"},{c:"D",city:"日喀则"},{c:"E",city:"那曲"},
+      {c:"F",city:"阿里"},{c:"G",city:"林芝"}
+    ]},
+    {name:"陕西",abbr:"陕",codes:[
+      {c:"A",city:"西安"},{c:"B",city:"铜川"},{c:"C",city:"宝鸡"},{c:"D",city:"咸阳"},{c:"E",city:"渭南"},
+      {c:"F",city:"汉中"},{c:"G",city:"安康"},{c:"H",city:"商洛"},{c:"J",city:"延安"},{c:"K",city:"榆林"},
+      {c:"U",city:"西安"},{c:"V",city:"杨凌"}
+    ]},
+    {name:"甘肃",abbr:"甘",codes:[
+      {c:"A",city:"兰州"},{c:"B",city:"嘉峪关"},{c:"C",city:"金昌"},{c:"D",city:"白银"},{c:"E",city:"天水"},
+      {c:"F",city:"酒泉"},{c:"G",city:"张掖"},{c:"H",city:"武威"},{c:"J",city:"定西"},{c:"K",city:"陇南"},
+      {c:"L",city:"平凉"},{c:"M",city:"庆阳"},{c:"N",city:"临夏"},{c:"P",city:"甘南"}
+    ]},
+    {name:"青海",abbr:"青",codes:[
+      {c:"A",city:"西宁"},{c:"B",city:"海东"},{c:"C",city:"海北"},{c:"D",city:"黄南"},{c:"E",city:"海南"},
+      {c:"F",city:"果洛"},{c:"G",city:"玉树"},{c:"H",city:"海西"}
+    ]},
+    {name:"宁夏",abbr:"宁",codes:[
+      {c:"A",city:"银川"},{c:"B",city:"石嘴山"},{c:"C",city:"吴忠"},{c:"D",city:"固原"},{c:"E",city:"中卫"}
+    ]},
+    {name:"新疆",abbr:"新",codes:[
+      {c:"A",city:"乌鲁木齐"},{c:"B",city:"昌吉"},{c:"C",city:"石河子"},{c:"D",city:"奎屯"},{c:"E",city:"博尔塔拉"},
+      {c:"F",city:"伊犁"},{c:"G",city:"塔城"},{c:"H",city:"阿勒泰"},{c:"J",city:"克拉玛依"},{c:"K",city:"吐鲁番"},
+      {c:"L",city:"哈密"},{c:"M",city:"巴音郭楞"},{c:"N",city:"阿克苏"},{c:"P",city:"克孜勒苏"},{c:"Q",city:"喀什"},
+      {c:"R",city:"和田"}
+    ]},
+    {name:"内蒙古",abbr:"蒙",codes:[
+      {c:"A",city:"呼和浩特"},{c:"B",city:"包头"},{c:"C",city:"乌海"},{c:"D",city:"赤峰"},{c:"E",city:"呼伦贝尔"},
+      {c:"F",city:"兴安盟"},{c:"G",city:"通辽"},{c:"H",city:"锡林郭勒"},{c:"J",city:"乌兰察布"},{c:"K",city:"鄂尔多斯"},
+      {c:"L",city:"巴彦淖尔"},{c:"M",city:"阿拉善盟"}
+    ]}
+  ];
+
+  var grid=document.getElementById("lp-grid");
+  var empty=document.getElementById("lp-empty");
+  var countEl=document.getElementById("lp-count");
+  var special=document.getElementById("lp-special");
+  var searchInput=document.getElementById("lp-search");
+
+  function render(filter){
+    var html="";
+    var filtered=provinces;
+    if(filter){
+      var q=filter.toLowerCase();
+      filtered=provinces.filter(function(p){
+        if(p.name.indexOf(q)!==-1 || p.abbr.indexOf(q)!==-1) return true;
+        return p.codes.some(function(cd){
+          return (p.abbr+cd.c).toLowerCase().indexOf(q)!==-1 || cd.city.indexOf(q)!==-1;
+        });
+      });
+    }
+    if(filtered.length===0){
+      grid.innerHTML="";
+      empty.style.display="";
+      countEl.textContent="";
+      special.style.display="none";
+      return;
+    }
+    empty.style.display="none";
+    filtered.forEach(function(p){
+      html+="<div class=\"lp-card\"><div class=\"lp-card-header\"><span class=\"lp-abbr\">"+p.abbr+"</span><span class=\"lp-name\">"+p.name+"</span></div><div class=\"lp-codes\">";
+      p.codes.forEach(function(cd){
+        html+="<span class=\"lp-code-tag\">"+p.abbr+cd.c+"<span class=\"lp-city\">"+cd.city+"</span></span>";
+      });
+      html+="</div></div>";
+    });
+    grid.innerHTML=html;
+    countEl.textContent="共 "+filtered.length+" 个省份";
+
+    if(!filter || filter===""){
+      special.style.display="";
+    }else{
+      var q=filter.toLowerCase();
+      var showSpecial=(q.indexOf("使")!==-1 || q.indexOf("领")!==-1 || q.indexOf("军")!==-1 || q.indexOf("警")!==-1 || q.indexOf("学")!==-1 || q.indexOf("试")!==-1 || q.indexOf("临")!==-1 || q.indexOf("wj")!==-1 || q.indexOf("空")!==-1 || q.indexOf("海")!==-1);
+      special.style.display=showSpecial?"":"none";
+    }
+  }
+
+  searchInput.addEventListener("input",function(){
+    render(this.value.trim());
+  });
+
+  render("");
+})();
+</script>

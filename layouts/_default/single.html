@@ -1,0 +1,349 @@
+{{ define "main" }}
+{{/* ===== 文章加密检测 ===== */}}
+{{ $hasPassword := and .Params.password (ne .Params.password "") }}
+
+{{/* JSON-LD 结构化数据 */}}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": {{ .Title | jsonify }},
+  "description": {{ if .Description }}{{ .Description | jsonify }}{{ else }}{{ .Summary | plainify | truncate 160 | jsonify }}{{ end }},
+  "url": {{ .Permalink | jsonify }},
+  "datePublished": {{ .PublishDate.Format "2006-01-02T15:04:05Z" | jsonify }},
+  "dateModified": {{ .Lastmod.Format "2006-01-02T15:04:05Z" | jsonify }},
+  "author": {
+    "@type": "Person",
+    "name": {{ (or .Params.author site.Params.author site.Title) | jsonify }}
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": {{ site.Title | jsonify }}{{ with site.Params.defaultImage }},
+    "logo": {
+      "@type": "ImageObject",
+      "url": {{ . | absURL | jsonify }}
+    }{{ end }}
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": {{ .Permalink | jsonify }}
+  }{{ with .Params.featured_image }},
+  "image": {{ . | absURL | jsonify }}{{ else }}{{ with site.Params.defaultImage }},
+  "image": {{ . | absURL | jsonify }}{{ end }}{{ end }}{{ with .Params.tags }},
+  "keywords": {{ . | jsonify }}{{ end }}
+}
+</script>
+{{/* BreadcrumbList JSON-LD */}}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "首页", "item": {{ site.BaseURL | jsonify }}},
+    {{ with .Params.categories }}{{ with index . 0 }}{{ $catPage := site.GetPage (printf "/categories/%s" .) }}{"@type": "ListItem", "position": 2, "name": {{ (or $catPage.Title .) | jsonify }}, "item": {{ $catPage.Permalink | jsonify }}},{{ end }}{{ end }}
+    {"@type": "ListItem", "position": {{ if .Params.categories }}3{{ else }}2{{ end }}, "name": {{ .Title | jsonify }}, "item": {{ .Permalink | jsonify }}}
+  ]
+}
+</script>
+
+{{/* 面包屑导航 - 图标优先从菜单项 [menu.main.params].icon 读取 */}}
+{{ $pageSlug := .Page.File.TranslationBaseName }}
+{{ $currentIcon := "" }}
+{{ range site.Menus.main }}
+  {{ if eq .Identifier $pageSlug }}
+    {{ $currentIcon = .Params.icon | default "" }}
+  {{ end }}
+{{ end }}
+{{ if not $currentIcon }}{{ $currentIcon = index site.Params.breadcrumbIcons $pageSlug | default "" }}{{ end }}
+<nav class="breadcrumb" aria-label="面包屑导航">
+  <ol class="breadcrumb-list">
+    <li class="breadcrumb-item"><a href="{{ site.BaseURL }}"><i class="fas fa-home" style="font-size:0.9em;margin-right:2px;"></i> 首页</a></li>
+    {{ with .Params.categories }}
+      {{ $catSlug := index . 0 }}
+      <li class="breadcrumb-item"><a href="/{{ $catSlug }}/"><i class="fas fa-folder-open" style="font-size:0.85em;margin-right:3px;"></i>{{ partial "category-display-name.html" (dict "Site" site "Slug" $catSlug) }}</a></li>
+    {{ end }}
+
+    <li class="breadcrumb-item active" aria-current="page">
+      {{ if $currentIcon }}<i class="fas {{ $currentIcon }}" style="font-size:0.85em;margin-right:4px;opacity:0.8;"></i>{{ end }}{{ .Title }}</li>
+  </ol>
+</nav>
+
+{{/* ===== 加密文章：显示锁定界面 ===== */}}
+{{ if $hasPassword }}
+{{/* 加密样式（已抽取至 assets/css/encrypt.css）*/}}
+<link rel="stylesheet" href="{{ "css/encrypt.css" | relURL }}">
+<noscript><style>.encrypted-article{display:none!important}.encrypt-lock-screen{display:flex!important}</style></noscript>
+<div id="encrypted-content" class="encrypt-wrapper">
+  <div class="encrypt-lock-screen">
+    <div class="encrypt-lock-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+      </svg>
+    </div>
+    <h3 class="encrypt-title">这是一篇加密文章</h3>
+    <p class="encrypt-hint">{{ .Params.passwordHint | default "请输入密码以查看内容" }}</p>
+    <form class="encrypt-form" autocomplete="off">
+      <div class="encrypt-input-group">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><circle cx="12" cy="16" r="1"/></svg>
+        <input type="password" id="encrypt-pwd" placeholder="请输入访问密码" autofocus />
+        <button type="submit" id="encrypt-submit">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          解锁
+        </button>
+      </div>
+      <p class="encrypt-error"></p>
+    </form>
+  </div>
+  {{/* 文章完整内容（隐藏存储） */}}
+  <article class="single-post encrypted-article" id="encrypted-article" style="display:none">
+{{ else }}
+<article class="single-post">
+{{ end }}
+
+  <header class="post-header">
+    {{ with .Params.categories }}
+    <div class="post-categories">
+      {{ range . }}
+      {{ $slug := . }}
+      <a href="/{{ $slug }}/" class="category-link">{{ partial "category-display-name.html" (dict "Site" site "Slug" $slug) }}</a>
+      {{ end }}
+    </div>
+    {{ end }}
+
+    <h1 class="post-title">{{ .Title }}</h1>
+
+    <div class="post-meta">
+      {{ if site.Params.article.showAuthor }}
+      <span class="meta-item">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        {{ .Params.author | default site.Params.author }}
+      </span>
+      {{ end }}
+
+      <span class="meta-item">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        {{ .Date.Format "2006-01-02" }}
+      </span>
+
+      {{ if or site.Params.article.showWordCount site.Params.article.showReadingTime }}
+      <span class="meta-item">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        {{ if site.Params.article.showReadingTime }}{{ .ReadingTime }} 分钟{{ end }}{{ if and site.Params.article.showWordCount site.Params.article.showReadingTime }} · {{ end }}{{ if site.Params.article.showWordCount }}{{ .WordCount }} 字{{ end }}
+      </span>
+      {{ end }}
+
+      {{ if and site.Params.statistics.busuanzi }}
+      <span class="meta-item">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        <span id="busuanzi_page_pv">--</span> 阅读
+      </span>
+      {{ end }}
+    </div>
+
+    {{ with .Params.tags }}
+    <div class="post-tags">
+      {{ range . }}
+      <a href="{{ "tags" | relURL }}/{{ . | urlize }}/" class="tag-link">#{{ . }}</a>
+      {{ end }}
+    </div>
+    {{ end }}
+  </header>
+
+  {{ if ne .Params.toolbar false }}
+  <div class="post-toolbar" role="toolbar" aria-label="文章操作">
+    <button type="button" id="btn-export-pdf" class="post-tool-btn" title="导出为PDF">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span>导出PDF</span>
+    </button>
+    <button type="button" id="btn-print-article" class="post-tool-btn" title="打印文章">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v-5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      <span>打印</span>
+    </button>
+    {{ if site.Params.article.showShare }}
+    <button type="button" id="btn-share" class="post-tool-btn" title="分享">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      <span>分享</span>
+    </button>
+    {{ end }}
+    {{ if and site.Params.comments.enable (eq site.Params.comments.type "twikoo") site.Params.comments.twikoo.envId site.Params.article.enableLike (ne .Params.like false) }}
+    <button type="button" id="post-like-btn" class="post-tool-btn post-like-btn" data-env-id="{{ site.Params.comments.twikoo.envId }}" title="点赞">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      <span id="post-like-count">0</span>
+    </button>
+    {{ end }}
+  </div>
+  {{ end }}
+
+  {{/* AI 智能总结 */}}
+  {{ if and site.Params.ai.enable (ne .Params.aiSummary false) }}
+  <div class="ai-summary-section" id="ai-summary-section">
+    <div class="ai-summary-header">
+      <div class="ai-summary-title">
+        <svg class="ai-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 1 4 4c0 1.95-1.4 3.58-3.25 3.93L12 22"/><path d="M12 2a4 4 0 0 0-4 4c0 1.95 1.4 3.58 3.25 3.93"/><path d="M8.5 12c-2.5 0-4.5 1.5-4.5 3.5 0 1.5.5 2.5 1.5 3.5"/><path d="M15.5 12c2.5 0 4.5 1.5 4.5 3.5 0 1.5-.5 2.5-1.5 3.5"/></svg>
+        <span>AI 智能总结</span>
+      </div>
+      <button type="button" id="btn-ai-summary" class="ai-summary-btn" title="AI 生成摘要">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        <span>生成摘要</span>
+      </button>
+    </div>
+    <div class="ai-summary-content" id="ai-summary-content" style="display:none">
+      <div class="ai-summary-text" id="ai-summary-text"></div>
+      <div class="ai-summary-footer">
+        <span class="ai-summary-model">由 AI 自动生成</span>
+      </div>
+    </div>
+    <div class="ai-summary-loading" id="ai-summary-loading" style="display:none">
+      <div class="ai-loading-dots">
+        <span></span><span></span><span></span>
+      </div>
+      <span>AI 正在分析文章内容...</span>
+    </div>
+    <div class="ai-summary-error" id="ai-summary-error" style="display:none">
+      <span class="ai-error-text" id="ai-error-text"></span>
+      <button type="button" class="ai-retry-btn" id="ai-retry-btn">重试</button>
+    </div>
+  </div>
+  {{ end }}
+
+  <div class="post-content">
+    {{/* 广告位：文章内容前 */}}
+    {{ partial "ads/content-before.html" (dict "Page" . "Site" .Site "widgetEnabled" true) }}
+    {{ .Content }}
+    {{/* 广告位：文章内容后 */}}
+    {{ partial "ads/content-after.html" (dict "Page" . "Site" .Site "widgetEnabled" true) }}
+  </div>
+
+  <footer class="post-footer">
+    {{ partial "series-nav.html" . }}
+
+    {{ if site.Params.article.showLicense }}
+    <div class="post-license">
+      <div class="license-header">
+        <span class="license-icon"><i class="far fa-copyright"></i></span>
+        <span class="license-title-text">版权声明</span>
+      </div>
+      <div class="license-body">
+        <p><span class="lb-label">本文作者</span> {{ site.Params.author }}</p>
+        <p><span class="lb-label">本文链接</span> <a href="{{ .Permalink }}" target="_blank">{{ .Permalink }}</a></p>
+        <p><span class="lb-label">许可协议</span> 本博客所有文章除特别声明外，均采用 <a href="{{ site.Params.article.licenseLink }}" target="_blank" rel="noopener">{{ site.Params.article.license }}</a> 许可协议。转载请注明出处！</p>
+      </div>
+    </div>
+    {{ end }}
+
+    {{ if site.Params.reward.enable }}
+    {{ partial "reward.html" . }}
+    {{ end }}
+  </footer>
+
+  {{/* 广告位：文章底部 */}}
+  {{ partial "ads/post-bottom.html" (dict "Page" . "Site" .Site "widgetEnabled" true) }}
+
+  {{ if .Params.topics }}
+  {{ partial "series-nav-bottom.html" . }}
+  {{ else if not .Params.excludeFromList }}
+  <nav class="post-nav">
+    <div class="post-nav-header">
+      <span class="pn-icon"><i class="fas fa-exchange-alt"></i></span>
+      <span class="pn-title-text">文章导航</span>
+    </div>
+    <div class="post-nav-inner">
+    {{ with .PrevInSection }}
+    <a href="{{ .RelPermalink }}" class="post-nav-item prev">
+      <span class="nav-label">上一篇</span>
+      <span class="nav-title">{{ .Title }}</span>
+    </a>
+    {{ end }}
+    {{ with .NextInSection }}
+    <a href="{{ .RelPermalink }}" class="post-nav-item next">
+      <span class="nav-label">下一篇</span>
+      <span class="nav-title">{{ .Title }}</span>
+    </a>
+    {{ end }}
+    </div>
+  </nav>
+  {{ end }}
+
+  {{ $related := first 6 (site.RegularPages.Related .) }}
+  {{ with $related }}
+  <section class="related-posts" id="related-posts">
+    <div class="related-header">
+      <span class="related-icon"><i class="fas fa-link"></i></span>
+      <h3 class="related-title">相关推荐</h3>
+    </div>
+    <div class="related-grid">
+      {{ range . }}
+      {{ $p := . }}
+      {{ $rpCover := $p.Params.featured_image | default $p.Params.image | default site.Params.article.defaultFeaturedImage }}
+      {{ $rpCat := index $p.Params.categories 0 }}
+      {{ $rpDesc := $p.Description | default (printf "%s" $p.Plain | truncate 55 "...") }}
+      {{ $rpReadingTime := math.Ceil (div (len $p.Plain) 300.0) }}
+      <a href="{{ $p.RelPermalink }}" class="related-card">
+        <div class="rp-cover">
+          <img src="{{ $rpCover | absURL }}" 
+               data-lazy-src="{{ $rpCover | absURL }}" 
+               alt="{{ $p.Title }}"
+               class="{{ if eq $rpCover site.Params.article.defaultFeaturedImage }}default-cover{{ end }}">
+        </div>
+        <div class="rp-info">
+          <h4 class="rp-title">{{ $p.Title }}</h4>
+          <p class="rp-desc">{{ $rpDesc }}</p>
+          <div class="rp-meta-row">
+            <span class="rp-date"><i class="far fa-clock"></i> {{ $p.Date.Format "01-02" }}</span>
+            {{ with $rpCat }}
+            <span class="rp-cat">{{ partial "category-display-name.html" (dict "Site" site "Slug" .) }}</span>
+            {{ end }}
+            <span class="rp-reading-time"><i class="fas fa-hourglass-half"></i> {{ $rpReadingTime }}分钟</span>
+          </div>
+        </div>
+      </a>
+      {{ end }}
+    </div>
+  </section>
+  {{ end }}
+
+  {{ partial "comments.html" . }}
+
+  {{ if $hasPassword }}
+  </article>
+  {{/* 密码哈希配置（客户端验证用） */}}
+  <div id="encrypt-config" style="display:none"
+    data-pwd-hash="{{ .Params.password | sha256 }}"
+    data-hint="{{ .Params.passwordHint }}"></div>
+  </div>
+  {{ else }}
+</article>
+  {{ end }}
+{{ end }}
+
+{{/* 文章页面 - Fancybox 6 图片灯箱 */}}
+{{ define "scripts" }}
+{{ partial "fancybox.html" . }}
+{{ if and site.Params.ai.enable (ne .Params.aiSummary false) }}
+<script>
+window.__AI_SUMMARY_CONFIG__ = {
+  apiBase: '{{ site.Params.ai.adminApiUrl | default (printf "%sapi" (strings.TrimRight "/" site.BaseURL)) }}',
+  autoGenerate: {{ if site.Params.ai.autoGenerate }}true{{ else }}false{{ end }},
+  provider: '{{ site.Params.ai.provider | default "extractive" }}'
+};
+</script>
+<script src="{{ "js/modules/ai-summary.js" | relURL }}"></script>
+{{ end }}
+
+<style>
+.fancybox__container { --fancybox-color-bg: rgba(0,0,0,.94); }
+[data-theme="dark"] .fancybox__container { --fancybox-color-bg: rgba(0,0,0,.97); }
+.post-content a[data-fancybox] { cursor: zoom-in !important; }
+.post-content a[data-fancybox] img {
+  border-radius: 4px;
+  transition: transform 0.2s ease;
+}
+.post-content a[data-fancybox]:hover img {
+  transform: scale(1.02) !important;
+  box-shadow: 0 4px 16px rgba(59,130,246,.2);
+}
+[data-theme="dark"] .post-content a[data-fancybox]:hover img {
+  box-shadow: 0 4px 20px rgba(96,165,250,.3);
+}
+</style>
+{{ end }}

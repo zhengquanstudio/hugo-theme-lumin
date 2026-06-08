@@ -1,0 +1,106 @@
+<div class="tool-input-group">
+  <label class="tool-label">性别</label>
+  <select class="tool-select" id="cal-gender">
+    <option value="male">男</option>
+    <option value="female">女</option>
+  </select>
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">年龄</label>
+  <input class="tool-input" type="number" id="cal-age" value="25" min="1" max="120" placeholder="年龄">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">身高（cm）</label>
+  <input class="tool-input" type="number" id="cal-height" value="170" step="0.1" placeholder="身高">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">体重（kg）</label>
+  <input class="tool-input" type="number" id="cal-weight" value="65" step="0.1" placeholder="体重">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">活动水平</label>
+  <select class="tool-select" id="cal-activity">
+    <option value="1.2">久坐不动（几乎不运动）</option>
+    <option value="1.375">轻度活动（每周1-3次）</option>
+    <option value="1.55">中度活动（每周3-5次）</option>
+    <option value="1.725">重度活动（每周6-7次）</option>
+    <option value="1.9">极重度活动（高强度体力劳动/训练）</option>
+  </select>
+</div>
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="cal-calc">计算</button>
+</div>
+<div class="tool-result" id="cal-result"></div>
+
+<script>
+(function() {
+  document.getElementById('cal-calc').addEventListener('click', function() {
+    var gender = document.getElementById('cal-gender').value;
+    var age = parseFloat(document.getElementById('cal-age').value);
+    var height = parseFloat(document.getElementById('cal-height').value);
+    var weight = parseFloat(document.getElementById('cal-weight').value);
+    var activity = parseFloat(document.getElementById('cal-activity').value);
+    var result = document.getElementById('cal-result');
+
+    if (isNaN(age) || isNaN(height) || isNaN(weight)) {
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">错误</div><p>请填写所有数据。</p></div>';
+      return;
+    }
+
+    // Mifflin-St Jeor公式
+    var bmr;
+    if (gender === 'male') {
+      bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+    } else {
+      bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+    }
+
+    var tdee = bmr * activity;
+
+    var levels = [
+      { name: '久坐不动', factor: 1.2 },
+      { name: '轻度活动', factor: 1.375 },
+      { name: '中度活动', factor: 1.55 },
+      { name: '重度活动', factor: 1.725 },
+      { name: '极重度活动', factor: 1.9 }
+    ];
+
+    var activities = [
+      { name: '跑步 (8km/h)', cal: 8 },
+      { name: '游泳', cal: 8 },
+      { name: '骑自行车 (16km/h)', cal: 7 },
+      { name: '跳绳', cal: 10 },
+      { name: '快走 (6km/h)', cal: 5 },
+      { name: '瑜伽', cal: 3.5 },
+      { name: '力量训练', cal: 6 },
+      { name: 'HIIT训练', cal: 12 }
+    ];
+
+    var html = '<div class="tool-output"><div class="tool-output-title">代谢率分析</div>';
+    html += '<div class="tool-stats"><div class="tool-stat"><div class="tool-stat-value">' + Math.round(bmr) + '</div><div class="tool-stat-label">BMR (kcal/天)</div></div>';
+    html += '<div class="tool-stat"><div class="tool-stat-value">' + Math.round(tdee) + '</div><div class="tool-stat-label">TDEE (kcal/天)</div></div></div>';
+
+    html += '<h4 style="margin:15px 0 8px;">各活动水平每日总消耗</h4>';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+    html += '<tr style="background:#f5f5f5;"><th style="padding:6px;text-align:left;">活动水平</th><th style="padding:6px;text-align:right;">每日消耗 (kcal)</th></tr>';
+    for (var i = 0; i < levels.length; i++) {
+      var cal = bmr * levels[i].factor;
+      html += '<tr style="border-bottom:1px solid #eee;' + (levels[i].factor === activity ? 'background:#e8f0fe;' : '') + '"><td style="padding:6px;">' + levels[i].name + '</td><td style="padding:6px;text-align:right;font-family:monospace;">' + Math.round(cal) + '</td></tr>';
+    }
+    html += '</table>';
+
+    html += '<h4 style="margin:15px 0 8px;">运动消耗参考（每kg体重/小时）</h4>';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+    html += '<tr style="background:#f5f5f5;"><th style="padding:6px;text-align:left;">运动项目</th><th style="padding:6px;text-align:right;">每小时消耗 (kcal)</th><th style="padding:6px;text-align:right;">30分钟消耗 (kcal)</th></tr>';
+    for (var i = 0; i < activities.length; i++) {
+      html += '<tr style="border-bottom:1px solid #eee;"><td style="padding:6px;">' + activities[i].name + '</td><td style="padding:6px;text-align:right;font-family:monospace;">' + Math.round(activities[i].cal * weight) + '</td><td style="padding:6px;text-align:right;font-family:monospace;">' + Math.round(activities[i].cal * weight / 2) + '</td></tr>';
+    }
+    html += '</table>';
+
+    html += '<p style="margin-top:12px;font-size:12px;color:#888;">BMR使用Mifflin-St Jeor公式计算。TDEE = BMR × 活动因子。</p></div>';
+    result.innerHTML = html;
+  });
+
+  document.getElementById('cal-calc').click();
+})();
+</script>

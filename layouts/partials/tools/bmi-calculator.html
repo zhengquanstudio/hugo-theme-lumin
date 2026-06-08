@@ -1,0 +1,124 @@
+<div class="tool-input-group">
+  <label class="tool-label">身高（cm）</label>
+  <input class="tool-input" type="number" id="bmi-height" value="170" step="0.1" min="50" max="300" placeholder="身高">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">体重（kg）</label>
+  <input class="tool-input" type="number" id="bmi-weight" value="65" step="0.1" min="1" max="500" placeholder="体重">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">性别（可选）</label>
+  <select class="tool-select" id="bmi-gender">
+    <option value="">不限</option>
+    <option value="male">男</option>
+    <option value="female">女</option>
+  </select>
+</div>
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="bmi-calc">计算 BMI</button>
+</div>
+<div class="tool-result" id="bmi-result"></div>
+
+<script>
+(function() {
+  function getBMIRating(bmi) {
+    if (bmi < 18.5) return { text: "偏瘦", color: "var(--primary-color,#3b82f6)", class: "underweight" };
+    if (bmi < 24) return { text: "正常", color: "var(--success-color,#22c55e)", class: "normal" };
+    if (bmi < 28) return { text: "超重", color: "var(--warning-color,#f59e0b)", class: "overweight" };
+    return { text: "肥胖", color: "var(--error-color,#ef4444)", class: "obese" };
+  }
+
+  function getBarPosition(bmi) {
+    // BMI segments: <18.5 underweight, 18.5-24 normal, 24-28 overweight, >=28 obese
+    // Map to 0-100%
+    var minBmi = 14;
+    var maxBmi = 36;
+    var pos = ((bmi - minBmi) / (maxBmi - minBmi)) * 100;
+    return Math.max(0, Math.min(100, pos));
+  }
+
+  function getSegmentOffsets() {
+    var minBmi = 14;
+    var maxBmi = 36;
+    var range = maxBmi - minBmi;
+    var uEnd = ((18.5 - minBmi) / range) * 100;
+    var nEnd = ((24 - minBmi) / range) * 100;
+    var oEnd = ((28 - minBmi) / range) * 100;
+    return [uEnd, nEnd, oEnd];
+  }
+
+  document.getElementById("bmi-calc").addEventListener("click", function() {
+    var height = parseFloat(document.getElementById("bmi-height").value);
+    var weight = parseFloat(document.getElementById("bmi-weight").value);
+    var gender = document.getElementById("bmi-gender").value;
+    var result = document.getElementById("bmi-result");
+
+    if (isNaN(height) || isNaN(weight) || height <= 0 || weight <= 0) {
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">输入错误</div><p>请输入有效的身高和体重。</p></div>';
+      return;
+    }
+
+    var h = height / 100;
+    var bmi = weight / (h * h);
+    bmi = Math.round(bmi * 10) / 10;
+    var rating = getBMIRating(bmi);
+    var pos = getBarPosition(bmi);
+    var segs = getSegmentOffsets();
+
+    // Ideal weight
+    var idealLow, idealHigh;
+    if (gender === "male") {
+      idealLow = 18.5 * h * h;
+      idealHigh = 23.9 * h * h;
+    } else if (gender === "female") {
+      idealLow = 18.5 * h * h;
+      idealHigh = 23.9 * h * h;
+    } else {
+      idealLow = 18.5 * h * h;
+      idealHigh = 23.9 * h * h;
+    }
+
+    var html = '<div class="tool-output"><div class="tool-output-title">BMI 计算结果</div>';
+
+    // Large BMI display
+    html += '<div style="text-align:center;padding:20px 0;">';
+    html += '<div style="font-size:48px;font-weight:700;color:' + rating.color + ';line-height:1;">' + bmi + '</div>';
+    html += '<div style="font-size:18px;font-weight:600;color:' + rating.color + ';margin-top:4px;">' + rating.text + '</div>';
+    html += '</div>';
+
+    // Colored BMI bar
+    html += '<div style="position:relative;width:100%;height:24px;border-radius:12px;overflow:hidden;margin:0 0 8px 0;display:flex;">';
+    html += '<div style="width:' + segs[0] + '%;background:var(--primary-color,#3b82f6);"></div>';
+    html += '<div style="width:' + (segs[1] - segs[0]) + '%;background:var(--success-color,#22c55e);"></div>';
+    html += '<div style="width:' + (segs[2] - segs[1]) + '%;background:var(--warning-color,#f59e0b);"></div>';
+    html += '<div style="flex:1;background:var(--error-color,#ef4444);"></div>';
+    html += '</div>';
+
+    // Indicator marker
+    html += '<div style="position:relative;width:100%;height:20px;margin-bottom:12px;">';
+    html += '<div style="position:absolute;left:' + pos + '%;top:0;transform:translateX(-50%);">';
+    html += '<div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:10px solid ' + rating.color + ';margin:0 auto;"></div>';
+    html += '</div>';
+    html += '</div>';
+
+    // Labels
+    html += '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-secondary,#6b7280);margin-bottom:16px;">';
+    html += '<span>偏瘦</span><span>正常</span><span>超重</span><span>肥胖</span>';
+    html += '</div>';
+
+    // Stats
+    html += '<div class="tool-stats">';
+    html += '<div class="tool-stat"><div class="tool-stat-value">' + bmi + '</div><div class="tool-stat-label">BMI 值</div></div>';
+    html += '<div class="tool-stat"><div class="tool-stat-value">' + idealLow.toFixed(1) + ' kg</div><div class="tool-stat-label">理想体重下限</div></div>';
+    html += '<div class="tool-stat"><div class="tool-stat-value">' + idealHigh.toFixed(1) + ' kg</div><div class="tool-stat-label">理想体重上限</div></div>';
+    html += '</div>';
+
+    html += '<p style="margin-top:10px;font-size:12px;color:var(--text-secondary,#6b7280);">BMI = 体重(kg) / 身高(m)^2。评级使用中国成人标准（18.5-23.9 为正常范围）。</p>';
+
+    html += '</div>';
+    result.innerHTML = html;
+  });
+
+  document.getElementById("bmi-calc").click();
+})();
+</script>

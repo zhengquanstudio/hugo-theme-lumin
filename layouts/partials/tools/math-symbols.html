@@ -1,0 +1,157 @@
+<div class="tool-tabs" id="ms-tabs" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;"></div>
+<div class="tool-result" id="ms-result"></div>
+
+<script>
+(function() {
+  var mathSymbols = {
+    '希腊字母(小写)': [
+      { char:'α', name:'alpha', latex:'\\alpha', desc:'阿尔法' },
+      { char:'β', name:'beta', latex:'\\beta', desc:'贝塔' },
+      { char:'γ', name:'gamma', latex:'\\gamma', desc:'伽马' },
+      { char:'δ', name:'delta', latex:'\\delta', desc:'德尔塔' },
+      { char:'ε', name:'epsilon', latex:'\\epsilon', desc:'艾普西龙' },
+      { char:'ζ', name:'zeta', latex:'\\zeta', desc:'泽塔' },
+      { char:'η', name:'eta', latex:'\\eta', desc:'伊塔' },
+      { char:'θ', name:'theta', latex:'\\theta', desc:'西塔' },
+      { char:'ι', name:'iota', latex:'\\iota', desc:'约塔' },
+      { char:'κ', name:'kappa', latex:'\\kappa', desc:'卡帕' },
+      { char:'λ', name:'lambda', latex:'\\lambda', desc:'拉姆达' },
+      { char:'μ', name:'mu', latex:'\\mu', desc:'缪' },
+      { char:'ν', name:'nu', latex:'\\nu', desc:'纽' },
+      { char:'ξ', name:'xi', latex:'\\xi', desc:'克西' },
+      { char:'π', name:'pi', latex:'\\pi', desc:'派' },
+      { char:'ρ', name:'rho', latex:'\\rho', desc:'柔' },
+      { char:'σ', name:'sigma', latex:'\\sigma', desc:'西格玛' },
+      { char:'τ', name:'tau', latex:'\\tau', desc:'陶' },
+      { char:'υ', name:'upsilon', latex:'\\upsilon', desc:'宇普西龙' },
+      { char:'φ', name:'phi', latex:'\\phi', desc:'斐' },
+      { char:'χ', name:'chi', latex:'\\chi', desc:'希' },
+      { char:'ψ', name:'psi', latex:'\\psi', desc:'普西' },
+      { char:'ω', name:'omega', latex:'\\omega', desc:'欧米伽' }
+    ],
+    '希腊字母(大写)': [
+      { char:'Α', name:'Alpha', latex:'A', desc:'大写阿尔法' },
+      { char:'Β', name:'Beta', latex:'B', desc:'大写贝塔' },
+      { char:'Γ', name:'Gamma', latex:'\\Gamma', desc:'大写伽马' },
+      { char:'Δ', name:'Delta', latex:'\\Delta', desc:'大写德尔塔' },
+      { char:'Ε', name:'Epsilon', latex:'E', desc:'大写艾普西龙' },
+      { char:'Ζ', name:'Zeta', latex:'Z', desc:'大写泽塔' },
+      { char:'Η', name:'Eta', latex:'H', desc:'大写伊塔' },
+      { char:'Θ', name:'Theta', latex:'\\Theta', desc:'大写西塔' },
+      { char:'Ι', name:'Iota', latex:'I', desc:'大写约塔' },
+      { char:'Κ', name:'Kappa', latex:'K', desc:'大写卡帕' },
+      { char:'Λ', name:'Lambda', latex:'\\Lambda', desc:'大写拉姆达' },
+      { char:'Μ', name:'Mu', latex:'M', desc:'大写缪' },
+      { char:'Ν', name:'Nu', latex:'N', desc:'大写纽' },
+      { char:'Ξ', name:'Xi', latex:'\\Xi', desc:'大写克西' },
+      { char:'Ο', name:'Omicron', latex:'O', desc:'大写奥密克戎' },
+      { char:'Π', name:'Pi', latex:'\\Pi', desc:'大写派' },
+      { char:'Ρ', name:'Rho', latex:'P', desc:'大写柔' },
+      { char:'Σ', name:'Sigma', latex:'\\Sigma', desc:'大写西格玛' },
+      { char:'Τ', name:'Tau', latex:'T', desc:'大写陶' },
+      { char:'Υ', name:'Upsilon', latex:'\\Upsilon', desc:'大写宇普西龙' },
+      { char:'Φ', name:'Phi', latex:'\\Phi', desc:'大写斐' },
+      { char:'Χ', name:'Chi', latex:'X', desc:'大写希' },
+      { char:'Ψ', name:'Psi', latex:'\\Psi', desc:'大写普西' },
+      { char:'Ω', name:'Omega', latex:'\\Omega', desc:'大写欧米伽' }
+    ],
+    '运算符': [
+      { char:'+', name:'plus', latex:'+', desc:'加号' },
+      { char:'−', name:'minus', latex:'-', desc:'减号' },
+      { char:'×', name:'times', latex:'\\times', desc:'乘号' },
+      { char:'÷', name:'divide', latex:'\\div', desc:'除号' },
+      { char:'±', name:'pm', latex:'\\pm', desc:'正负号' },
+      { char:'√', name:'sqrt', latex:'\\sqrt{}', desc:'平方根' },
+      { char:'∑', name:'sum', latex:'\\sum', desc:'求和' },
+      { char:'∏', name:'prod', latex:'\\prod', desc:'求积' },
+      { char:'∫', name:'int', latex:'\\int', desc:'积分' },
+      { char:'∂', name:'partial', latex:'\\partial', desc:'偏导' },
+      { char:'∇', name:'nabla', latex:'\\nabla', desc:'梯度/散度' },
+      { char:'∞', name:'infty', latex:'\\infty', desc:'无穷' }
+    ],
+    '关系符': [
+      { char:'=', name:'equal', latex:'=', desc:'等于' },
+      { char:'≠', name:'neq', latex:'\\neq', desc:'不等于' },
+      { char:'<', name:'less', latex:'<', desc:'小于' },
+      { char:'>', name:'greater', latex:'>', desc:'大于' },
+      { char:'≤', name:'leq', latex:'\\leq', desc:'小于等于' },
+      { char:'≥', name:'geq', latex:'\\geq', desc:'大于等于' },
+      { char:'≈', name:'approx', latex:'\\approx', desc:'约等于' },
+      { char:'≡', name:'equiv', latex:'\\equiv', desc:'恒等于' },
+      { char:'∝', name:'propto', latex:'\\propto', desc:'正比于' },
+      { char:'≪', name:'ll', latex:'\\ll', desc:'远小于' },
+      { char:'≫', name:'gg', latex:'\\gg', desc:'远大于' }
+    ],
+    '集合论': [
+      { char:'∈', name:'in', latex:'\\in', desc:'属于' },
+      { char:'∉', name:'notin', latex:'\\notin', desc:'不属于' },
+      { char:'⊂', name:'subset', latex:'\\subset', desc:'子集' },
+      { char:'⊃', name:'supset', latex:'\\supset', desc:'超集' },
+      { char:'⊆', name:'subseteq', latex:'\\subseteq', desc:'包含于' },
+      { char:'∪', name:'cup', latex:'\\cup', desc:'并集' },
+      { char:'∩', name:'cap', latex:'\\cap', desc:'交集' },
+      { char:'∅', name:'emptyset', latex:'\\emptyset', desc:'空集' },
+      { char:'∀', name:'forall', latex:'\\forall', desc:'全称量词' },
+      { char:'∃', name:'exists', latex:'\\exists', desc:'存在量词' },
+      { char:'∧', name:'wedge', latex:'\\land', desc:'逻辑与' },
+      { char:'∨', name:'vee', latex:'\\lor', desc:'逻辑或' },
+      { char:'¬', name:'neg', latex:'\\neg', desc:'逻辑非' },
+      { char:'⇒', name:'Rightarrow', latex:'\\Rightarrow', desc:'蕴含' },
+      { char:'⇔', name:'Leftrightarrow', latex:'\\Leftrightarrow', desc:'等价' }
+    ],
+    '微积分': [
+      { char:'lim', name:'limit', latex:'\\lim', desc:'极限' },
+      { char:'∞', name:'infty', latex:'\\infty', desc:'无穷大' },
+      { char:'∂', name:'partial', latex:'\\partial', desc:'偏微分' },
+      { char:'∇', name:'nabla', latex:'\\nabla', desc:'纳布拉算子' },
+      { char:'∫', name:'int', latex:'\\int', desc:'不定积分' },
+      { char:'∬', name:'iint', latex:'\\iint', desc:'二重积分' },
+      { char:'∭', name:'iiint', latex:'\\iiint', desc:'三重积分' },
+      { char:'∮', name:'oint', latex:'\\oint', desc:'闭合积分' },
+      { char:'′', name:'prime', latex:'\'', desc:'导数符号' }
+    ]
+  };
+
+  var categories = Object.keys(mathSymbols);
+
+  function render(activeCat) {
+    activeCat = activeCat || '希腊字母(小写)';
+
+    var tabsHtml = categories.map(function(c) {
+      return '<button class="tool-tab' + (c === activeCat ? ' active' : '') + '" data-cat="' + c + '" style="padding:6px 14px;border:1px solid ' + (c===activeCat?'#4a90d9':'#ddd') + ';background:' + (c===activeCat?'#e8f0fe':'#fff') + ';border-radius:4px;cursor:pointer;font-size:12px;">' + c + '</button>';
+    }).join('');
+    document.getElementById('ms-tabs').innerHTML = tabsHtml;
+
+    var list = mathSymbols[activeCat];
+    var html = '<div class="tool-output"><div class="tool-output-title">' + activeCat + '</div>';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+    html += '<tr style="background:#f5f5f5;"><th style="padding:6px;text-align:center;">符号</th><th style="padding:6px;text-align:left;">名称</th><th style="padding:6px;text-align:left;">LaTeX</th><th style="padding:6px;text-align:left;">描述</th><th style="padding:6px;text-align:center;">复制</th></tr>';
+
+    for (var i = 0; i < list.length; i++) {
+      html += '<tr style="border-bottom:1px solid #eee;"><td style="padding:6px;text-align:center;font-size:22px;">' + list[i].char + '</td><td style="padding:6px;font-size:12px;">' + list[i].name + '</td><td style="padding:6px;font-family:monospace;font-size:12px;">' + list[i].latex + '</td><td style="padding:6px;font-size:12px;">' + list[i].desc + '</td><td style="padding:6px;text-align:center;"><button class="tool-copy-btn" data-val="' + list[i].char + '" style="padding:2px 8px;border:1px solid #ddd;background:#fff;cursor:pointer;border-radius:3px;font-size:11px;">复制</button></td></tr>';
+    }
+    html += '</table></div>';
+    document.getElementById('ms-result').innerHTML = html;
+
+    var tabBtns = document.querySelectorAll('#ms-tabs .tool-tab');
+    for (var t = 0; t < tabBtns.length; t++) {
+      tabBtns[t].addEventListener('click', function() {
+        render(this.dataset.cat);
+      });
+    }
+
+    var copyBtns = document.querySelectorAll('#ms-result .tool-copy-btn');
+    for (var c = 0; c < copyBtns.length; c++) {
+      copyBtns[c].addEventListener('click', function() {
+        navigator.clipboard.writeText(this.dataset.val).then(function() {
+          this.textContent = 'OK';
+          var that = this;
+          setTimeout(function(){ that.textContent = '复制'; }, 1000);
+        }.bind(this));
+      });
+    }
+  }
+
+  render('希腊字母(小写)');
+})();
+</script>

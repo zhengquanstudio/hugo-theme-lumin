@@ -1,0 +1,85 @@
+{{ if site.Params.banner.enable }}
+<section class="site-banner" id="site-banner">
+  {{ $images := site.Params.banner.images }}
+  {{ $subtitles := site.Params.banner.subtitles }}
+  {{ $interval := site.Params.banner.interval | default 6000 }}
+  {{ $typingSpeed := site.Params.banner.typingSpeed | default 120 }}
+  {{ $deletingSpeed := site.Params.banner.deletingSpeed | default 60 }}
+  {{ $pauseTime := site.Params.banner.pauseTime | default 2500 }}
+  {{ $randomMode := site.Params.banner.randomMode | default false }}
+  {{ $themeEffect := site.Params.banner.themeEffect | default "ripple" }}
+
+  <!-- 背景图轮播 -->
+  <div class="banner-slideshow" id="banner-slideshow">
+    {{ if $images }}
+      {{ range $index, $image := $images }}
+      <div class="banner-slide{{ if eq $index 0 }} active{{ end }}" data-index="{{ $index }}">
+        {{ $imgSrc := cond (or (strings.HasPrefix $image "http://") (strings.HasPrefix $image "https://") (strings.HasPrefix $image "//")) $image (printf "/images/banners/%s" $image) }}
+        <img src="{{ $imgSrc }}" alt="{{ site.Title }} Banner {{ add $index 1 }}" class="banner-slide-image">
+      </div>
+      {{ end }}
+    {{ else }}
+      <div class="banner-slide active">
+        <div class="banner-gradient"></div>
+      </div>
+    {{ end }}
+  </div>
+
+  <div class="banner-overlay"></div>
+
+  <div class="banner-content">
+    <h1 class="banner-title">{{ site.Params.banner.title | default site.Title }}</h1>
+    <div class="banner-typewriter">
+      <span class="typewriter-text" id="typewriter-text"></span>
+      <span class="typewriter-cursor">|</span>
+    </div>
+  </div>
+  
+  <!-- 向下滚动提示 -->
+  <div class="scroll-down-hint" id="scroll-down-hint">
+    <span>向下滚动</span>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="6 9 12 15 18 9"></polyline>
+    </svg>
+  </div>
+  
+  <!-- 波浪效果 - 纯 CSS 无缝循环 -->
+  <div class="banner-waves">
+    <svg class="hero-waves" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+         viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto">
+      <defs>
+        <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
+      </defs>
+      <g class="parallax">
+        <use class="wave-layer wave-layer-1" xlink:href="#gentle-wave" x="48" y="0"></use>
+        <use class="wave-layer wave-layer-2" xlink:href="#gentle-wave" x="48" y="3"></use>
+        <use class="wave-layer wave-layer-3" xlink:href="#gentle-wave" x="48" y="5"></use>
+        <use class="wave-layer wave-layer-4" xlink:href="#gentle-wave" x="48" y="7"></use>
+      </g>
+    </svg>
+  </div>
+  
+  <!-- 配置 -->
+  <script>
+    window.LUMIN_BANNER = {
+      interval: {{ $interval }},
+      typingSpeed: {{ $typingSpeed }},
+      deletingSpeed: {{ $deletingSpeed }},
+      pauseTime: {{ $pauseTime }},
+      apiEnabled: {{ site.Params.banner.apiEnabled | default false }},
+      apiSource: {{ site.Params.banner.apiSource | default 1 }},     // 1=hitokoto 2=yiyan 3=jinrishici
+      randomMode: {{ $randomMode }},
+      themeEffect: "{{ $themeEffect }}",
+      subtitles: [
+        {{ if $subtitles }}
+          {{ range $i, $s := $subtitles }}
+            {{ if gt $i 0 }},{{ end }}"{{ $s }}"
+          {{ end }}
+        {{ else }}
+          "{{ site.Params.banner.subtitle | default "记录生活，分享技术" }}"
+        {{ end }}
+      ]
+    };
+  </script>
+</section>
+{{ end }}

@@ -1,0 +1,283 @@
+<style>
+.bc-tab-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.bc-tab-btn{padding:7px 16px;border:1.5px solid var(--border-color,#e5e7eb);background:var(--bg-primary,#fff);color:var(--text-primary,#1f2937);border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:500;transition:all .15s}
+.bc-tab-btn.active{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-color:transparent;font-weight:700}
+.bc-tab-btn:hover:not(.active){border-color:#667eea;color:#667eea}
+.bc-panel{display:none}
+.bc-panel.active{display:block}
+.bc-result-wrap{margin-top:14px;display:flex;justify-content:center;align-items:center;min-height:60px}
+.bc-svg-ctn{background:#fff;padding:16px 24px;border-radius:12px;border:1.5px solid var(--border-color,#e5e7eb);display:inline-block;text-align:center}
+.bc-hint{font-size:.78rem;color:var(--text-muted,#9ca3af);margin-top:6px}
+.bc-download-row{margin-top:8px;display:flex;gap:8px;justify-content:center}
+</style>
+
+<div class="bc-tab-row" id="bc-tabs">
+  <button class="bc-tab-btn active" data-tab="code128">Code 128</button>
+  <button class="bc-tab-btn" data-tab="ean13">EAN-13</button>
+  <button class="bc-tab-btn" data-tab="ean8">EAN-8</button>
+  <button class="bc-tab-btn" data-tab="upca">UPC-A</button>
+  <button class="bc-tab-btn" data-tab="code39">Code 39</button>
+  <button class="bc-tab-btn" data-tab="itf">ITF-14</button>
+  <button class="bc-tab-btn" data-tab="msi">MSI</button>
+  <button class="bc-tab-btn" data-tab="codabar">Codabar</button>
+</div>
+
+<!-- Code 128 -->
+<div class="bc-panel active" id="bc-panel-code128">
+  <div class="tool-input-group">
+    <label class="tool-label">Code 128 — 通用字母数字条码</label>
+    <div class="bc-hint" style="margin-bottom:6px">支持全部 ASCII 可打印字符，广泛用于物流、仓储</div>
+    <input class="tool-input" id="bc-code128-val" value="LUMIN-2025-001" placeholder="输入内容，支持字母/数字/符号">
+  </div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;">
+    <div class="tool-input-group" style="flex:1;min-width:120px">
+      <label class="tool-label">条码高度(px)</label>
+      <input class="tool-input" id="bc-code128-h" type="number" value="80" min="20" max="200">
+    </div>
+    <div class="tool-input-group" style="flex:1;min-width:120px">
+      <label class="tool-label">线条宽度</label>
+      <input class="tool-input" id="bc-code128-lw" type="number" value="2" min="1" max="4" step="0.5">
+    </div>
+  </div>
+  <button class="tool-btn tool-btn-primary" onclick="bcGen('code128')">生成条码</button>
+  <div class="bc-result-wrap" id="bc-res-code128"></div>
+</div>
+
+<!-- EAN-13 -->
+<div class="bc-panel" id="bc-panel-ean13">
+  <div class="tool-input-group">
+    <label class="tool-label">EAN-13 — 商品条码（国际标准）</label>
+    <div class="bc-hint" style="margin-bottom:6px">中国商品条码以 690-699 开头，输入 12 位，自动计算校验位</div>
+    <input class="tool-input" id="bc-ean13-val" value="690123456789" maxlength="13" placeholder="输入12或13位数字">
+  </div>
+  <button class="tool-btn tool-btn-primary" onclick="bcGen('ean13')">生成条码</button>
+  <div class="bc-result-wrap" id="bc-res-ean13"></div>
+</div>
+
+<!-- EAN-8 -->
+<div class="bc-panel" id="bc-panel-ean8">
+  <div class="tool-input-group">
+    <label class="tool-label">EAN-8 — 短版商品条码</label>
+    <div class="bc-hint" style="margin-bottom:6px">用于小包装商品，输入 7 位数字，自动计算校验位</div>
+    <input class="tool-input" id="bc-ean8-val" value="1234567" maxlength="8" placeholder="输入7或8位数字">
+  </div>
+  <button class="tool-btn tool-btn-primary" onclick="bcGen('ean8')">生成条码</button>
+  <div class="bc-result-wrap" id="bc-res-ean8"></div>
+</div>
+
+<!-- UPC-A -->
+<div class="bc-panel" id="bc-panel-upca">
+  <div class="tool-input-group">
+    <label class="tool-label">UPC-A — 美国商品条码</label>
+    <div class="bc-hint" style="margin-bottom:6px">美国/加拿大零售商品，输入 11 位数字，自动计算校验位</div>
+    <input class="tool-input" id="bc-upca-val" value="04210000526" maxlength="12" placeholder="输入11或12位数字">
+  </div>
+  <button class="tool-btn tool-btn-primary" onclick="bcGen('upca')">生成条码</button>
+  <div class="bc-result-wrap" id="bc-res-upca"></div>
+</div>
+
+<!-- Code 39 -->
+<div class="bc-panel" id="bc-panel-code39">
+  <div class="tool-input-group">
+    <label class="tool-label">Code 39 — 工业/军事标准条码</label>
+    <div class="bc-hint" style="margin-bottom:6px">支持 A-Z、0-9 及 - . $ / + % 空格，常用于工业/医疗</div>
+    <input class="tool-input" id="bc-code39-val" value="CODE-39-TEST" placeholder="输入大写字母/数字/特殊符号">
+  </div>
+  <button class="tool-btn tool-btn-primary" onclick="bcGen('code39')">生成条码</button>
+  <div class="bc-result-wrap" id="bc-res-code39"></div>
+</div>
+
+<!-- ITF-14 -->
+<div class="bc-panel" id="bc-panel-itf">
+  <div class="tool-input-group">
+    <label class="tool-label">ITF-14 — 外箱/物流条码</label>
+    <div class="bc-hint" style="margin-bottom:6px">用于纸箱/物流，输入 13 位数字，自动计算校验位</div>
+    <input class="tool-input" id="bc-itf-val" value="1234567890123" maxlength="14" placeholder="输入13或14位数字">
+  </div>
+  <button class="tool-btn tool-btn-primary" onclick="bcGen('itf')">生成条码</button>
+  <div class="bc-result-wrap" id="bc-res-itf"></div>
+</div>
+
+<!-- MSI -->
+<div class="bc-panel" id="bc-panel-msi">
+  <div class="tool-input-group">
+    <label class="tool-label">MSI — 货架/仓库管理条码</label>
+    <div class="bc-hint" style="margin-bottom:6px">仅支持数字，常用于超市货架管理</div>
+    <input class="tool-input" id="bc-msi-val" value="123456789" placeholder="输入数字内容">
+  </div>
+  <button class="tool-btn tool-btn-primary" onclick="bcGen('msi')">生成条码</button>
+  <div class="bc-result-wrap" id="bc-res-msi"></div>
+</div>
+
+<!-- Codabar -->
+<div class="bc-panel" id="bc-panel-codabar">
+  <div class="tool-input-group">
+    <label class="tool-label">Codabar — 图书馆/医疗条码</label>
+    <div class="bc-hint" style="margin-bottom:6px">常用于图书馆借阅、医疗设备，需以 A/B/C/D 开头和结尾</div>
+    <input class="tool-input" id="bc-codabar-val" value="A12345B" placeholder="如：A12345B">
+  </div>
+  <button class="tool-btn tool-btn-primary" onclick="bcGen('codabar')">生成条码</button>
+  <div class="bc-result-wrap" id="bc-res-codabar"></div>
+</div>
+
+<script>
+(function(){
+  // Load JsBarcode from multiple CDNs with fallback
+  function loadJsBarcode(urls, idx) {
+    if (idx >= urls.length) {
+      document.querySelectorAll('.bc-result-wrap').forEach(function(ctn){
+        ctn.innerHTML = '<span style="color:#ef4444;font-size:.85rem;">JsBarcode 库加载失败，请检查网络连接后刷新页面</span>';
+      });
+      return;
+    }
+    var s = document.createElement('script');
+    s.src = urls[idx];
+    s.onload = function() { initApp(); };
+    s.onerror = function() { loadJsBarcode(urls, idx + 1); };
+    document.head.appendChild(s);
+  }
+
+  var bcCdnUrls = [
+    'https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js',
+    'https://unpkg.com/jsbarcode@3.11.6/dist/JsBarcode.all.min.js',
+    'https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/JsBarcode/3.11.6/JsBarcode.all.min.js'
+  ];
+
+  // Tab switching
+  var tabs = document.querySelectorAll('#bc-tabs .bc-tab-btn');
+  for(var i=0;i<tabs.length;i++){
+    tabs[i].addEventListener('click',function(){
+      var tab = this.dataset.tab;
+      document.querySelectorAll('#bc-tabs .bc-tab-btn').forEach(function(b){b.classList.remove('active');});
+      document.querySelectorAll('.bc-panel').forEach(function(p){p.classList.remove('active');});
+      this.classList.add('active');
+      document.getElementById('bc-panel-'+tab).classList.add('active');
+    });
+  }
+
+  function eanCheck(digits, len) {
+    var sum = 0;
+    for(var i=0;i<len;i++) sum += parseInt(digits[i]) * (i%2===0?1:3);
+    return (10-sum%10)%10;
+  }
+
+  function makeBarcodeSVG(format, value, options) {
+    var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('xmlns','http://www.w3.org/2000/svg');
+    try {
+      var opts = Object.assign({
+        format: format,
+        width: options.lw || 2,
+        height: options.h || 80,
+        displayValue: true,
+        background: '#ffffff',
+        lineColor: '#000000',
+        margin: 10,
+        fontSize: 14
+      }, options.extra || {});
+      JsBarcode(svg, value, opts);
+      return {ok:true, el:svg};
+    } catch(e) {
+      return {ok:false, msg: e.message || '生成失败'};
+    }
+  }
+
+  function renderResult(containerId, format, value, options) {
+    var ctn = document.getElementById(containerId);
+    if(typeof JsBarcode === 'undefined'){
+      ctn.innerHTML = '<span style="color:#ef4444">JsBarcode 库正在加载，请稍后重试</span>';
+      return;
+    }
+    var res = makeBarcodeSVG(format, value, options || {});
+    if(!res.ok){
+      ctn.innerHTML = '<span style="color:#ef4444">生成失败：'+res.msg+'</span>';
+      return;
+    }
+    var wrap = document.createElement('div');
+    wrap.className = 'bc-svg-ctn';
+    wrap.appendChild(res.el);
+    var dlRow = document.createElement('div');
+    dlRow.className = 'bc-download-row';
+    var dlBtn = document.createElement('button');
+    dlBtn.className = 'tool-btn';
+    dlBtn.style.fontSize = '.78rem';
+    dlBtn.textContent = '下载 SVG';
+    dlBtn.onclick = function(){
+      var ser = new XMLSerializer();
+      var svgStr = ser.serializeToString(res.el);
+      var blob = new Blob([svgStr], {type:'image/svg+xml'});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href=url; a.download='barcode-'+format+'.svg'; a.click();
+      URL.revokeObjectURL(url);
+    };
+    dlRow.appendChild(dlBtn);
+    wrap.appendChild(dlRow);
+    ctn.innerHTML = '';
+    ctn.appendChild(wrap);
+  }
+
+  window.bcGen = function(type){
+    switch(type){
+      case 'code128': {
+        var val = document.getElementById('bc-code128-val').value;
+        var h = parseInt(document.getElementById('bc-code128-h').value)||80;
+        var lw = parseFloat(document.getElementById('bc-code128-lw').value)||2;
+        renderResult('bc-res-code128','CODE128',val,{h:h,lw:lw});
+        break;
+      }
+      case 'ean13': {
+        var raw = document.getElementById('bc-ean13-val').value.replace(/\D/g,'');
+        if(raw.length===12) raw = raw + eanCheck(raw,12);
+        renderResult('bc-res-ean13','EAN13',raw,{h:100});
+        break;
+      }
+      case 'ean8': {
+        var raw8 = document.getElementById('bc-ean8-val').value.replace(/\D/g,'');
+        if(raw8.length===7) raw8 = raw8 + eanCheck(raw8,7);
+        renderResult('bc-res-ean8','EAN8',raw8,{h:80});
+        break;
+      }
+      case 'upca': {
+        var rawU = document.getElementById('bc-upca-val').value.replace(/\D/g,'');
+        if(rawU.length===11){
+          var sum2=0;
+          for(var i=0;i<11;i++) sum2+=parseInt(rawU[i])*(i%2===0?3:1);
+          rawU = rawU + ((10-sum2%10)%10);
+        }
+        renderResult('bc-res-upca','UPC',''+rawU,{h:100});
+        break;
+      }
+      case 'code39': {
+        var v39 = document.getElementById('bc-code39-val').value.toUpperCase();
+        renderResult('bc-res-code39','CODE39',v39,{h:80});
+        break;
+      }
+      case 'itf': {
+        var rawI = document.getElementById('bc-itf-val').value.replace(/\D/g,'');
+        if(rawI.length===13){
+          var si=0;
+          for(var j=0;j<13;j++) si+=parseInt(rawI[j])*(j%2===0?3:1);
+          rawI = rawI + ((10-si%10)%10);
+        }
+        renderResult('bc-res-itf','ITF14',rawI,{h:80});
+        break;
+      }
+      case 'msi': {
+        renderResult('bc-res-msi','MSI',document.getElementById('bc-msi-val').value.replace(/\D/g,''),{h:80});
+        break;
+      }
+      case 'codabar': {
+        renderResult('bc-res-codabar','codabar',document.getElementById('bc-codabar-val').value.toUpperCase(),{h:80});
+        break;
+      }
+    }
+  };
+
+  function initApp(){
+    bcGen('code128');
+  }
+
+  loadJsBarcode(bcCdnUrls, 0);
+})();
+</script>

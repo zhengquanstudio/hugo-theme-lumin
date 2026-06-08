@@ -1,0 +1,197 @@
+<div class="tool-input-group" style="text-align:center;padding:16px;background:var(--bg-secondary,#f9fafb);border-radius:12px;border:1px solid var(--border-color,#e5e7eb);margin-bottom:16px;">
+  <div style="font-size:.78rem;color:var(--text-muted,#9ca3af);margin-bottom:4px;">当前 Unix 时间戳</div>
+  <div id="ts-current" style="font-size:2rem;font-weight:800;color:#667eea;font-family:'Cascadia Code',Consolas,monospace;letter-spacing:1px;">—</div>
+  <div id="ts-current-date" style="font-size:.78rem;color:var(--text-muted,#9ca3af);margin-top:4px;">—</div>
+</div>
+
+<div class="tool-tabs">
+  <button class="tool-tab active" data-ts-tab="to-date">时间戳 → 日期</button>
+  <button class="tool-tab" data-ts-tab="to-ts">日期 → 时间戳</button>
+</div>
+
+<div id="ts-panel-to-date">
+  <div class="tool-input-group">
+    <label class="tool-label">输入时间戳</label>
+    <input type="text" class="tool-input" id="ts-input" placeholder="例如：1700000000">
+  </div>
+  <div class="tool-input-group" style="display:flex;flex-wrap:wrap;gap:20px;">
+    <label class="tool-switch">
+      <input type="checkbox" id="ts-unit-ms">
+      <span class="tool-switch-track"></span>
+      毫秒级时间戳
+    </label>
+  </div>
+  <div class="tool-btn-row">
+    <button class="tool-btn tool-btn-primary" id="ts-convert-btn">🔄 转换</button>
+    <button class="tool-btn" id="ts-now-btn">⏱️ 使用当前时间</button>
+  </div>
+  <div class="tool-output" id="ts-to-date-output" style="display:none;">
+    <div class="tool-output-label">
+      <span class="tool-output-title">转换结果</span>
+    </div>
+    <div id="ts-to-date-results" style="display:flex;flex-direction:column;gap:8px;"></div>
+  </div>
+</div>
+
+<div id="ts-panel-to-ts" style="display:none;">
+  <div class="tool-input-group">
+    <label class="tool-label">选择日期时间</label>
+    <input type="datetime-local" class="tool-input" id="ts-date-input">
+  </div>
+  <div class="tool-btn-row">
+    <button class="tool-btn tool-btn-primary" id="ts-to-ts-btn">🔄 转换</button>
+    <button class="tool-btn" id="ts-date-now-btn">⏱️ 使用当前时间</button>
+  </div>
+  <div class="tool-output" id="ts-to-ts-output" style="display:none;">
+    <div class="tool-output-label">
+      <span class="tool-output-title">转换结果</span>
+    </div>
+    <div id="ts-to-ts-results" style="display:flex;flex-direction:column;gap:8px;"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const currentEl = document.getElementById('ts-current');
+  const currentDateEl = document.getElementById('ts-current-date');
+  const tabs = document.querySelectorAll('[data-ts-tab]');
+  const panelToDate = document.getElementById('ts-panel-to-date');
+  const panelToTs = document.getElementById('ts-panel-to-ts');
+  const tsInput = document.getElementById('ts-input');
+  const tsUnitMs = document.getElementById('ts-unit-ms');
+  const convertBtn = document.getElementById('ts-convert-btn');
+  const nowBtn = document.getElementById('ts-now-btn');
+  const toDateOutput = document.getElementById('ts-to-date-output');
+  const toDateResults = document.getElementById('ts-to-date-results');
+  const dateInput = document.getElementById('ts-date-input');
+  const toTsBtn = document.getElementById('ts-to-ts-btn');
+  const dateNowBtn = document.getElementById('ts-date-now-btn');
+  const toTsOutput = document.getElementById('ts-to-ts-output');
+  const toTsResults = document.getElementById('ts-to-ts-results');
+
+  // Auto-update current timestamp
+  let timer = null;
+  function updateCurrent() {
+    const now = Date.now();
+    currentEl.textContent = Math.floor(now / 1000);
+    const d = new Date(now);
+    currentDateEl.textContent = d.toLocaleString('zh-CN', {
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+    });
+  }
+  updateCurrent();
+  timer = setInterval(updateCurrent, 1000);
+
+  // Tab switching
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const target = tab.getAttribute('data-ts-tab');
+      panelToDate.style.display = target === 'to-date' ? '' : 'none';
+      panelToTs.style.display = target === 'to-ts' ? '' : 'none';
+    });
+  });
+
+  function copyText(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+      const orig = btn.innerHTML;
+      btn.innerHTML = '✅ 已复制';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('copied'); }, 1500);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+      document.body.removeChild(ta);
+      const orig = btn.innerHTML;
+      btn.innerHTML = '✅ 已复制'; btn.classList.add('copied');
+      setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('copied'); }, 1500);
+    });
+  }
+
+  function makeResultRow(label, value) {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg-secondary,#f9fafb);border:1px solid var(--border-color,#e5e7eb);border-radius:8px;';
+    const lbl = document.createElement('span');
+    lbl.style.cssText = 'font-size:.78rem;color:var(--text-muted,#9ca3af);min-width:100px;flex-shrink:0;';
+    lbl.textContent = label;
+    const val = document.createElement('span');
+    val.style.cssText = 'flex:1;font-family:\'Cascadia Code\',Consolas,monospace;font-size:.85rem;word-break:break-all;color:var(--text-primary,#1f2937);';
+    val.textContent = value;
+    const cpBtn = document.createElement('button');
+    cpBtn.className = 'tool-copy-btn';
+    cpBtn.innerHTML = '📋 复制';
+    cpBtn.addEventListener('click', () => copyText(value, cpBtn));
+    row.appendChild(lbl); row.appendChild(val); row.appendChild(cpBtn);
+    return row;
+  }
+
+  // Timestamp → Date
+  convertBtn.addEventListener('click', () => {
+    const raw = tsInput.value.trim();
+    if (!raw) return;
+    const num = Number(raw);
+    if (isNaN(num)) { alert('请输入有效的数字时间戳'); return; }
+    const ms = tsUnitMs.checked ? num : num * 1000;
+    const d = new Date(ms);
+    if (isNaN(d.getTime())) { alert('时间戳无效，无法转换'); return; }
+
+    toDateResults.innerHTML = '';
+    toDateResults.appendChild(makeResultRow('ISO 8601', d.toISOString()));
+    toDateResults.appendChild(makeResultRow('本地时间', d.toLocaleString('zh-CN', {
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+    })));
+    toDateResults.appendChild(makeResultRow('UTC 时间', d.toUTCString()));
+    toDateResults.appendChild(makeResultRow('日期', d.toLocaleDateString('zh-CN')));
+    toDateResults.appendChild(makeResultRow('时间', d.toLocaleTimeString('zh-CN', { hour12: false })));
+    const y = d.getFullYear();
+    const M = String(d.getMonth() + 1).padStart(2, '0');
+    const D = String(d.getDate()).padStart(2, '0');
+    const h = String(d.getHours()).padStart(2, '0');
+    const m = String(d.getMinutes()).padStart(2, '0');
+    const s = String(d.getSeconds()).padStart(2, '0');
+    toDateResults.appendChild(makeResultRow('自定义格式', `${y}-${M}-${D} ${h}:${m}:${s}`));
+    toDateResults.appendChild(makeResultRow('秒级时间戳', String(Math.floor(ms / 1000))));
+    toDateResults.appendChild(makeResultRow('毫秒级时间戳', String(ms)));
+    toDateOutput.style.display = '';
+  });
+
+  nowBtn.addEventListener('click', () => {
+    const now = Math.floor(Date.now() / 1000);
+    tsInput.value = now;
+    tsUnitMs.checked = false;
+    convertBtn.click();
+  });
+
+  // Date → Timestamp
+  toTsBtn.addEventListener('click', () => {
+    const val = dateInput.value;
+    if (!val) return;
+    const d = new Date(val);
+    if (isNaN(d.getTime())) { alert('日期无效，无法转换'); return; }
+
+    const sec = Math.floor(d.getTime() / 1000);
+    const ms = d.getTime();
+    toTsResults.innerHTML = '';
+    toTsResults.appendChild(makeResultRow('秒级时间戳', String(sec)));
+    toTsResults.appendChild(makeResultRow('毫秒级时间戳', String(ms)));
+    toTsResults.appendChild(makeResultRow('ISO 8601', d.toISOString()));
+    toTsResults.appendChild(makeResultRow('本地时间', d.toLocaleString('zh-CN', {
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+    })));
+    toTsOutput.style.display = '';
+  });
+
+  dateNowBtn.addEventListener('click', () => {
+    const now = new Date();
+    const offset = now.getTimezoneOffset() * 60000;
+    const local = new Date(now.getTime() - offset);
+    dateInput.value = local.toISOString().slice(0, 16);
+    toTsBtn.click();
+  });
+})();
+</script>

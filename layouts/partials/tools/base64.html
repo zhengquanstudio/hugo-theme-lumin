@@ -1,0 +1,146 @@
+<div class="tool-tabs" id="b64-tabs">
+  <button class="tool-tab active" data-tab="b64-encode">编码</button>
+  <button class="tool-tab" data-tab="b64-decode">解码</button>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">输入内容</label>
+  <textarea class="tool-textarea" id="b64-input" rows="8" placeholder="请输入需要编码或解码的文本">Hello, World! 你好，世界！Base64 编码测试。</textarea>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="b64-encode-btn">编码</button>
+  <button class="tool-btn tool-btn-primary" id="b64-decode-btn">解码</button>
+  <button class="tool-btn" id="b64-clear-btn">清空</button>
+</div>
+
+<div class="tool-output" id="b64-output-area" style="display:none;">
+  <div class="tool-result" id="b64-result"></div>
+  <button class="tool-copy-btn" id="b64-copy-btn">复制结果</button>
+</div>
+
+<div id="b64-error" style="display:none;color:var(--color-error,#e53e3e);margin-top:8px;"></div>
+
+<div class="tool-stats" id="b64-stats" style="display:none;">
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="b64-stat-input">0</span>
+    <span class="tool-stat-label">输入长度</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="b64-stat-output">0</span>
+    <span class="tool-stat-label">输出长度</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  const input = document.getElementById('b64-input');
+  const result = document.getElementById('b64-result');
+  const outputArea = document.getElementById('b64-output-area');
+  const errorDiv = document.getElementById('b64-error');
+  const statsDiv = document.getElementById('b64-stats');
+  const tabs = document.querySelectorAll('#b64-tabs .tool-tab');
+
+  let currentTab = 'b64-encode';
+
+  function switchTab(tabId) {
+    currentTab = tabId;
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
+  }
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+  });
+
+  function showError(msg) {
+    errorDiv.textContent = msg;
+    errorDiv.style.display = 'block';
+    outputArea.style.display = 'none';
+    statsDiv.style.display = 'none';
+  }
+
+  function hideError() {
+    errorDiv.style.display = 'none';
+  }
+
+  function showResult(text, inputLen) {
+    result.textContent = text;
+    outputArea.style.display = 'block';
+    statsDiv.style.display = 'flex';
+    document.getElementById('b64-stat-input').textContent = inputLen + ' 字符';
+    document.getElementById('b64-stat-output').textContent = text.length + ' 字符';
+  }
+
+  function encodeBase64(str) {
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(str);
+    let binary = '';
+    bytes.forEach(b => binary += String.fromCharCode(b));
+    return btoa(binary);
+  }
+
+  function decodeBase64(str) {
+    const binary = atob(str);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    const decoder = new TextDecoder();
+    return decoder.decode(bytes);
+  }
+
+  document.getElementById('b64-encode-btn').addEventListener('click', () => {
+    hideError();
+    const raw = input.value;
+    if (!raw) { showError('请输入需要编码的文本'); return; }
+    try {
+      const encoded = encodeBase64(raw);
+      showResult(encoded, raw.length);
+      switchTab('b64-encode');
+    } catch(e) {
+      showError('编码失败：' + e.message);
+    }
+  });
+
+  document.getElementById('b64-decode-btn').addEventListener('click', () => {
+    hideError();
+    const raw = input.value.trim();
+    if (!raw) { showError('请输入需要解码的 Base64 文本'); return; }
+    try {
+      const decoded = decodeBase64(raw);
+      showResult(decoded, raw.length);
+      switchTab('b64-decode');
+    } catch(e) {
+      showError('解码失败：无效的 Base64 字符串');
+    }
+  });
+
+  document.getElementById('b64-clear-btn').addEventListener('click', () => {
+    input.value = '';
+    result.textContent = '';
+    outputArea.style.display = 'none';
+    statsDiv.style.display = 'none';
+    hideError();
+  });
+
+  document.getElementById('b64-copy-btn').addEventListener('click', () => {
+    const text = result.textContent;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('b64-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const btn = document.getElementById('b64-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    });
+  });
+})();
+</script>

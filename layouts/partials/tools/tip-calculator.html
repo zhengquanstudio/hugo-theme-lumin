@@ -1,0 +1,63 @@
+<div class="tool-input-group">
+  <label class="tool-label">账单金额</label>
+  <input class="tool-input" type="number" id="tip-bill" value="200" step="0.01" min="0" placeholder="账单金额">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">小费比例</label>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+    <button class="tip-preset-btn" data-tip="10" style="padding:6px 12px;border:1px solid #ddd;background:#fff;cursor:pointer;border-radius:4px;">10%</button>
+    <button class="tip-preset-btn" data-tip="15" style="padding:6px 12px;border:1px solid #ddd;background:#fff;cursor:pointer;border-radius:4px;">15%</button>
+    <button class="tip-preset-btn" data-tip="18" style="padding:6px 12px;border:1px solid #ddd;background:#fff;cursor:pointer;border-radius:4px;">18%</button>
+    <button class="tip-preset-btn" data-tip="20" style="padding:6px 12px;border:1px solid #ddd;background:#fff;cursor:pointer;border-radius:4px;">20%</button>
+  </div>
+  <input class="tool-input" type="number" id="tip-percent" value="15" step="0.1" min="0" max="100" placeholder="自定义比例">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">分摊人数</label>
+  <input class="tool-input" type="number" id="tip-people" value="1" min="1" step="1" placeholder="人数">
+</div>
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="tip-calc">计算</button>
+</div>
+<div class="tool-result" id="tip-result"></div>
+
+<script>
+(function() {
+  function calc() {
+    var bill = parseFloat(document.getElementById('tip-bill').value);
+    var percent = parseFloat(document.getElementById('tip-percent').value);
+    var people = parseInt(document.getElementById('tip-people').value);
+    var result = document.getElementById('tip-result');
+
+    if (isNaN(bill) || isNaN(percent) || isNaN(people) || bill < 0 || percent < 0 || people < 1) {
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">错误</div><p>请填写所有字段。</p></div>';
+      return;
+    }
+
+    var tip = bill * percent / 100;
+    var total = bill + tip;
+    var perPerson = total / people;
+    var tipPerPerson = tip / people;
+
+    result.innerHTML = '<div class="tool-output"><div class="tool-output-title">计算结果</div>' +
+      '<div class="tool-stats"><div class="tool-stat"><div class="tool-stat-value">¥' + tip.toFixed(2) + '</div><div class="tool-stat-label">小费金额</div></div>' +
+      '<div class="tool-stat"><div class="tool-stat-value">¥' + total.toFixed(2) + '</div><div class="tool-stat-label">总金额</div></div>' +
+      '<div class="tool-stat"><div class="tool-stat-value">¥' + perPerson.toFixed(2) + '</div><div class="tool-stat-label">人均 ' + people + ' 人</div></div></div>' +
+      '<p style="margin-top:12px;font-size:13px;color:#666;">小费 = ¥' + bill.toFixed(2) + ' × ' + percent + '% = ¥' + tip.toFixed(2) + '<br>人均小费 = ¥' + tipPerPerson.toFixed(2) + '</p></div>';
+  }
+
+  var btns = document.querySelectorAll('.tip-preset-btn');
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].addEventListener('click', function() {
+      document.getElementById('tip-percent').value = this.dataset.tip;
+      calc();
+    });
+  }
+
+  document.getElementById('tip-calc').addEventListener('click', calc);
+  document.getElementById('tip-percent').addEventListener('input', calc);
+  document.getElementById('tip-bill').addEventListener('input', calc);
+  document.getElementById('tip-people').addEventListener('input', calc);
+  calc();
+})();
+</script>

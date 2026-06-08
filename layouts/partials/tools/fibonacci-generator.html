@@ -1,0 +1,62 @@
+<div class="tool-input-group">
+  <label class="tool-label">生成方式</label>
+  <select class="tool-select" id="fib-mode">
+    <option value="count">按项数（前 N 项）</option>
+    <option value="max">按最大值（不超过 M）</option>
+  </select>
+</div>
+<div class="tool-input-group" id="fib-count-group">
+  <label class="tool-label">项数 N</label>
+  <input class="tool-input" type="number" id="fib-n" value="20" min="1" max="2000" step="1">
+</div>
+<div class="tool-input-group" id="fib-max-group" style="display:none;">
+  <label class="tool-label">最大值 M</label>
+  <input class="tool-input" type="number" id="fib-max" value="1000" min="1" step="1">
+</div>
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="fib-calc">生成</button>
+</div>
+<div class="tool-result" id="fib-result"></div>
+
+<script>
+(function() {
+  var modeEl = document.getElementById('fib-mode');
+  modeEl.addEventListener('change', function() {
+    document.getElementById('fib-count-group').style.display = modeEl.value === 'count' ? '' : 'none';
+    document.getElementById('fib-max-group').style.display = modeEl.value === 'max' ? '' : 'none';
+  });
+
+  document.getElementById('fib-calc').addEventListener('click', function() {
+    var mode = modeEl.value;
+    var result = document.getElementById('fib-result');
+
+    if (mode === 'count') {
+      var n = parseInt(document.getElementById('fib-n').value);
+      if (isNaN(n) || n < 1 || n > 2000) {
+        result.innerHTML = '<div class="tool-output"><div class="tool-output-title">错误</div><p>请输入1-2000之间的整数。</p></div>';
+        return;
+      }
+      var fib = [];
+      if (n >= 1) fib.push(0n);
+      if (n >= 2) fib.push(1n);
+      for (var i = 2; i < n; i++) fib.push(fib[i-2] + fib[i-1]);
+      var display = fib.length <= 30 ? fib.map(function(v,i){return 'F<sub>' + (i+1) + '</sub> = ' + v.toString();}).join('<br>') : fib.map(function(v,i){return 'F<sub>' + (i+1) + '</sub> = ' + v.toString();}).slice(-20).join('<br>') + '<br>... 共 ' + n + ' 项，仅显示最后20项';
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">前 ' + n + ' 项斐波那契数列</div><p style="font-family:monospace;max-height:400px;overflow:auto;line-height:1.8;">' + display + '</p></div>';
+    } else {
+      var m = parseInt(document.getElementById('fib-max').value);
+      if (isNaN(m) || m < 1) {
+        result.innerHTML = '<div class="tool-output"><div class="tool-output-title">错误</div><p>请输入大于0的最大值。</p></div>';
+        return;
+      }
+      var bigM = BigInt(m), fib = [];
+      var a = 0n, b = 1n;
+      fib.push(a);
+      while (b <= bigM) { fib.push(b); var t = a + b; a = b; b = t; }
+      var display = fib.map(function(v,i){return 'F<sub>' + (i+1) + '</sub> = ' + v.toString();}).join('<br>');
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">不超过 ' + m + ' 的斐波那契数列</div><p style="font-family:monospace;max-height:400px;overflow:auto;line-height:1.8;">' + display + '</p><p>共 ' + fib.length + ' 项</p></div>';
+    }
+  });
+
+  document.getElementById('fib-calc').click();
+})();
+</script>

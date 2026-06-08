@@ -1,0 +1,197 @@
+<div class="tool-tabs" id="hb-tabs">
+  <button class="tool-tab active" data-tab="hb-beautify">美化</button>
+  <button class="tool-tab" data-tab="hb-minify">压缩</button>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label">输入 HTML 代码</label>
+  <textarea class="tool-textarea" id="hb-input" rows="10" placeholder='请输入 HTML 代码，例如：<div><p>Hello</p><span>World</span></div>'><html><head><meta charset="UTF-8"><title>测试页面</title></head><body><div class="container"><h1>Hello World</h1><p>这是一段<strong>示例</strong>文本</p><ul><li>列表项一</li><li>列表项二</li></ul></div></body></html></textarea>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="hb-beautify-btn">美化</button>
+  <button class="tool-btn tool-btn-primary" id="hb-minify-btn">压缩</button>
+  <button class="tool-btn" id="hb-clear-btn">清空</button>
+</div>
+
+<div id="hb-error" style="display:none;color:var(--color-error,#e53e3e);margin-top:8px;"></div>
+
+<div class="tool-output" id="hb-output-area" style="display:none;">
+  <div class="tool-result" id="hb-result"></div>
+  <button class="tool-copy-btn" id="hb-copy-btn">复制结果</button>
+</div>
+
+<div class="tool-stats" id="hb-stats" style="display:none;">
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="hb-stat-original">0</span>
+    <span class="tool-stat-label">原始大小</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="hb-stat-result">0</span>
+    <span class="tool-stat-label">结果大小</span>
+  </div>
+  <div class="tool-stat">
+    <span class="tool-stat-value" id="hb-stat-tags">0</span>
+    <span class="tool-stat-label">标签数</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  const input = document.getElementById('hb-input');
+  const result = document.getElementById('hb-result');
+  const outputArea = document.getElementById('hb-output-area');
+  const errorDiv = document.getElementById('hb-error');
+  const statsDiv = document.getElementById('hb-stats');
+  const tabs = document.querySelectorAll('#hb-tabs .tool-tab');
+
+  let currentTab = 'hb-beautify';
+
+  function switchTab(tabId) {
+    currentTab = tabId;
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
+  }
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+  });
+
+  function showError(msg) {
+    errorDiv.textContent = msg;
+    errorDiv.style.display = 'block';
+    outputArea.style.display = 'none';
+    statsDiv.style.display = 'none';
+  }
+
+  function hideError() {
+    errorDiv.style.display = 'none';
+  }
+
+  function showResult(text, origSize) {
+    result.textContent = text;
+    outputArea.style.display = 'block';
+    statsDiv.style.display = 'flex';
+    document.getElementById('hb-stat-original').textContent = formatSize(origSize);
+    document.getElementById('hb-stat-result').textContent = formatSize(new Blob([text]).size);
+    const tags = (text.match(/<\/?[a-zA-Z][a-zA-Z0-9]*/g) || []).length;
+    document.getElementById('hb-stat-tags').textContent = tags;
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    return (bytes / 1024).toFixed(1) + ' KB';
+  }
+
+  function beautifyHTML(html) {
+    const voidTags = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'];
+    let result = '';
+    let depth = 0;
+    const indent = '  ';
+
+    // 移除已有空白，重新格式化
+    let cleaned = html.replace(/>\s+</g, '><').replace(/\s{2,}/g, ' ').trim();
+
+    let i = 0;
+    while (i < cleaned.length) {
+      if (cleaned[i] === '<') {
+        // 找到标签结束
+        let end = cleaned.indexOf('>', i);
+        if (end === -1) { result += cleaned.substring(i); break; }
+        const tag = cleaned.substring(i, end + 1);
+        const isClose = tag.startsWith('</');
+        const isSelfClose = tag.endsWith('/>');
+        const tagName = tag.match(/<\/?([a-zA-Z][a-zA-Z0-9]*)/);
+        const name = tagName ? tagName[1].toLowerCase() : '';
+
+        if (isClose) {
+          depth = Math.max(0, depth - 1);
+          result = result.trimEnd() + '\n' + indent.repeat(depth) + tag;
+        } else if (isSelfClose || voidTags.includes(name)) {
+          result += '\n' + indent.repeat(depth) + tag;
+        } else {
+          result += '\n' + indent.repeat(depth) + tag;
+          depth++;
+        }
+
+        i = end + 1;
+      } else {
+        // 文本内容
+        let nextTag = cleaned.indexOf('<', i);
+        if (nextTag === -1) nextTag = cleaned.length;
+        let text = cleaned.substring(i, nextTag).trim();
+        if (text) {
+          result += '\n' + indent.repeat(depth) + text;
+        }
+        i = nextTag;
+      }
+    }
+
+    return result.trim();
+  }
+
+  function minifyHTML(html) {
+    // 移除注释
+    let result = html.replace(/<!--[\s\S]*?-->/g, '');
+    // 移除标签间空白
+    result = result.replace(/>\s+</g, '><');
+    // 压缩多余空白
+    result = result.replace(/\s{2,}/g, ' ');
+    // 移除 pre/textarea/script 外的换行
+    return result.trim();
+  }
+
+  document.getElementById('hb-beautify-btn').addEventListener('click', () => {
+    hideError();
+    const raw = input.value;
+    if (!raw.trim()) { showError('请输入 HTML 代码'); return; }
+    try {
+      const formatted = beautifyHTML(raw);
+      showResult(formatted, new Blob([raw]).size);
+      switchTab('hb-beautify');
+    } catch(e) {
+      showError('美化失败：' + e.message);
+    }
+  });
+
+  document.getElementById('hb-minify-btn').addEventListener('click', () => {
+    hideError();
+    const raw = input.value;
+    if (!raw.trim()) { showError('请输入 HTML 代码'); return; }
+    try {
+      const minified = minifyHTML(raw);
+      showResult(minified, new Blob([raw]).size);
+      switchTab('hb-minify');
+    } catch(e) {
+      showError('压缩失败：' + e.message);
+    }
+  });
+
+  document.getElementById('hb-clear-btn').addEventListener('click', () => {
+    input.value = '';
+    result.textContent = '';
+    outputArea.style.display = 'none';
+    statsDiv.style.display = 'none';
+    hideError();
+  });
+
+  document.getElementById('hb-copy-btn').addEventListener('click', () => {
+    const text = result.textContent;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('hb-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const btn = document.getElementById('hb-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    });
+  });
+})();
+</script>

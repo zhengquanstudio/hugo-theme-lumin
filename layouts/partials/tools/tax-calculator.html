@@ -1,0 +1,79 @@
+<div class="tool-input-group">
+  <label class="tool-label">税前月收入（元）</label>
+  <input class="tool-input" type="number" id="tc-income" value="15000" step="1" min="0" placeholder="月收入">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">五险一金（元/月，可选）</label>
+  <input class="tool-input" type="number" id="tc-insurance" value="0" step="1" min="0" placeholder="个人缴纳部分">
+</div>
+<div class="tool-input-group">
+  <label class="tool-label">专项附加扣除（元/月，可选）</label>
+  <input class="tool-input" type="number" id="tc-deduction" value="0" step="1" min="0" placeholder="如子女教育、房贷等">
+</div>
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="tc-calc">计算个税</button>
+</div>
+<div class="tool-result" id="tc-result"></div>
+
+<script>
+(function() {
+  var taxBrackets = [
+    { max: 3000, rate: 0.03, deduction: 0 },
+    { max: 12000, rate: 0.10, deduction: 210 },
+    { max: 25000, rate: 0.20, deduction: 1410 },
+    { max: 35000, rate: 0.25, deduction: 2660 },
+    { max: 55000, rate: 0.30, deduction: 4410 },
+    { max: 80000, rate: 0.35, deduction: 7160 },
+    { max: Infinity, rate: 0.45, deduction: 15160 }
+  ];
+
+  document.getElementById('tc-calc').addEventListener('click', function() {
+    var income = parseFloat(document.getElementById('tc-income').value);
+    var insurance = parseFloat(document.getElementById('tc-insurance').value) || 0;
+    var deduction = parseFloat(document.getElementById('tc-deduction').value) || 0;
+    var result = document.getElementById('tc-result');
+
+    if (isNaN(income) || income < 0) {
+      result.innerHTML = '<div class="tool-output"><div class="tool-output-title">错误</div><p>请输入有效月收入。</p></div>';
+      return;
+    }
+
+    var threshold = 5000;
+    var taxable = income - threshold - insurance - deduction;
+    if (taxable < 0) taxable = 0;
+
+    var tax = 0, bracket;
+    for (var i = 0; i < taxBrackets.length; i++) {
+      bracket = taxBrackets[i];
+      tax = taxable * bracket.rate - bracket.deduction;
+      if (taxable <= bracket.max) break;
+    }
+
+    var afterTax = income - insurance - tax;
+
+    var html = '<div class="tool-output"><div class="tool-output-title">个税计算结果</div>';
+    html += '<div class="tool-stats"><div class="tool-stat"><div class="tool-stat-value">¥' + tax.toFixed(2) + '</div><div class="tool-stat-label">应缴个税</div></div>';
+    html += '<div class="tool-stat"><div class="tool-stat-value">¥' + taxable.toFixed(2) + '</div><div class="tool-stat-label">应纳税所得额</div></div>';
+    html += '<div class="tool-stat"><div class="tool-stat-value">¥' + afterTax.toFixed(2) + '</div><div class="tool-stat-label">实发工资</div></div></div>';
+
+    html += '<div style="margin-top:12px;font-size:13px;color:#666;">';
+    html += '<p>月收入 ¥' + income.toFixed(2) + ' - 起征点 ¥5,000 - 五险一金 ¥' + insurance.toFixed(2) + ' - 专项扣除 ¥' + deduction.toFixed(2) + ' = 应纳税所得额 ¥' + taxable.toFixed(2) + '</p>';
+    html += '</div>';
+
+    html += '<h4 style="margin:15px 0 8px;">适用税率表</h4>';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:12px;">';
+    html += '<tr style="background:#f5f5f5;"><th style="padding:6px;text-align:left;">级数</th><th style="padding:6px;text-align:left;">应纳税所得额</th><th style="padding:6px;text-align:left;">税率</th><th style="padding:6px;text-align:left;">速算扣除数</th></tr>';
+    for (var i = 0; i < taxBrackets.length; i++) {
+      var b = taxBrackets[i], prev = i === 0 ? 0 : taxBrackets[i-1].max;
+      var range = b.max === Infinity ? '>' + prev : (prev+1) + ' ~ ' + b.max;
+      var highlight = taxable > prev && (taxable <= b.max || b.max === Infinity);
+      html += '<tr style="border-bottom:1px solid #eee;' + (highlight ? 'background:#fff3cd;' : '') + '"><td style="padding:6px;">' + (i+1) + '</td><td style="padding:6px;">' + range + '</td><td style="padding:6px;">' + (b.rate*100).toFixed(0) + '%</td><td style="padding:6px;">' + b.deduction + '</td></tr>';
+    }
+    html += '</table></div>';
+
+    result.innerHTML = html;
+  });
+
+  document.getElementById('tc-calc').click();
+})();
+</script>

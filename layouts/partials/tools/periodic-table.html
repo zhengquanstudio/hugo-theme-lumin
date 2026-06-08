@@ -1,0 +1,347 @@
+<style>
+.pt-legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.pt-legend-item{display:inline-flex;align-items:center;gap:6px;font-size:.76rem;color:var(--text-muted,#6b7280);padding:4px 10px;background:var(--bg-secondary,#f9fafb);border-radius:8px;border:1px solid var(--border-color,#e5e7eb)}
+.pt-legend-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+.pt-grid{display:grid;grid-template-columns:repeat(18,52px);gap:2px;justify-content:center;margin-bottom:6px}
+.pt-cell{width:50px;height:50px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .18s;border:1.5px solid var(--border-color,#e5e7eb);background:var(--bg-primary,#fff);position:relative;font-size:.62rem;user-select:none}
+.pt-cell:hover{transform:scale(1.15);z-index:10;box-shadow:0 4px 16px rgba(0,0,0,.18);border-color:transparent}
+.pt-cell-num{font-size:.52rem;color:var(--text-muted,#9ca3af);line-height:1}
+.pt-cell-sym{font-size:.88rem;font-weight:800;line-height:1.1;color:var(--text-primary,#1f2937)}
+.pt-cell-name{font-size:.5rem;color:var(--text-muted,#9ca3af);line-height:1}
+.pt-cell[data-cat="alkali"]{background:#ffe0e0;border-color:#ff6b6b}
+.pt-cell[data-cat="alkaline"]{background:#fff8e0;border-color:#ffd93d}
+.pt-cell[data-cat="transition"]{background:#fff0e0;border-color:#ff922b}
+.pt-cell[data-cat="metal"]{background:#e0ffe0;border-color:#51cf66}
+.pt-cell[data-cat="nonmetal"]{background:#e0fff5;border-color:#20c997}
+.pt-cell[data-cat="halogen"]{background:#e0efff;border-color:#4dabf7}
+.pt-cell[data-cat="noble"]{background:#efe0ff;border-color:#9775fa}
+.pt-cell[data-cat="lanthanide"]{background:#ffe0f0;border-color:#f783ac}
+.pt-cell[data-cat="actinide"]{background:#f8e0ff;border-color:#da77f2}
+.pt-spacer{width:50px;height:50px;background:transparent}
+.pt-section-label{grid-column:span 18;text-align:center;font-size:.72rem;font-weight:700;color:var(--text-muted,#9ca3af);padding:8px 0 4px;letter-spacing:1px}
+.pt-detail-wrap{margin-top:20px;padding:20px 24px;background:var(--bg-secondary,#f9fafb);border-radius:14px;border:1px solid var(--border-color,#e5e7eb);display:none}
+.pt-detail-wrap.show{display:block}
+.pt-detail-header{display:flex;align-items:center;gap:16px;margin-bottom:14px}
+.pt-detail-symbol{font-size:2.2rem;font-weight:800;color:#667eea;line-height:1}
+.pt-detail-name{font-size:1.3rem;font-weight:700;color:var(--text-primary,#1f2937)}
+.pt-detail-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
+.pt-detail-stat{padding:10px 14px;background:var(--bg-primary,#fff);border-radius:10px;border:1px solid var(--border-color,#e5e7eb)}
+.pt-detail-stat-value{font-size:1rem;font-weight:700;color:#667eea}
+.pt-detail-stat-label{font-size:.72rem;color:var(--text-muted,#9ca3af);margin-top:2px}
+.pt-grid-wrap{overflow-x:auto;padding-bottom:10px}
+[data-theme="dark"] .pt-cell{filter:brightness(.85)}
+@media(max-width:1100px){
+  .pt-grid{grid-template-columns:repeat(18,38px)}
+  .pt-cell{width:37px;height:37px;border-radius:4px}
+  .pt-cell-sym{font-size:.7rem}
+  .pt-cell-num{font-size:.44rem}
+  .pt-cell-name{font-size:.42rem}
+  .pt-spacer{width:37px;height:37px}
+}
+</style>
+
+<div class="pt-legend">
+  <div class="pt-legend-item"><span class="pt-legend-dot" style="background:#ff6b6b"></span>碱金属</div>
+  <div class="pt-legend-item"><span class="pt-legend-dot" style="background:#ffd93d"></span>碱土金属</div>
+  <div class="pt-legend-item"><span class="pt-legend-dot" style="background:#ff922b"></span>过渡金属</div>
+  <div class="pt-legend-item"><span class="pt-legend-dot" style="background:#51cf66"></span>其他金属</div>
+  <div class="pt-legend-item"><span class="pt-legend-dot" style="background:#20c997"></span>非金属</div>
+  <div class="pt-legend-item"><span class="pt-legend-dot" style="background:#4dabf7"></span>卤素</div>
+  <div class="pt-legend-item"><span class="pt-legend-dot" style="background:#9775fa"></span>惰性气体</div>
+  <div class="pt-legend-item"><span class="pt-legend-dot" style="background:#f783ac"></span>镧系</div>
+  <div class="pt-legend-item"><span class="pt-legend-dot" style="background:#da77f2"></span>锕系</div>
+</div>
+
+<div class="pt-grid-wrap">
+  <div class="pt-grid" id="pt-grid-main"></div>
+  <div class="pt-grid" id="pt-grid-lanthanide" style="margin-top:8px"></div>
+  <div class="pt-grid" id="pt-grid-actinide"></div>
+</div>
+
+<div class="pt-detail-wrap" id="pt-detail">
+  <div class="pt-detail-header">
+    <span class="pt-detail-symbol" id="pt-detail-sym"></span>
+    <span class="pt-detail-name" id="pt-detail-name"></span>
+  </div>
+  <div class="pt-detail-stats">
+    <div class="pt-detail-stat">
+      <div class="pt-detail-stat-value" id="pt-detail-num"></div>
+      <div class="pt-detail-stat-label">原子序数</div>
+    </div>
+    <div class="pt-detail-stat">
+      <div class="pt-detail-stat-value" id="pt-detail-cat"></div>
+      <div class="pt-detail-stat-label">分类</div>
+    </div>
+    <div class="pt-detail-stat">
+      <div class="pt-detail-stat-value" id="pt-detail-mass"></div>
+      <div class="pt-detail-stat-label">相对原子质量</div>
+    </div>
+    <div class="pt-detail-stat">
+      <div class="pt-detail-stat-value" id="pt-detail-state"></div>
+      <div class="pt-detail-stat-label">状态(常温)</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var catNames={
+    alkali:"碱金属",
+    alkaline:"碱土金属",
+    transition:"过渡金属",
+    metal:"其他金属",
+    nonmetal:"非金属",
+    halogen:"卤素",
+    noble:"惰性气体",
+    lanthanide:"镧系元素",
+    actinide:"锕系元素"
+  };
+  var catColor={
+    alkali:"#ff6b6b",
+    alkaline:"#ffd93d",
+    transition:"#ff922b",
+    metal:"#51cf66",
+    nonmetal:"#20c997",
+    halogen:"#4dabf7",
+    noble:"#9775fa",
+    lanthanide:"#f783ac",
+    actinide:"#da77f2"
+  };
+
+  var elements=[
+    {num:1,sym:"H",name:"氢",cat:"nonmetal",period:1,group:1,mass:"1.008",state:"气体"},
+    {num:2,sym:"He",name:"氦",cat:"noble",period:1,group:18,mass:"4.0026",state:"气体"},
+    {num:3,sym:"Li",name:"锂",cat:"alkali",period:2,group:1,mass:"6.94",state:"固体"},
+    {num:4,sym:"Be",name:"铍",cat:"alkaline",period:2,group:2,mass:"9.0122",state:"固体"},
+    {num:5,sym:"B",name:"硼",cat:"nonmetal",period:2,group:13,mass:"10.81",state:"固体"},
+    {num:6,sym:"C",name:"碳",cat:"nonmetal",period:2,group:14,mass:"12.011",state:"固体"},
+    {num:7,sym:"N",name:"氮",cat:"nonmetal",period:2,group:15,mass:"14.007",state:"气体"},
+    {num:8,sym:"O",name:"氧",cat:"nonmetal",period:2,group:16,mass:"15.999",state:"气体"},
+    {num:9,sym:"F",name:"氟",cat:"halogen",period:2,group:17,mass:"18.998",state:"气体"},
+    {num:10,sym:"Ne",name:"氖",cat:"noble",period:2,group:18,mass:"20.180",state:"气体"},
+    {num:11,sym:"Na",name:"钠",cat:"alkali",period:3,group:1,mass:"22.990",state:"固体"},
+    {num:12,sym:"Mg",name:"镁",cat:"alkaline",period:3,group:2,mass:"24.305",state:"固体"},
+    {num:13,sym:"Al",name:"铝",cat:"metal",period:3,group:13,mass:"26.982",state:"固体"},
+    {num:14,sym:"Si",name:"硅",cat:"nonmetal",period:3,group:14,mass:"28.085",state:"固体"},
+    {num:15,sym:"P",name:"磷",cat:"nonmetal",period:3,group:15,mass:"30.974",state:"固体"},
+    {num:16,sym:"S",name:"硫",cat:"nonmetal",period:3,group:16,mass:"32.06",state:"固体"},
+    {num:17,sym:"Cl",name:"氯",cat:"halogen",period:3,group:17,mass:"35.45",state:"气体"},
+    {num:18,sym:"Ar",name:"氩",cat:"noble",period:3,group:18,mass:"39.948",state:"气体"},
+    {num:19,sym:"K",name:"钾",cat:"alkali",period:4,group:1,mass:"39.098",state:"固体"},
+    {num:20,sym:"Ca",name:"钙",cat:"alkaline",period:4,group:2,mass:"40.078",state:"固体"},
+    {num:21,sym:"Sc",name:"钪",cat:"transition",period:4,group:3,mass:"44.956",state:"固体"},
+    {num:22,sym:"Ti",name:"钛",cat:"transition",period:4,group:4,mass:"47.867",state:"固体"},
+    {num:23,sym:"V",name:"钒",cat:"transition",period:4,group:5,mass:"50.942",state:"固体"},
+    {num:24,sym:"Cr",name:"铬",cat:"transition",period:4,group:6,mass:"51.996",state:"固体"},
+    {num:25,sym:"Mn",name:"锰",cat:"transition",period:4,group:7,mass:"54.938",state:"固体"},
+    {num:26,sym:"Fe",name:"铁",cat:"transition",period:4,group:8,mass:"55.845",state:"固体"},
+    {num:27,sym:"Co",name:"钴",cat:"transition",period:4,group:9,mass:"58.933",state:"固体"},
+    {num:28,sym:"Ni",name:"镍",cat:"transition",period:4,group:10,mass:"58.693",state:"固体"},
+    {num:29,sym:"Cu",name:"铜",cat:"transition",period:4,group:11,mass:"63.546",state:"固体"},
+    {num:30,sym:"Zn",name:"锌",cat:"transition",period:4,group:12,mass:"65.38",state:"固体"},
+    {num:31,sym:"Ga",name:"镓",cat:"metal",period:4,group:13,mass:"69.723",state:"固体"},
+    {num:32,sym:"Ge",name:"锗",cat:"nonmetal",period:4,group:14,mass:"72.630",state:"固体"},
+    {num:33,sym:"As",name:"砷",cat:"nonmetal",period:4,group:15,mass:"74.922",state:"固体"},
+    {num:34,sym:"Se",name:"硒",cat:"nonmetal",period:4,group:16,mass:"78.971",state:"固体"},
+    {num:35,sym:"Br",name:"溴",cat:"halogen",period:4,group:17,mass:"79.904",state:"液体"},
+    {num:36,sym:"Kr",name:"氪",cat:"noble",period:4,group:18,mass:"83.798",state:"气体"},
+    {num:37,sym:"Rb",name:"铷",cat:"alkali",period:5,group:1,mass:"85.468",state:"固体"},
+    {num:38,sym:"Sr",name:"锶",cat:"alkaline",period:5,group:2,mass:"87.62",state:"固体"},
+    {num:39,sym:"Y",name:"钇",cat:"transition",period:5,group:3,mass:"88.906",state:"固体"},
+    {num:40,sym:"Zr",name:"锆",cat:"transition",period:5,group:4,mass:"91.224",state:"固体"},
+    {num:41,sym:"Nb",name:"铌",cat:"transition",period:5,group:5,mass:"92.906",state:"固体"},
+    {num:42,sym:"Mo",name:"钼",cat:"transition",period:5,group:6,mass:"95.95",state:"固体"},
+    {num:43,sym:"Tc",name:"锝",cat:"transition",period:5,group:7,mass:"98",state:"固体"},
+    {num:44,sym:"Ru",name:"钌",cat:"transition",period:5,group:8,mass:"101.07",state:"固体"},
+    {num:45,sym:"Rh",name:"铑",cat:"transition",period:5,group:9,mass:"102.91",state:"固体"},
+    {num:46,sym:"Pd",name:"钯",cat:"transition",period:5,group:10,mass:"106.42",state:"固体"},
+    {num:47,sym:"Ag",name:"银",cat:"transition",period:5,group:11,mass:"107.87",state:"固体"},
+    {num:48,sym:"Cd",name:"镉",cat:"transition",period:5,group:12,mass:"112.41",state:"固体"},
+    {num:49,sym:"In",name:"铟",cat:"metal",period:5,group:13,mass:"114.82",state:"固体"},
+    {num:50,sym:"Sn",name:"锡",cat:"metal",period:5,group:14,mass:"118.71",state:"固体"},
+    {num:51,sym:"Sb",name:"锑",cat:"nonmetal",period:5,group:15,mass:"121.76",state:"固体"},
+    {num:52,sym:"Te",name:"碲",cat:"nonmetal",period:5,group:16,mass:"127.60",state:"固体"},
+    {num:53,sym:"I",name:"碘",cat:"halogen",period:5,group:17,mass:"126.90",state:"固体"},
+    {num:54,sym:"Xe",name:"氙",cat:"noble",period:5,group:18,mass:"131.29",state:"气体"},
+    {num:55,sym:"Cs",name:"铯",cat:"alkali",period:6,group:1,mass:"132.91",state:"固体"},
+    {num:56,sym:"Ba",name:"钡",cat:"alkaline",period:6,group:2,mass:"137.33",state:"固体"},
+    {num:57,sym:"La",name:"镧",cat:"transition",period:6,group:3,isLanthanideAnchor:true,mass:"138.91",state:"固体"},
+    {num:72,sym:"Hf",name:"铪",cat:"transition",period:6,group:4,mass:"178.49",state:"固体"},
+    {num:73,sym:"Ta",name:"钽",cat:"transition",period:6,group:5,mass:"180.95",state:"固体"},
+    {num:74,sym:"W",name:"钨",cat:"transition",period:6,group:6,mass:"183.84",state:"固体"},
+    {num:75,sym:"Re",name:"铼",cat:"transition",period:6,group:7,mass:"186.21",state:"固体"},
+    {num:76,sym:"Os",name:"锇",cat:"transition",period:6,group:8,mass:"190.23",state:"固体"},
+    {num:77,sym:"Ir",name:"铱",cat:"transition",period:6,group:9,mass:"192.22",state:"固体"},
+    {num:78,sym:"Pt",name:"铂",cat:"transition",period:6,group:10,mass:"195.08",state:"固体"},
+    {num:79,sym:"Au",name:"金",cat:"transition",period:6,group:11,mass:"196.97",state:"固体"},
+    {num:80,sym:"Hg",name:"汞",cat:"transition",period:6,group:12,mass:"200.59",state:"液体"},
+    {num:81,sym:"Tl",name:"铊",cat:"metal",period:6,group:13,mass:"204.38",state:"固体"},
+    {num:82,sym:"Pb",name:"铅",cat:"metal",period:6,group:14,mass:"207.2",state:"固体"},
+    {num:83,sym:"Bi",name:"铋",cat:"metal",period:6,group:15,mass:"208.98",state:"固体"},
+    {num:84,sym:"Po",name:"钋",cat:"nonmetal",period:6,group:16,mass:"209",state:"固体"},
+    {num:85,sym:"At",name:"砹",cat:"halogen",period:6,group:17,mass:"210",state:"固体"},
+    {num:86,sym:"Rn",name:"氡",cat:"noble",period:6,group:18,mass:"222",state:"气体"},
+    {num:87,sym:"Fr",name:"钫",cat:"alkali",period:7,group:1,mass:"223",state:"固体"},
+    {num:88,sym:"Ra",name:"镭",cat:"alkaline",period:7,group:2,mass:"226",state:"固体"},
+    {num:89,sym:"Ac",name:"锕",cat:"transition",period:7,group:3,isActinideAnchor:true,mass:"227",state:"固体"},
+    {num:104,sym:"Rf",name:"𬬻",cat:"transition",period:7,group:4,mass:"267",state:"固体"},
+    {num:105,sym:"Db",name:"𬭊",cat:"transition",period:7,group:5,mass:"268",state:"固体"},
+    {num:106,sym:"Sg",name:"𬭳",cat:"transition",period:7,group:6,mass:"269",state:"固体"},
+    {num:107,sym:"Bh",name:"𬭛",cat:"transition",period:7,group:7,mass:"270",state:"固体"},
+    {num:108,sym:"Hs",name:"𬭶",cat:"transition",period:7,group:8,mass:"269",state:"固体"},
+    {num:109,sym:"Mt",name:"鿏",cat:"transition",period:7,group:9,mass:"278",state:"固体"},
+    {num:110,sym:"Ds",name:"𫟼",cat:"transition",period:7,group:10,mass:"281",state:"固体"},
+    {num:111,sym:"Rg",name:"𬬭",cat:"transition",period:7,group:11,mass:"282",state:"固体"},
+    {num:112,sym:"Cn",name:"鿔",cat:"transition",period:7,group:12,mass:"285",state:"固体"},
+    {num:113,sym:"Nh",name:"鿭",cat:"metal",period:7,group:13,mass:"286",state:"固体"},
+    {num:114,sym:"Fl",name:"𫓧",cat:"metal",period:7,group:14,mass:"289",state:"固体"},
+    {num:115,sym:"Mc",name:"镆",cat:"metal",period:7,group:15,mass:"290",state:"固体"},
+    {num:116,sym:"Lv",name:"𫟷",cat:"metal",period:7,group:16,mass:"293",state:"固体"},
+    {num:117,sym:"Ts",name:"鿬",cat:"halogen",period:7,group:17,mass:"294",state:"固体"},
+    {num:118,sym:"Og",name:"鿫",cat:"noble",period:7,group:18,mass:"294",state:"气体"}
+  ];
+
+  var lanthanides=[
+    {num:58,sym:"Ce",name:"铈",cat:"lanthanide",mass:"140.12",state:"固体"},
+    {num:59,sym:"Pr",name:"镨",cat:"lanthanide",mass:"140.91",state:"固体"},
+    {num:60,sym:"Nd",name:"钕",cat:"lanthanide",mass:"144.24",state:"固体"},
+    {num:61,sym:"Pm",name:"钷",cat:"lanthanide",mass:"145",state:"固体"},
+    {num:62,sym:"Sm",name:"钐",cat:"lanthanide",mass:"150.36",state:"固体"},
+    {num:63,sym:"Eu",name:"铕",cat:"lanthanide",mass:"151.96",state:"固体"},
+    {num:64,sym:"Gd",name:"钆",cat:"lanthanide",mass:"157.25",state:"固体"},
+    {num:65,sym:"Tb",name:"铽",cat:"lanthanide",mass:"158.93",state:"固体"},
+    {num:66,sym:"Dy",name:"镝",cat:"lanthanide",mass:"162.50",state:"固体"},
+    {num:67,sym:"Ho",name:"钬",cat:"lanthanide",mass:"164.93",state:"固体"},
+    {num:68,sym:"Er",name:"铒",cat:"lanthanide",mass:"167.26",state:"固体"},
+    {num:69,sym:"Tm",name:"铥",cat:"lanthanide",mass:"168.93",state:"固体"},
+    {num:70,sym:"Yb",name:"镱",cat:"lanthanide",mass:"173.05",state:"固体"},
+    {num:71,sym:"Lu",name:"镥",cat:"lanthanide",mass:"174.97",state:"固体"}
+  ];
+
+  var actinides=[
+    {num:90,sym:"Th",name:"钍",cat:"actinide",mass:"232.04",state:"固体"},
+    {num:91,sym:"Pa",name:"镤",cat:"actinide",mass:"231.04",state:"固体"},
+    {num:92,sym:"U",name:"铀",cat:"actinide",mass:"238.03",state:"固体"},
+    {num:93,sym:"Np",name:"镎",cat:"actinide",mass:"237",state:"固体"},
+    {num:94,sym:"Pu",name:"钚",cat:"actinide",mass:"244",state:"固体"},
+    {num:95,sym:"Am",name:"镅",cat:"actinide",mass:"243",state:"固体"},
+    {num:96,sym:"Cm",name:"锔",cat:"actinide",mass:"247",state:"固体"},
+    {num:97,sym:"Bk",name:"锫",cat:"actinide",mass:"247",state:"固体"},
+    {num:98,sym:"Cf",name:"锎",cat:"actinide",mass:"251",state:"固体"},
+    {num:99,sym:"Es",name:"锿",cat:"actinide",mass:"252",state:"固体"},
+    {num:100,sym:"Fm",name:"镄",cat:"actinide",mass:"257",state:"固体"},
+    {num:101,sym:"Md",name:"钔",cat:"actinide",mass:"258",state:"固体"},
+    {num:102,sym:"No",name:"锘",cat:"actinide",mass:"259",state:"固体"},
+    {num:103,sym:"Lr",name:"铹",cat:"actinide",mass:"266",state:"固体"}
+  ];
+
+  function buildCell(el){
+    return "<div class=\"pt-cell\" data-cat=\""+el.cat+"\" data-num=\""+el.num+"\" data-sym=\""+el.sym+"\" data-name=\""+el.name+"\" data-category=\""+el.cat+"\" data-mass=\""+(el.mass||"")+"\" data-state=\""+(el.state||"")+"\" title=\""+el.name+"("+el.sym+") - 原子序数"+el.num+"\"><span class=\"pt-cell-num\">"+el.num+"</span><span class=\"pt-cell-sym\">"+el.sym+"</span><span class=\"pt-cell-name\">"+el.name+"</span></div>";
+  }
+
+  function buildSpacer(){
+    return "<div class=\"pt-spacer\"></div>";
+  }
+
+  var elMap={};
+  elements.forEach(function(el){elMap[el.num]=el;});
+  lanthanides.forEach(function(el){elMap[el.num]=el;});
+  actinides.forEach(function(el){elMap[el.num]=el;});
+
+  function buildRow(startGroup, cells){
+    var row="";
+    for(var g=1;g<=18;g++){
+      row+=cells[g]||buildSpacer();
+    }
+    return row;
+  }
+
+  function renderMainGrid(){
+    var gridMain=document.getElementById("pt-grid-main");
+    var periods=[];
+    for(var p=1;p<=7;p++){
+      var rowCells={};
+      elements.forEach(function(el){
+        if(el.period===p && !el.isLanthanideAnchor && !el.isActinideAnchor){
+          rowCells[el.group]=buildCell(el);
+        }
+      });
+      if(p===6){
+        rowCells[3]=buildCell(elements.find(function(el){return el.num===57;}));
+      }
+      if(p===7){
+        rowCells[3]=buildCell(elements.find(function(el){return el.num===89;}));
+      }
+      periods.push(buildRow(1,rowCells));
+    }
+    gridMain.innerHTML=periods.join("");
+  }
+
+  function renderLanthanideGrid(){
+    var grid=document.getElementById("pt-grid-lanthanide");
+    var html="<div class=\"pt-section-label\">镧系元素 (La-Lu)</div>";
+    var row="";
+    for(var i=1;i<=18;i++){
+      if(i>=3 && i<=16){
+        var idx=i-3;
+        if(idx<lanthanides.length){
+          row+=buildCell(lanthanides[idx]);
+        }else{
+          row+=buildSpacer();
+        }
+      }else{
+        row+=buildSpacer();
+      }
+    }
+    html+=row;
+    grid.innerHTML=html;
+  }
+
+  function renderActinideGrid(){
+    var grid=document.getElementById("pt-grid-actinide");
+    var html="<div class=\"pt-section-label\">锕系元素 (Ac-Lr)</div>";
+    var row="";
+    for(var i=1;i<=18;i++){
+      if(i>=3 && i<=16){
+        var idx=i-3;
+        if(idx<actinides.length){
+          row+=buildCell(actinides[idx]);
+        }else{
+          row+=buildSpacer();
+        }
+      }else{
+        row+=buildSpacer();
+      }
+    }
+    html+=row;
+    grid.innerHTML=html;
+  }
+
+  function showDetail(num){
+    var el=elMap[parseInt(num)];
+    if(!el) return;
+    var detail=document.getElementById("pt-detail");
+    document.getElementById("pt-detail-sym").textContent=el.sym;
+    document.getElementById("pt-detail-name").textContent=el.name;
+    document.getElementById("pt-detail-num").textContent=el.num;
+    document.getElementById("pt-detail-cat").textContent=catNames[el.cat]||"未知";
+    document.getElementById("pt-detail-mass").textContent=el.mass||"-";
+    document.getElementById("pt-detail-state").textContent=el.state||"-";
+    detail.classList.add("show");
+  }
+
+  function initEvents(){
+    document.addEventListener("click",function(e){
+      var cell=e.target.closest(".pt-cell");
+      if(cell){
+        showDetail(cell.getAttribute("data-num"));
+      }
+    });
+  }
+
+  renderMainGrid();
+  renderLanthanideGrid();
+  renderActinideGrid();
+  initEvents();
+})();
+</script>

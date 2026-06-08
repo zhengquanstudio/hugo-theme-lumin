@@ -1,0 +1,188 @@
+<div class="tool-tabs" id="lm-tabs">
+  <button class="tool-tab active" data-tab="lm-merge">合并</button>
+  <button class="tool-tab" data-tab="lm-split">拆分</button>
+</div>
+
+<div class="tool-input-group">
+  <label class="tool-label" id="lm-input-label">输入文本（每行一项）</label>
+  <textarea class="tool-textarea" id="lm-input" rows="10" placeholder="请输入文本，每行一项...">北京
+上海
+广州
+深圳
+杭州</textarea>
+</div>
+
+<div class="tool-input-group" id="lm-merge-options">
+  <label class="tool-label">合并选项</label>
+  <div style="display:flex;flex-wrap:wrap;gap:16px;margin-top:4px;align-items:center;">
+    <div style="display:flex;align-items:center;gap:4px;">
+      <label style="white-space:nowrap;">分隔符:</label>
+      <input class="tool-input" id="lm-separator" value=", " style="width:100px;">
+    </div>
+    <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
+      <input type="checkbox" id="lm-skip-empty" checked> 跳过空行
+    </label>
+    <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
+      <input type="checkbox" id="lm-dedup"> 去重
+    </label>
+  </div>
+</div>
+
+<div class="tool-input-group" id="lm-split-options" style="display:none;">
+  <label class="tool-label">拆分方式</label>
+  <select class="tool-select" id="lm-split-mode">
+    <option value="separator" selected>按分隔符拆分</option>
+    <option value="length">按固定字符数拆分</option>
+  </select>
+  <div id="lm-split-separator-group" style="margin-top:8px;">
+    <label style="white-space:nowrap;">分隔符:</label>
+    <input class="tool-input" id="lm-split-separator" value="," style="width:100px;">
+  </div>
+  <div id="lm-split-length-group" style="margin-top:8px;display:none;">
+    <label style="white-space:nowrap;">每行字符数:</label>
+    <input class="tool-input" id="lm-split-length" type="number" value="10" min="1" max="1000" style="width:80px;">
+  </div>
+</div>
+
+<div class="tool-btn-row">
+  <button class="tool-btn tool-btn-primary" id="lm-convert-btn">转换</button>
+  <button class="tool-btn" id="lm-clear-btn">清空</button>
+</div>
+
+<div id="lm-error" style="display:none;color:var(--color-error,#e53e3e);margin-top:8px;"></div>
+
+<div class="tool-output" id="lm-output-area" style="display:none;">
+  <div class="tool-result" id="lm-result"></div>
+  <button class="tool-copy-btn" id="lm-copy-btn">复制结果</button>
+</div>
+
+<script>
+(function(){
+  const input = document.getElementById('lm-input');
+  const result = document.getElementById('lm-result');
+  const outputArea = document.getElementById('lm-output-area');
+  const errorDiv = document.getElementById('lm-error');
+  const tabs = document.querySelectorAll('#lm-tabs .tool-tab');
+  const mergeOptions = document.getElementById('lm-merge-options');
+  const splitOptions = document.getElementById('lm-split-options');
+  const inputLabel = document.getElementById('lm-input-label');
+  const splitMode = document.getElementById('lm-split-mode');
+  const splitSepGroup = document.getElementById('lm-split-separator-group');
+  const splitLenGroup = document.getElementById('lm-split-length-group');
+
+  let currentTab = 'lm-merge';
+
+  function switchTab(tabId) {
+    currentTab = tabId;
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
+    if (tabId === 'lm-merge') {
+      mergeOptions.style.display = 'block';
+      splitOptions.style.display = 'none';
+      inputLabel.textContent = '输入文本（每行一项）';
+      input.placeholder = '请输入文本，每行一项...';
+    } else {
+      mergeOptions.style.display = 'none';
+      splitOptions.style.display = 'block';
+      inputLabel.textContent = '输入文本';
+      input.placeholder = '请输入需要拆分的文本...';
+    }
+    updateSplitSubOptions();
+  }
+
+  function updateSplitSubOptions() {
+    if (splitMode.value === 'separator') {
+      splitSepGroup.style.display = 'block';
+      splitLenGroup.style.display = 'none';
+    } else {
+      splitSepGroup.style.display = 'none';
+      splitLenGroup.style.display = 'block';
+    }
+  }
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+  });
+
+  splitMode.addEventListener('change', updateSplitSubOptions);
+
+  function showError(msg) {
+    errorDiv.textContent = msg;
+    errorDiv.style.display = 'block';
+    outputArea.style.display = 'none';
+  }
+
+  function hideError() {
+    errorDiv.style.display = 'none';
+  }
+
+  document.getElementById('lm-convert-btn').addEventListener('click', () => {
+    hideError();
+    const raw = input.value;
+    if (!raw.trim()) { showError('请输入文本'); return; }
+
+    let output = '';
+
+    if (currentTab === 'lm-merge') {
+      // 合并
+      let lines = raw.split('\n');
+      const separator = document.getElementById('lm-separator').value;
+      const skipEmpty = document.getElementById('lm-skip-empty').checked;
+      const dedup = document.getElementById('lm-dedup').checked;
+
+      if (skipEmpty) {
+        lines = lines.map(l => l.trim()).filter(l => l !== '');
+      }
+      if (dedup) {
+        lines = [...new Set(lines)];
+      }
+      output = lines.join(separator);
+    } else {
+      // 拆分
+      if (splitMode.value === 'separator') {
+        const sep = document.getElementById('lm-split-separator').value;
+        const parts = raw.split(sep).map(p => p.trim()).filter(p => p !== '');
+        output = parts.join('\n');
+      } else {
+        const len = parseInt(document.getElementById('lm-split-length').value, 10);
+        const text = raw.replace(/\s/g, '');
+        const parts = [];
+        for (let i = 0; i < text.length; i += len) {
+          parts.push(text.substring(i, i + len));
+        }
+        output = parts.join('\n');
+      }
+    }
+
+    if (!output) { showError('转换结果为空'); return; }
+    result.textContent = output;
+    outputArea.style.display = 'block';
+  });
+
+  document.getElementById('lm-clear-btn').addEventListener('click', () => {
+    input.value = '';
+    result.textContent = '';
+    outputArea.style.display = 'none';
+    hideError();
+  });
+
+  document.getElementById('lm-copy-btn').addEventListener('click', () => {
+    const text = result.textContent;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('lm-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const btn = document.getElementById('lm-copy-btn');
+      btn.textContent = '已复制！';
+      setTimeout(() => { btn.textContent = '复制结果'; }, 1500);
+    });
+  });
+})();
+</script>
